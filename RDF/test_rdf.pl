@@ -3,41 +3,46 @@
     Part of SWI-Prolog SGML/XML parser
 
     Author:  Jan Wielemaker
-    E-mail:  jan@swi.psy.uva.nl
-    WWW:     http://www.swi.psy.uva.nl/projects/SWI-Prolog/
+    E-mail:  J.Wielemaker@uva.nl
+    WWW:     http://www.swi-prolog.org/
     Copying: LGPL-2.  See the file COPYING or http://www.gnu.org
 
-    Copyright (C) 1990-2000 SWI, University of Amsterdam. All rights reserved.
+    Copyright (C) 1990-2009 SWI, University of Amsterdam.
+    All rights reserved.
 */
 
-:- module(rdf_test,
+:- module(test_rdf,
 	  [ suite/1,			% +Test-number
 	    test_dir/1,			% +Directory
 	    test_file/1,		% +File
 	    time_file/1,		% +File
 	    passed/1,			% +Test-numberOrFile
-	    test/0,			% run whole suite
+	    test_rdf/0,			% run whole suite
 	    show_ok/1			% +Test
 	  ]).
 
 :- multifile
 	user:file_search_path/2.
 
+user:file_search_path(library, .).
 user:file_search_path(library, ..).
+user:file_search_path(library, '../../clib').
+user:file_search_path(library, '../..').
 user:file_search_path(foreign, ..).
+user:file_search_path(foreign, '../../clib').
+user:file_search_path(foreign, '../../semweb').
 
 :- use_module(library(sgml)).
-:- use_module(rdf_parser).
-:- use_module(rdf_triple).
-:- use_module(rdf).
+:- use_module(library(semweb/rdf_compare)).
+:- use_module(library(rdf_parser)).
+:- use_module(library(rdf_triple)).
+:- use_module(library(rdf)).
 :- use_module(pretty_print).
-
-:- set_prolog_flag(rdf_container, true).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Test file for the SWI-Prolog RDF parser.  Toplevel predicates:
 
-	# test/0		
+	# test/0
 	Run all tests from the `suite' directory and validate the
 	the result if the correct result is stored in a .ok file.
 
@@ -47,14 +52,14 @@ Test file for the SWI-Prolog RDF parser.  Toplevel predicates:
 
 	# passed(N)
 	Parse suite/t<N>.rdf and save the result in suite/t<N>.ok
-	
+
 The intention is to write  tests,  use   suite/1  to  make sure they are
 parsed correctly and then run passed/1 to   save  the correct answer, so
 running test/0 can validate all results.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 suite(N) :-
-	concat_atom(['suite/t', N, '.rdf'], File),
+	atomic_list_concat(['suite/t', N, '.rdf'], File),
 	test_file(File).
 
 test_file(File) :-
@@ -67,7 +72,8 @@ test_file(File) :-
 			 space(sgml)
 		       ]),
 	rdf_start_file([], Cleanup),
-	xml_to_plrdf(RDFElement, RDF, []),
+	make_rdf_state([base_uri('http://test.org/test/')], State, _),
+	xml_to_plrdf(RDFElement, RDF, State),
 	rdf_end_file(Cleanup),
 	format('============= Prolog term ==============~n', []),
 	pretty_print(RDF),
@@ -82,7 +88,7 @@ time_file(File) :-
 
 passed(Id) :-
 	integer(Id), !,
-	concat_atom(['suite/t', Id, '.rdf'], File),
+	atomic_list_concat(['suite/t', Id, '.rdf'], File),
 	passed(File).
 passed(File) :-
 	rdf_reset_ids,
@@ -96,7 +102,7 @@ passed(File) :-
 
 :- dynamic failed/1.
 
-test :-
+test_rdf :-
 	test(load_rdf),
 	test(process_rdf).
 
@@ -130,7 +136,7 @@ test(How, File) :-
 	->  (   catch(open(OkFile, read, Fd, [encoding(utf8)]), _, fail)
 	    ->  (   read_triples(Fd, OkTriples),
 		    close(Fd),
-		    compare_triples(Triples, OkTriples, _Subst)
+		    rdf_equal_graphs(Triples, OkTriples, _Subst)
 		->  true
 		;   assert(failed(File)),
 		    format('~N~w: WRONG ANSWER~n', [File])
@@ -145,7 +151,7 @@ ok_file(File, OkFile) :-
 	file_base_name(File, BaseFile),
 	file_name_extension(Base, _, BaseFile),
 	file_directory_name(File, Dir),
-	concat_atom([Dir, /, ok, /, Base, '.ok'], OkFile).
+	atomic_list_concat([Dir, /, ok, /, Base, '.ok'], OkFile).
 
 
 save_triples([], _).
@@ -185,7 +191,7 @@ write_triples([H|T]) :- !,
 write_triple(Triple) :-
 	is_rdf_triple(Triple), !,
 	Triple = rdf(S,P,O),
-	format('{~p, ~p, ~p}~n', [S,P,O]).
+	format('{~q, ~q, ~q}~n', [S,P,O]).
 write_triple(Triple) :-
 	format('@@@@@ Bad Triple: ~p~n', [Triple]),
 	fail.
@@ -280,58 +286,6 @@ term_member(X, Compound) :-
 	arg(_, Compound, Arg),
 	term_member(X, Arg).
 
-		 /*******************************
-		 *	     COMPARING		*
-		 *******************************/
-
-%	compare_triples(+PlRDF, +NTRDF, -Substitions)
-%
-%	Compare two models and if they are equal, return a list of
-%	PlID = NTID, mapping NodeID elements.
-
-
-compare_triples(A, B, Substitutions) :-
-	compare_list(A, B, [], Substitutions), !.
-
-compare_list([], [], S, S).
-compare_list([H1|T1], In2, S0, S) :-
-	select(H2, In2, T2),
-	compare_triple(H1, H2, S0, S1),
-	compare_list(T1, T2, S1, S).
-
-compare_triple(rdf(Subj1,P1,O1), rdf(Subj2, P2, O2), S0, S) :-
-	compare_field(Subj1, Subj2, S0, S1),
-	compare_field(P1, P2, S1, S2),
-	compare_field(O1, O2, S2, S).
-
-compare_field(X, X, S, S) :- !.
-compare_field(literal(X), xml(X), S, S) :- !. % TBD
-compare_field(rdf:Name, Atom, S, S) :-
-	atom(Atom),
-	rdf_parser:rdf_name_space(NS),
-	atom_concat(NS, Name, Atom), !.
-compare_field(NS:Name, Atom, S, S) :-
-	atom(Atom),
-	atom_concat(NS, Name, Atom), !.
-compare_field(X, Id, S, S) :-
-	memberchk(X=Id, S), !.
-compare_field(X, Y, S, [X=Y|S]) :-
-	\+ memberchk(X=_, S),
-	node_id(X),
-	node_id(Y),
-	format('Assume ~w = ~w~n', [X, Y]).
-
-node_id(node(_)) :- !.
-node_id(X) :-
-	atom(X),
-	generated_prefix(Prefix),
-	sub_atom(X, 0, _, _, Prefix), !.
-
-generated_prefix('Bag__').
-generated_prefix('Seq__').
-generated_prefix('Alt__').
-generated_prefix('Description__').
-generated_prefix('Statement__').
 
 		 /*******************************
 		 *	    SHOW DIAGRAM	*

@@ -30,16 +30,19 @@
 */
 
 :- module(test_rdf_write,
-	  [ run_tests/0,
+	  [ test_write/0,
+	    run_tests/0,
             run_tests/1
 	  ]).
 
 :- asserta(user:file_search_path(foreign, '..')).
 :- asserta(user:file_search_path(foreign, '../../semweb')).
+:- asserta(user:file_search_path(foreign, '../../clib')).
 :- asserta(user:file_search_path(library, '../..')).
 :- asserta(user:file_search_path(library, '..')).
 :- asserta(user:file_search_path(library, '.')).
 :- asserta(user:file_search_path(library, '../../plunit')).
+:- asserta(user:file_search_path(library, '../../clib')).
 
 :- use_module(library(plunit)).
 :- use_module(library(rdf_write)).
@@ -48,6 +51,10 @@
 :- use_module(library(debug)).
 :- use_module(library(semweb/rdf_db)).
 :- use_module(rdf).
+
+test_write :-
+	run_tests([ rdf_write
+		  ]).
 
 
 		 /*******************************
@@ -62,7 +69,7 @@ test_graph(Triples) :-
 	load_rdf(Tmp, ReadTriples),
 	delete_file(Tmp),
 	compare_triples(Triples, ReadTriples, _).
-	
+
 
 		 /*******************************
 		 *	     COMPARING		*
