@@ -186,8 +186,8 @@ options controlling the conversion process.
 
 A proper XML document contains only a single toplevel element whose name
 matches the document type. Nevertheless, a list is returned for
-consistency with the representation of element content. The <aref/
-ListOfContent/ consists of the following types:
+consistency with the representation of element content. The
+\arg{ListOfContent} consists of the following types:
 
 \begin{description}
     \termitem{\arg{Atom}}{}
@@ -217,8 +217,8 @@ term is returned holding the data in \arg{Text}.
 If an entity with declared content-type \const{NDATA} is encountered, this
 term is returned holding the data in \arg{Text}.
     \termitem{pi}{Text}
-If a processing instruction is encountered (\verb$<?...?>$), <aref/
-Text/ holds the text of the processing instruction. Please note that the
+If a processing instruction is encountered (\verb$<?...?>$), \arg{Text}
+holds the text of the processing instruction. Please note that the
 \verb$<?xml ...?>$ instruction is handled internally.
 \end{description}
 
@@ -239,11 +239,11 @@ and \const{xmlns}. See \secref{xml} for details on the differences.
 
     \termitem{shorttag}{+Bool}
 Define whether SHORTTAG abbreviation is accepted.  The default is true
-for SGML mode and false for the XML modes.  Without SHORTTAG, a <c>/</c>
-is accepted with warning as part of an unquoted attribute-value, though
-<c>/></c> still closes the element-tag in XML mode.  It may be set to
-false for parsing HTML documents to allow for unquoted URLs containing
-<c>/</c>.
+for SGML mode and false for the XML modes. Without SHORTTAG, a
+\chr{/} is accepted with warning as part of an unquoted
+attribute-value, though \verb$/>$ still closes the element-tag in
+XML mode. It may be set to false for parsing HTML documents to allow for
+unquoted URLs containing \chr{/}.
 
     \termitem{space}{+SpaceMode}
 Sets the `space-handling-mode' for the initial environment. This mode is
@@ -641,12 +641,12 @@ soon as the first real data is encountered.
 \subsection{Extracting a DTD}		\label{sec:implicitdtd}
 
 Some documents have no DTD. One of the neat facilities of this library
-is that it builds a DTD while parsing a document with an <jargon/
-implicit/ DTD. The resulting DTD contains all elements encountered in
-the document. For each element the content model is a disjunction of
-elements and possibly \verb$#PCDATA$ that can be repeated. Thus, if we
-found element \const{y} and CDATA in element \const{x}, the model
-is:
+is that it builds a DTD while parsing a document with an
+\jargon{implicit} DTD. The resulting DTD contains all elements
+encountered in the document. For each element the content model is a
+disjunction of elements and possibly \verb$#PCDATA$ that can be
+repeated. Thus, if we found element \const{y} and CDATA in element
+\const{x}, the model is:
 
 \begin{code}
 <!ELEMENT x - - (y|#PCDATA)*>
@@ -750,15 +750,16 @@ warning is issued and the value is passed as an atom.
     \termitem{encoding}{Encoding}
 Set the initial encoding.  The default initial encoding for XML documents is
 UTF-8 and for SGML documents ISO-8859-1.  XML documents may change the
-encoding using the <xmp>encoding=</xmp> attribute in the header.  Explicit
-use of this option is only required to parse non-conforming documents.
-Currently accepted values are \const{iso-8859-1} and \const{utf-8}.
+encoding using the \exam{encoding=} attribute in the header.
+Explicit use of this option is only required to parse non-conforming
+documents. Currently accepted values are \const{iso-8859-1} and
+\const{utf-8}.
 
     \termitem{doctype}{Element}
 Defines the toplevel element expected. If a \verb$<!DOCTYPE$
 declaration has been parsed, the default is the defined doctype. The
 parser can be instructed to accept the first element encountered as the
-toplevel using <xmp>doctype(_)</xmp>. This feature is especially
+toplevel using \exam{doctype(_)}. This feature is especially
 useful when parsing part of a document (see the \const{parse} option to
 sgml_parse/2.
 \end{description}
@@ -874,7 +875,7 @@ Input is a stream. A full description of the option-list is below.
 A variable that will be unified with a list describing the content of
 the document (see load_structure/2).
     \termitem{source}{+Stream}
-An input stream that is read.  This option <em/must/ be given.
+An input stream that is read.  This option \emph{must} be given.
     \termitem{content_length}{+Characters}
 Stop parsing after \arg{Characters}.  This option is useful to parse
 input embedded in \jargon{envelopes}, such as the HTTP protocol.
@@ -1001,8 +1002,8 @@ Event-driven processing is not very natural in Prolog.
 
 The SGML2PL library allows for a mixed approach. Consider the case where
 we want to process all descriptions from RDF elements in a document. The
-code below calls <xmp>process_rdf_description(Element)</xmp> on each element
-that is directly inside an RDF element.
+code below calls \exam{process_rdf_description(Element)} on
+each element that is directly inside an RDF element.
 
 \begin{code}
 :- dynamic
@@ -1073,7 +1074,7 @@ provide only small portions at a time to the user. Loading the entire
 document into memory is then undesirable.
 
 Using the \term{parse}{element} option, we open a file, seek
-(using <pref builtin>seek/4) to the position of the element and
+(using seek/4) to the position of the element and
 read the desired element.
 
 The index can be built using the call-back interface of
@@ -1230,7 +1231,7 @@ empty elements, so you get \verb$<foo/>$ (default,
 you get \verb$<foo>$ (if foo is declared to be \const{EMPTY} in the DTD),
 \verb$<foo></foo>$ (default, \term{net}{false}) or
 \verb$<foo//$ (\term{net}{true}).  In SGML code, short character
-content not containing <c>/</c> can be emitted as \verb$<b>xxx</b>$
+content not containing \chr{/} can be emitted as \verb$<b>xxx</b>$
 (default, \term{net}{false} or \verb$<b/xxx/$ (\term{net}{true})
 \end{description}
 
@@ -1352,7 +1353,7 @@ attributes yet, let alone details.
 \subsection{Unix systems}
 
 Installation on Unix system uses the commonly found \program{configure},
-<\program{make} and \program{make install} sequence. SWI-Prolog
+\program{make} and \program{make install} sequence. SWI-Prolog
 should be installed before building this package. If SWI-Prolog is not
 installed as \program{pl}, the environment variable \env{PL} must be set
 to the name of the SWI-Prolog executable. Installation is now
