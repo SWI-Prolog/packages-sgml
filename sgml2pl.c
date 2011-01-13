@@ -732,12 +732,14 @@ call_prolog(parser_data *pd, predicate_t pred, term_t av)
 { qid_t qid = PL_open_query(NULL, PL_Q_PASS_EXCEPTION, pred, av);
   int rc = PL_next_solution(qid);
 
-  if ( !rc && PL_exception(qid) )
-    pd->exception = TRUE;
-  else
-    pd->exception = FALSE;
-
   PL_close_query(qid);
+
+  if ( rc )
+  { pd->exception = FALSE;
+  } else
+  { pd->exception = PL_exception(0);
+    pd->stopped = TRUE;
+  }
 
   return rc;
 }
