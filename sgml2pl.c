@@ -737,8 +737,8 @@ call_prolog(parser_data *pd, predicate_t pred, term_t av)
   if ( rc )
   { pd->exception = FALSE;
   } else
-  { pd->exception = PL_exception(0);
-    pd->stopped = TRUE;
+  { if ( (pd->exception = PL_exception(0)) )
+      pd->stopped = TRUE;
   }
 
   return rc;
@@ -1887,6 +1887,8 @@ pl_sgml_parse(term_t parser, term_t options)
       p->encoded = TRUE;		/* parser must decode */
     else
       p->encoded = FALSE;		/* already decoded */
+
+    pd->stopped = FALSE;
 
     if ( !recursive )
     { pd->source = in;
