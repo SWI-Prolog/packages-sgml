@@ -920,10 +920,10 @@ Defines how syntax errors are handled.
         \termitem{quiet}{}
 	Suppress all messages.
 	\termitem{print}{}
-	Default.  Pass messages to <pref builtin>print_message/2.
+	Default.  Pass messages to print_message/2.
 	\termitem{style}{}
 	Print dubious input such as attempts for redefinitions in the DTD
-	using <pref builtin>print_message/2 with severity
+	using print_message/2 with severity
 	\const{informational}.
     \end{description}
 
