@@ -480,6 +480,11 @@ init_ring(void)
 { pthread_key_create(&ring_key, free_ring);
 }
 
+void
+stop_ring(void)
+{ pthread_key_delete(ring_key);
+}
+
 #else
 static ring ring_store;
 #define my_ring() (&ring_store)

@@ -2608,3 +2608,8 @@ install()
 #endif
 }
 
+
+install_t
+uninstall()
+{ stop_ring();
+}
