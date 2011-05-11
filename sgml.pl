@@ -433,8 +433,19 @@ prolog:message(sgml(Parser, File, Line, Message)) -->
 
 prolog:called_by(sgml_parse(_, Options), Called) :-
 	is_list(Options),
-	findall(G+3,
-		(   member(call(_, G), Options),
-		    callable(G)
-		),
-		Called).
+	findall(Meta, meta_call_term(_, Meta, Options), Called).
+
+meta_call_term(T, G+N, Options) :-
+	T = call(Event, G),
+	member(T, Options),
+	call_params(Event, Term),
+	functor(Term, _, N).
+
+call_params(begin, begin(tag,attributes,parser)).
+call_params(end,   end(tag,parser)).
+call_params(cdata, cdata(cdata,parser)).
+call_params(pi,	   pi(cdata,parser)).
+call_params(decl,  decl(cdata,parser)).
+call_params(error, error(severity,message,parser)).
+call_params(xmlns, xmlns(namespace,url,parser)).
+call_params(urlns, urlns(url,url,parser)).
