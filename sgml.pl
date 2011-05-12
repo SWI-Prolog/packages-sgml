@@ -432,14 +432,20 @@ prolog:message(sgml(Parser, File, Line, Message)) -->
 	prolog:called_by/2.
 
 prolog:called_by(sgml_parse(_, Options), Called) :-
-	is_list(Options),
 	findall(Meta, meta_call_term(_, Meta, Options), Called).
 
 meta_call_term(T, G+N, Options) :-
 	T = call(Event, G),
-	member(T, Options),
+	pmember(T, Options),
 	call_params(Event, Term),
 	functor(Term, _, N).
+
+pmember(X, List) :-			% member for partial lists
+	nonvar(List),
+	List = [H|T],
+	(   X = H
+	;   pmember(X, T)
+	).
 
 call_params(begin, begin(tag,attributes,parser)).
 call_params(end,   end(tag,parser)).
