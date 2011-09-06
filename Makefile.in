@@ -34,6 +34,8 @@ CMFLAGS=@CMFLAGS@
 CIFLAGS=-I. -I@PLINCL@
 CFLAGS=$(COFLAGS) $(CWFLAGS) $(CMFLAGS) $(CIFLAGS) @DEFS@
 LDFLAGS=$(COFLAGS)
+EXEEXT=@EXEEXT@
+LIBS=@LIBS@
 
 LDSOFLAGS=@LDSOFLAGS@
 
@@ -57,7 +59,7 @@ ALLCSRC=	$(LIBOBJ:.o=.c) \
 LIBPL=		sgml.pl xsdp_types.pl iso_639.pl sgml_write.pl xpath.pl \
 		pwp.pl
 TARGETS=	sgml2pl.@SO@
-PROGRAMS=	dtd2pl sgml
+PROGRAMS=	dtd2pl$(EXEEXT) sgml$(EXEEXT)
 DTDFILES=	HTML4.dcl HTML4.dtd HTML4.soc \
 		HTMLlat1.ent HTMLspec.ent HTMLsym.ent
 
@@ -67,7 +69,7 @@ coflags::
 		@echo $(COFLAGS) > .coflags
 
 sgml2pl.@SO@:	$(PLOBJ)
-		$(PLLD) -shared -o $@ $(PLOBJ)
+		$(PLLD) -shared -o $@ $(PLOBJ) $(LIBS)
 
 install:	$(TARGETS) $(LIBPL) install-dtd
 		mkdir -p $(DESTDIR)$(PLBASE)/lib/$(PLARCH)
@@ -105,11 +107,11 @@ uninstall::
 		(cd $(PLBASE)/library && rm -f $(LIBPL))
 		$(PL) -f none -g make -t halt
 
-dtd2pl:		$(DTD2PLOBJ)
-		$(LD) $(LDFLAGS) -o $@ $(DTD2PLOBJ)
+dtd2pl$(EXEEXT):	$(DTD2PLOBJ)
+		$(LD) $(LDFLAGS) -o $@ $(DTD2PLOBJ) $(LIBS)
 
-sgml:		$(SGMLOBJ)
-		$(LD) $(LDFLAGS) -o $@ $(SGMLOBJ)
+sgml$(EXEEXT):		$(SGMLOBJ)
+		$(LD) $(LDFLAGS) -o $@ $(SGMLOBJ) $(LIBS)
 
 tags:		TAGS
 
