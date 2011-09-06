@@ -3701,7 +3701,7 @@ xml_set_encoding(dtd_parser *p, const char *enc)
   if ( posix_strcasecmp(enc, "iso-8859-1") == 0 )
   { dtd->encoding = SGML_ENC_ISO_LATIN1;
   } else if ( posix_strcasecmp(enc, "us-ascii") == 0 )
-  { dtd->encoding = SGML_ENC_ISO_LATIN1; 	/* doesn't make a difference */
+  { dtd->encoding = SGML_ENC_ISO_LATIN1;	/* doesn't make a difference */
   } else if ( posix_strcasecmp(enc, "utf-8") == 0 )
   { dtd->encoding = SGML_ENC_UTF8;
   } else
@@ -3767,7 +3767,7 @@ process_pi(dtd_parser *p, const ichar *decl)
     { dtd_symbol *nm;
 
       if ( (s=itake_name(p, decl, &nm)) &&
-	   (s=isee_func(dtd, s, CF_VI)) ) 		/* = */
+	   (s=isee_func(dtd, s, CF_VI)) )		/* = */
       { ichar *start;
 	int len;
 	ichar buf[MAXSTRINGLEN];
@@ -4785,7 +4785,8 @@ reprocess:
       }
 
       if ( p->waiting_for_net && f[CF_ETAGO2] == chr ) /* shorttag */
-      { setlocation(&p->startloc, &p->location, line, lpos);
+      { p->waiting_for_net = FALSE;
+	setlocation(&p->startloc, &p->location, line, lpos);
 	process_net(p);
 	return TRUE;
       }
