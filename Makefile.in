@@ -14,7 +14,7 @@ PLARCH=@PLARCH@
 PKGDOC=$(PLBASE)/doc/packages
 PCEHOME=../xpce
 PLLIB=$(PLBASE)/library
-PLFOREIGN=$(PLBASE)/lib/$(PLARCH)
+PLFOREIGN=$(PLBASE)/lib/$(INSTALL_PLARCH)
 SO=@SO@
 
 PUBLICPL=swipl
@@ -42,6 +42,7 @@ LDSOFLAGS=@LDSOFLAGS@
 INSTALL=@INSTALL@
 INSTALL_PROGRAM=@INSTALL_PROGRAM@
 INSTALL_DATA=@INSTALL_DATA@
+INSTALL_PLARCH=@INSTALL_PLARCH@
 
 LIBOBJ=		parser.o util.o charmap.o catalog.o model.o xmlns.o utf8.o \
 		xml_unicode.o
@@ -72,7 +73,7 @@ sgml2pl.@SO@:	$(PLOBJ)
 		$(PLLD) -shared -o $@ $(PLOBJ) $(LIBS)
 
 install:	$(TARGETS) $(LIBPL) install-dtd
-		mkdir -p $(DESTDIR)$(PLBASE)/lib/$(PLARCH)
+		mkdir -p $(DESTDIR)$(PLBASE)/lib/$(INSTALL_PLARCH)
 		$(INSTALL_PROGRAM) $(TARGETS) $(DESTDIR)$(PLFOREIGN)
 		$(INSTALL_DATA) $(LIBPL) $(DESTDIR)$(PLLIB)
 		$(PL) -f none -g make -t halt
@@ -103,7 +104,7 @@ check::
 		$(PL) -f Test/wrtest.pl -g test,halt
 
 uninstall::
-		(cd $(PLBASE)/lib/$(PLARCH) && rm -f $(TARGETS))
+		(cd $(PLBASE)/lib/$(INSTALL_PLARCH) && rm -f $(TARGETS))
 		(cd $(PLBASE)/library && rm -f $(LIBPL))
 		$(PL) -f none -g make -t halt
 
