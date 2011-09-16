@@ -14,8 +14,9 @@ PLARCH=@PLARCH@
 PKGDOC=$(PLBASE)/doc/packages
 PCEHOME=../xpce
 PLLIB=$(PLBASE)/library
-PLFOREIGN=$(PLBASE)/lib/$(INSTALL_PLARCH)
+PLFOREIGN=$(PLBASE)/$(SOLIB)/$(INSTALL_PLARCH)
 SO=@SO@
+SOLIB=@SOLIB@
 
 PUBLICPL=swipl
 DOCTOTEX=$(PCEHOME)/bin/doc2tex
@@ -73,7 +74,7 @@ sgml2pl.@SO@:	$(PLOBJ)
 		$(PLLD) -shared -o $@ $(PLOBJ) $(LIBS)
 
 install:	$(TARGETS) $(LIBPL) install-dtd
-		mkdir -p $(DESTDIR)$(PLBASE)/lib/$(INSTALL_PLARCH)
+		mkdir -p $(DESTDIR)$(PLBASE)/$(SOLIB)/$(INSTALL_PLARCH)
 		$(INSTALL_PROGRAM) $(TARGETS) $(DESTDIR)$(PLFOREIGN)
 		$(INSTALL_DATA) $(LIBPL) $(DESTDIR)$(PLLIB)
 		$(PL) -f none -g make -t halt
@@ -104,7 +105,7 @@ check::
 		$(PL) -f Test/wrtest.pl -g test,halt
 
 uninstall::
-		(cd $(PLBASE)/lib/$(INSTALL_PLARCH) && rm -f $(TARGETS))
+		(cd $(PLBASE)/$(SOLIB)/$(INSTALL_PLARCH) && rm -f $(TARGETS))
 		(cd $(PLBASE)/library && rm -f $(LIBPL))
 		$(PL) -f none -g make -t halt
 
