@@ -30,7 +30,7 @@
 */
 
 :- module(sgml_write,
-	  [ html_write/2,       	%          +Data, +Options
+	  [ html_write/2,		%          +Data, +Options
 	    html_write/3,		% +Stream, +Data, +Options
 	    sgml_write/2,		%          +Data, +Options
 	    sgml_write/3,		% +Stream, +Data, +Options
@@ -43,6 +43,19 @@
 :- use_module(library(assoc)).
 :- use_module(library(option)).
 :- use_module(library(error)).
+
+:- predicate_options(xml_write/2, 2, [pass_to(xml_write/3, 3)]).
+:- predicate_options(xml_write/3, 3,
+		     [ dtd(any),
+		       doctype(atom),
+		       public(atom),
+		       system(atom),
+		       header(boolean),
+		       nsmap(list),
+		       indent(nonneg),
+		       layout(boolean),
+		       net(boolean)
+		     ]).
 
 /** <module> XML/SGML writer module
 
