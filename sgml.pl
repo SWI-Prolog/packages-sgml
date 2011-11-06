@@ -5,7 +5,8 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@cs.vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (C): 1985-2009, University of Amsterdam
+    Copyright (C): 1985-2011, University of Amsterdam
+			      VU University Amsterdam
 
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
@@ -66,6 +67,39 @@
 :- use_module(library(lists)).
 :- use_module(library(option)).
 
+:- meta_predicate
+	load_structure(+, -, :).
+
+:- predicate_options(load_structure/3, 3,
+		     [ dtd(any),
+		       dialect(oneof([sgml,xml,xmlns])),
+		       shorttag(boolean),
+		       space(oneof([sgml,preserve,defailt,remove])),
+		       number(oneof([token,integer])),
+		       defaults(boolean),
+%		       entity(atom,atom),
+		       file(atom),
+		       line(integer),
+		       max_errors(integer)
+		     ]).
+:- predicate_options(load_dtd/3, 3,
+		     [ dialect(oneof([sgml,xml,xmlns])),
+		       pass_to(open/4, 4)
+		     ]).
+
+
+/** <module> SGML, XML and HTML parser
+
+This library allows you to parse SGML, XML   and HTML data into a Prolog
+data  structure.  The  high-level  interface  defined  in  library(sgml)
+provides  access  at  the  file-level,  while  the  low-level  interface
+(load_structure/3) defined in  the  foreign   module  works  with Prolog
+streams. Please examine the source as a  starting point for dealing with
+data from other sources  than  files,   such  as  SWI-Prolog  resources,
+network-sockets, character strings, etc. The   first example below loads
+an HTML file.
+*/
+
 :- multifile user:file_search_path/2.
 :- dynamic   user:file_search_path/2.
 
@@ -116,6 +150,16 @@ diagnosed to mess with the entity resolution by Fabien Todescato.
 
 dtd_alias(html, 'HTML4').
 
+%%	dtd(+Type, -DTD) is det.
+%
+%	DTD is a DTD object created from  the file dtd(Type). Loaded DTD
+%	objects are cached. Note that  DTD   objects  may  not be shared
+%	between threads. Therefore, dtd/2  maintains   the  pool  of DTD
+%	objects  using  a  thread_local  predicate.    DTD  objects  are
+%	destroyed if a thread terminates.
+%
+%	@error existence_error(source_sink, dtd(Type))
+
 dtd(Type, DTD) :-
 	current_dtd(Type, DTD), !.
 dtd(Type, DTD) :-
@@ -134,23 +178,28 @@ dtd(Type, DTD) :-
 
 %%	load_dtd(+DTD, +DtdFile, +Options)
 %
-%	Load file into a DTD.  Defined options are:
+%	Load DtdFile into a DTD.  Defined options are:
 %
 %		* dialect(+Dialect)
 %		Dialect to use (xml, xmlns, sgml)
 %
 %		* encoding(+Encoding)
 %		Encoding of DTD file
+%
+%	@param	DTD is a fresh DTD object, normally created using
+%		new_dtd/1.
 
 load_dtd(DTD, DtdFile) :-
 	load_dtd(DTD, DtdFile, []).
 load_dtd(DTD, DtdFile, Options) :-
 	split_dtd_options(Options, DTDOptions, FileOptions),
-	open_dtd(DTD, DTDOptions, DtdOut),
-	open(DtdFile, read, DtdIn, FileOptions),
-	copy_stream_data(DtdIn, DtdOut),
-	close(DtdIn),
-	close(DtdOut).
+	setup_call_cleanup(
+	    open_dtd(DTD, DTDOptions, DtdOut),
+	    setup_call_cleanup(
+		open(DtdFile, read, DtdIn, FileOptions),
+		copy_stream_data(DtdIn, DtdOut),
+		close(DtdIn)),
+	    close(DtdOut)).
 
 split_dtd_options([], [], []).
 split_dtd_options([H|T], [H|TD], S) :-
@@ -257,8 +306,17 @@ set_parser_options(Parser, Options, RestOptions) :-
 set_parser_options(_, Options, Options).
 
 
-:- meta_predicate
-	load_structure(+, -, :).
+%%	load_structure(+Source, -ListOfContent, :Options) is det.
+%
+%	Parse   Source   and   return   the   resulting   structure   in
+%	ListOfContent.  Source  is  either   a    term   of  the  format
+%	stream(StreamHandle) or a  file-name.  Options   is  a  list  of
+%	options controlling the conversion process.
+%
+%	A proper XML document contains only   a  single toplevel element
+%	whose name matches the document type.   Nevertheless,  a list is
+%	returned for consistency with  the   representation  of  element
+%	content.
 
 load_structure(stream(In), Term, M:Options) :- !,
 	(   select_option(offset(Offset), Options, Options1)
@@ -289,9 +347,10 @@ load_structure(Stream, Term, Options) :-
 	is_stream(Stream), !,
 	load_structure(stream(Stream), Term, Options).
 load_structure(File, Term, M:Options) :-
-	open(File, read, In, [type(binary)]),
-	load_structure(stream(In), Term, M:[file(File)|Options]),
-	close(In).
+	setup_call_cleanup(
+	    open(File, read, In, [type(binary)]),
+	    load_structure(stream(In), Term, M:[file(File)|Options]),
+	    close(In)).
 
 parse(Parser, M:Options, Document, In) :-
 	set_parser_options(Parser, Options, Options1),
@@ -352,8 +411,8 @@ load_html_file(File, Term) :-
 		 *	      ENCODING		*
 		 *******************************/
 
-%	xml_quote_attribute(+In, -Quoted)
-%	xml_quote_cdata(+In, -Quoted)
+%%	xml_quote_attribute(+In, -Quoted) is det.
+%%	xml_quote_cdata(+In, -Quoted) is det.
 %
 %	Backward  compatibility  for  versions  that  allow  to  specify
 %	encoding. All characters that cannot fit the encoding are mapped
@@ -366,6 +425,10 @@ xml_quote_attribute(In, Quoted) :-
 xml_quote_cdata(In, Quoted) :-
 	xml_quote_cdata(In, Quoted, ascii).
 
+%%	xml_name(+Atom) is semidet.
+%
+%	True if Atom is a valid XML name.
+
 xml_name(In) :-
 	xml_name(In, ascii).
 
@@ -374,7 +437,7 @@ xml_name(In) :-
 		 *	   TYPE CHECKING	*
 		 *******************************/
 
-%	xml_is_dome(@Term)
+%%	xml_is_dom(@Term) is semidet.
 %
 %	True  if  term  statisfies   the    structure   as  returned  by
 %	load_structure/3 and friends.
