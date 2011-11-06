@@ -80,6 +80,7 @@
 %		       entity(atom,atom),
 		       file(atom),
 		       line(integer),
+		       syntax_errors(oneof([quiet,print,style])),
 		       max_errors(integer)
 		     ]).
 :- predicate_options(load_dtd/3, 3,
