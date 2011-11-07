@@ -81,12 +81,12 @@
 		       file(atom),
 		       line(integer),
 		       number(oneof([token,integer])),
-		       pass_to(sgml_parse/2, 2),
 		       qualify_attributes(boolean),
 		       shorttag(boolean),
 		       space(oneof([sgml,preserve,defailt,remove])),
 		       xmlns(atom),
-		       xmlns(atom,atom)
+		       xmlns(atom,atom),
+		       pass_to(sgml_parse/2, 2)
 		     ]).
 :- predicate_options(load_dtd/3, 3,
 		     [ dialect(oneof([sgml,xml,xmlns])),
