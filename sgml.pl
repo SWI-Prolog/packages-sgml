@@ -71,21 +71,40 @@
 	load_structure(+, -, :).
 
 :- predicate_options(load_structure/3, 3,
-		     [ dtd(any),
-		       dialect(oneof([sgml,xml,xmlns])),
-		       shorttag(boolean),
-		       space(oneof([sgml,preserve,defailt,remove])),
-		       number(oneof([token,integer])),
+		     [ charpos(integer),
 		       defaults(boolean),
-%		       entity(atom,atom),
+		       dialect(oneof([sgml,xml,xmlns])),
+		       doctype(atom),
+		       dtd(any),
+		       encoding(encoding),
+		       entity(atom,atom),
 		       file(atom),
 		       line(integer),
-		       syntax_errors(oneof([quiet,print,style])),
-		       max_errors(integer)
+		       number(oneof([token,integer])),
+		       pass_to(sgml_parse/2, 2),
+		       qualify_attributes(boolean),
+		       shorttag(boolean),
+		       space(oneof([sgml,preserve,defailt,remove])),
+		       xmlns(atom),
+		       xmlns(atom,atom)
 		     ]).
 :- predicate_options(load_dtd/3, 3,
 		     [ dialect(oneof([sgml,xml,xmlns])),
 		       pass_to(open/4, 4)
+		     ]).
+:- predicate_options(sgml_parse/2, 2,
+		     [ call(oneof([begin,end,cdata,pi,decl,error,xmlns,urlns]),
+			    callable),
+		       content_length(integer),
+		       document(-any),
+		       max_errors(integer),
+		       parse(oneof([file,element,content,declaration,input])),
+		       source(any),
+		       syntax_errors(oneof([quiet,print,style])),
+		       xml_no_ns(oneof([error,quiet]))
+		     ]).
+:- predicate_options(new_sgml_parser/2, 2,
+		     [ dtd(any)
 		     ]).
 
 
