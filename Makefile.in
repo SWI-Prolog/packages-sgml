@@ -4,46 +4,15 @@
 # Copyright: LGPL (see COPYING or www.gnu.org
 ################################################################
 
-.SUFFIXES: .tex .dvi .doc .pl
-
-PL=@PL@
-LD=@LD@
-PLLD=@PLLD@
-PLBASE=@PLBASE@
-PLARCH=@PLARCH@
-PKGDOC=$(PLBASE)/doc/packages
-PCEHOME=../xpce
-PLLIB=$(PLBASE)/library
-PLFOREIGN=$(PLBASE)/$(SOLIB)/$(INSTALL_PLARCH)
-SO=@SO@
-SOLIB=@SOLIB@
-
-PUBLICPL=swipl
-DOCTOTEX=$(PCEHOME)/bin/doc2tex
-PLTOTEX=$(PUBLICPL) -q -s pltotex.pl -g pltotex --
-LATEX=latex
+PACKAGE=sgml
 DOC=sgml
-TEX=$(DOC).tex xpath.tex pwp.tex
-DVI=$(DOC).dvi
-PDF=$(DOC).pdf
-HTML=$(DOC).html
+include ../Makefile.defs
 
-CC=@CC@
-COFLAGS=@COFLAGS@
-CWFLAGS=@CWFLAGS@
-CMFLAGS=@CMFLAGS@
-CIFLAGS=-I. -I@PLINCL@
-CFLAGS=$(COFLAGS) $(CWFLAGS) $(CMFLAGS) $(CIFLAGS) @DEFS@
-LDFLAGS=$(COFLAGS)
+CFLAGS+= -I.
+SUBTEX=xpath.tex pwp.tex
+
 EXEEXT=@EXEEXT@
 LIBS=@LIBS@
-
-LDSOFLAGS=@LDSOFLAGS@
-
-INSTALL=@INSTALL@
-INSTALL_PROGRAM=@INSTALL_PROGRAM@
-INSTALL_DATA=@INSTALL_DATA@
-INSTALL_PLARCH=@INSTALL_PLARCH@
 
 LIBOBJ=		parser.o util.o charmap.o catalog.o model.o xmlns.o utf8.o \
 		xml_unicode.o
@@ -71,13 +40,13 @@ coflags::
 		@echo $(COFLAGS) > .coflags
 
 sgml2pl.@SO@:	$(PLOBJ)
-		$(PLLD) -shared -o $@ $(PLOBJ) $(LIBS)
+		$(LD) $(LDSOFLAGS) -o $@ $(PLOBJ) $(LIBS)
 
 install:	$(TARGETS) $(LIBPL) install-dtd
-		mkdir -p $(DESTDIR)$(PLBASE)/$(SOLIB)/$(INSTALL_PLARCH)
-		$(INSTALL_PROGRAM) $(TARGETS) $(DESTDIR)$(PLFOREIGN)
-		$(INSTALL_DATA) $(LIBPL) $(DESTDIR)$(PLLIB)
-		$(PL) -f none -g make -t halt
+		mkdir -p $(DESTDIR)$(SOLIBDIR)
+		$(INSTALL_PROGRAM) $(TARGETS) $(DESTDIR)$(SOLIBDIR)
+		$(INSTALL_DATA) $(LIBPL) $(DESTDIR)$(PLLIBDIR)
+		$(MKINDEX)
 
 ln-install::
 		@$(MAKE) INSTALL_DATA=../ln-install \
@@ -87,33 +56,33 @@ ln-install::
 rpm-install:	install
 
 install-dtd::
-		mkdir -p $(DESTDIR)$(PLBASE)/library/DTD
+		mkdir -p $(DESTDIR)$(PLLIBDIR)/DTD
 		for f in $(DTDFILES); do \
-		   $(INSTALL_DATA) DTD/$$f $(DESTDIR)$(PLBASE)/library/DTD; \
+		   $(INSTALL_DATA) DTD/$$f $(DESTDIR)$(PLLIBDIR)/DTD; \
 		done
 
 pdf-install::
-		mkdir -p $(DESTDIR)$(PKGDOC)
-		$(INSTALL_DATA) sgml.pdf $(DESTDIR)$(PKGDOC)
+		mkdir -p $(DESTDIR)$(PKGDOCDIR)
+		$(INSTALL_DATA) sgml.pdf $(DESTDIR)$(PKGDOCDIR)
 
 html-install::
-		mkdir -p $(DESTDIR)$(PKGDOC)
-		$(INSTALL_DATA) sgml.html $(DESTDIR)$(PKGDOC)
+		mkdir -p $(DESTDIR)$(PKGDOCDIR)
+		$(INSTALL_DATA) sgml.html $(DESTDIR)$(PKGDOCDIR)
 
 check::
 		$(PL) -f Test/test.pl -g test,halt
 		$(PL) -f Test/wrtest.pl -g test,halt
 
 uninstall::
-		(cd $(PLBASE)/$(SOLIB)/$(INSTALL_PLARCH) && rm -f $(TARGETS))
+		(cd $(SOLIBDIR) && rm -f $(TARGETS))
 		(cd $(PLBASE)/library && rm -f $(LIBPL))
-		$(PL) -f none -g make -t halt
+		$(MKINDEX)
 
 dtd2pl$(EXEEXT):	$(DTD2PLOBJ)
-		$(LD) $(LDFLAGS) -o $@ $(DTD2PLOBJ) $(LIBS)
+		$(LD) $(LDFLAGS) -o $@ $(DTD2PLOBJ) $(LIBS) -lswipl
 
 sgml$(EXEEXT):		$(SGMLOBJ)
-		$(LD) $(LDFLAGS) -o $@ $(SGMLOBJ) $(LIBS)
+		$(LD) $(LDFLAGS) -o $@ $(SGMLOBJ) $(LIBS) -lswipl
 
 tags:		TAGS
 
@@ -124,35 +93,11 @@ TAGS:		$(ALLCSRC)
 # Documentation
 ################################################################
 
-doc:		$(PDF) $(HTML)
-pdf:		$(PDF)
-html:		$(HTML)
-
-$(HTML):	$(TEX)
-		latex2html $(DOC)
-		mv html/index.html $@
-		rmdir html
-
-$(PDF):		$(TEX)
-		../../man/runtex --pdf $(DOC)
-
-$(TEX):		$(DOCTOTEX)
-
 xpath.tex:	xpath.pl
 		$(PLTOTEX) --out=$@ --section 'library(xpath)'
 
 pwp.tex:	pwp.pl
 		$(PLTOTEX) --out=$@ --section 'library(pwp)'
-
-.doc.tex:
-		$(DOCTOTEX) $*.doc > $*.tex
-.pl.tex:
-		$(PLTOTEX) $*.pl > $*.tex
-
-docclean::
-		rm -f $(TEX)
-		rm -rf html
-		../../man/runtex --clean $(DOC)
 
 ################################################################
 # Clean
