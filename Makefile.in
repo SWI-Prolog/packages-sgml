@@ -1,49 +1,13 @@
 ################################################################
-# SWI-Prolog `sgml2pl' package
-# Author:    Jan Wielemaker. jan@swi.psy.uva.nl
+# SWI-Prolog `sgml' package
+# Author:    Jan Wielemaker. J.Wielemaker@vu.nl
 # Copyright: LGPL (see COPYING or www.gnu.org
 ################################################################
 
-.SUFFIXES: .tex .dvi .doc .pl
-
-PL=@PL@
-LD=@LD@
-PLLD=@PLLD@
-PLBASE=@PLBASE@
-PLARCH=@PLARCH@
-PKGDOC=$(PLBASE)/doc/packages
-PCEHOME=../xpce
-PLLIB=$(PLBASE)/library
-PLFOREIGN=$(PLBASE)/$(SOLIB)/$(INSTALL_PLARCH)
-SO=@SO@
-SOLIB=@SOLIB@
-
-PUBLICPL=swipl
-DOCTOTEX=$(PCEHOME)/bin/doc2tex
-PLTOTEX=$(PUBLICPL) -q -s pltotex.pl -g pltotex --
-LATEX=latex
+PACKAGE=sgml
 DOC=sgml
-TEX=$(DOC).tex xpath.tex pwp.tex
-DVI=$(DOC).dvi
-PDF=$(DOC).pdf
-HTML=$(DOC).html
-
-CC=@CC@
-COFLAGS=@COFLAGS@
-CWFLAGS=@CWFLAGS@
-CMFLAGS=@CMFLAGS@
-CIFLAGS=-I. -I@PLINCL@
-CFLAGS=$(COFLAGS) $(CWFLAGS) $(CMFLAGS) $(CIFLAGS) @DEFS@
-LDFLAGS=$(COFLAGS)
-EXEEXT=@EXEEXT@
-LIBS=@LIBS@
-
-LDSOFLAGS=@LDSOFLAGS@
-
-INSTALL=@INSTALL@
-INSTALL_PROGRAM=@INSTALL_PROGRAM@
-INSTALL_DATA=@INSTALL_DATA@
-INSTALL_PLARCH=@INSTALL_PLARCH@
+include ../Makefile.defs
+CFLAGS+= -I.
 
 LIBOBJ=		parser.o util.o charmap.o catalog.o model.o xmlns.o utf8.o \
 		xml_unicode.o
@@ -65,19 +29,16 @@ PROGRAMS=	dtd2pl$(EXEEXT) sgml$(EXEEXT)
 DTDFILES=	HTML4.dcl HTML4.dtd HTML4.soc \
 		HTMLlat1.ent HTMLspec.ent HTMLsym.ent
 
-all:		coflags $(TARGETS) $(PROGRAMS)
-
-coflags::
-		@echo $(COFLAGS) > .coflags
+all:		$(TARGETS) $(PROGRAMS)
 
 sgml2pl.@SO@:	$(PLOBJ)
-		$(PLLD) -shared -o $@ $(PLOBJ) $(LIBS)
+		$(LD) $(LDSOFLAGS) -o $@ $(PLOBJ) $(LIBS)
 
 install:	$(TARGETS) $(LIBPL) install-dtd
-		mkdir -p $(DESTDIR)$(PLBASE)/$(SOLIB)/$(INSTALL_PLARCH)
-		$(INSTALL_PROGRAM) $(TARGETS) $(DESTDIR)$(PLFOREIGN)
-		$(INSTALL_DATA) $(LIBPL) $(DESTDIR)$(PLLIB)
-		$(PL) -f none -g make -t halt
+		mkdir -p $(DESTDIR)$(SOLIBDIR)
+		$(INSTALL_PROGRAM) $(TARGETS) $(DESTDIR)$(SOLIBDIR);
+		$(INSTALL_DATA) $(LIBPL) $(DESTDIR)$(PLLIBDIR)
+		$(MKINDEX)
 
 ln-install::
 		@$(MAKE) INSTALL_DATA=../ln-install \
@@ -109,10 +70,10 @@ uninstall::
 		(cd $(PLBASE)/library && rm -f $(LIBPL))
 		$(PL) -f none -g make -t halt
 
-dtd2pl$(EXEEXT):	$(DTD2PLOBJ)
+dtd2pl$(EXEEXT): $(DTD2PLOBJ)
 		$(LD) $(LDFLAGS) -o $@ $(DTD2PLOBJ) $(LIBS)
 
-sgml$(EXEEXT):		$(SGMLOBJ)
+sgml$(EXEEXT):	$(SGMLOBJ)
 		$(LD) $(LDFLAGS) -o $@ $(SGMLOBJ) $(LIBS)
 
 tags:		TAGS
@@ -124,19 +85,8 @@ TAGS:		$(ALLCSRC)
 # Documentation
 ################################################################
 
-doc:		$(PDF) $(HTML)
-pdf:		$(PDF)
-html:		$(HTML)
-
-$(HTML):	$(TEX)
-		latex2html $(DOC)
-		mv html/index.html $@
-		rmdir html
-
-$(PDF):		$(TEX)
-		../../man/runtex --pdf $(DOC)
-
-$(TEX):		$(DOCTOTEX)
+TEXEXTRA=	xpath.tex pwp.tex
+$(TEX):		$(TEXEXTRA)
 
 xpath.tex:	xpath.pl
 		$(PLTOTEX) --out=$@ --section 'library(xpath)'
@@ -144,15 +94,6 @@ xpath.tex:	xpath.pl
 pwp.tex:	pwp.pl
 		$(PLTOTEX) --out=$@ --section 'library(pwp)'
 
-.doc.tex:
-		$(DOCTOTEX) $*.doc > $*.tex
-.pl.tex:
-		$(PLTOTEX) $*.pl > $*.tex
-
-docclean::
-		rm -f $(TEX)
-		rm -rf html
-		../../man/runtex --clean $(DOC)
 
 ################################################################
 # Clean
@@ -164,5 +105,4 @@ clean::
 distclean:	clean
 		rm -f $(TARGETS) $(PROGRAMS)
 		rm -f config.cache config.h config.status Makefile
-		rm -f .coflags
 
