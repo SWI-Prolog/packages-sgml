@@ -6,8 +6,8 @@
 \makeindex
 
 \onefile
-\htmloutput{html}				% Output directory
-\htmlmainfile{index}				% Main document file
+\htmloutput{.}					% Output directory
+\htmlmainfile{sgml}				% Main document file
 \bodycolor{white}				% Page colour
 
 \begin{document}
@@ -564,7 +564,7 @@ The element contains parsed character data .
 
 	\termitem{\arg{element}} An element with this name.
 
- 	\termitem{*}{SubModel}
+	\termitem{*}{SubModel}
 0 or more appearances.
 
 	\termitem{?}{SubModel}
