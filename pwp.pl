@@ -159,16 +159,18 @@ and the children elements are recursively expanded.
 	element are copied over to the output unchanged.
 
 	If pwp:att = 'c' for some non-alphanumeric character c,
-	each attribute is examined for occurrences of c(...)c which
-	are as short as possible.
+	each attribute is examined for occurrences of c(...)c and c[...]c
+        which are as short as possible.
 	There is no one character which could be used every time, so you
 	have to explicitly choose a substitution marker which is safe
 	for the data you do not want to be altered.  None of the pwp
 	attributes are inherited, least of all this one.
 
 	Text outside c(...)c groups is copied unchanged; text inside
-	such a group is parsed as a Prolog term and treated as if by
-	pwp:how = text.
+	a c(...)c group is parsed as a Prolog term and treated as if by
+	pwp:how = text. Text inside a c[...]c group is evaluated (in the
+        current context), and if it fails, the entire attribute will be
+        removed from the element.
 
 
 Examples:
@@ -549,37 +551,52 @@ pwp_how('xml-file', Term, Kids1) :-
 
 
 pwp_substitute([], _, _, []).
-pwp_substitute([AV|AVs], Magic, Context, [AV1|Atts1]) :-
+pwp_substitute([AV|AVs], Magic, Context, NewAvs) :-
 	AV = (Name = Value),
 	(   sub_atom(Value, _, _, _, Magic)
 	->  char_code(Magic, C),
 	    atom_codes(Value, Codes),
-	    pwp_split(Codes, C, B0, T0, A0), !,
-	    pwp_substitute(B0, T0, A0, C, Context, V),
-	    atom_codes(New_Value, V),
-	    AV1 = (Name = New_Value),
+	    pwp_split(Codes, C, B0, T0, A0, Type), !,
+	    (   pwp_substitute(B0, T0, A0, C, Context, V, Type)
+            ->  NewAvs = [AV1|Atts1],
+                atom_codes(New_Value, V),
+                AV1 = (Name = New_Value)
+            ;   Type == existence->
+                NewAvs = Atts1
+            ),
 	    pwp_substitute(AVs, Magic, Context, Atts1)
 	).
 pwp_substitute([AV|AVs], Magic, Context, [AV|Atts1]) :-
 	pwp_substitute(AVs, Magic, Context, Atts1).
 
 
-pwp_substitute(B0, T0, A0, C, Context, V0) :-
+pwp_substitute(B0, T0, A0, C, Context, V0, Type) :-
 	append(B0, V1, V0),
 	atom_codes(Atom, T0),
 	atom_to_term(Atom, Term, Bindings),
 	pwp_unite(Bindings, Context, _),
-	pwp_use_codes(Term, V1, V2),
-	(   pwp_split(A0, C, B1, T1, A1)
-	->  pwp_substitute(B1, T1, A1, C, Context, V2)
+        (   Type == value
+        ->  pwp_use_codes(Term, V1, V2)
+        ;   catch(Term, _, fail),
+            V2 = V1
+        ),
+	(   pwp_split(A0, C, B1, T1, A1, T2)
+	->  pwp_substitute(B1, T1, A1, C, Context, V2, T2)
 	;   V2 = A0
 	).
 
 
-pwp_split(Codes, C, Before, Text, After) :-
-	append(Before, [C,0'(|Rest], Codes),
-	append(Text,   [0'),C|After], Rest), !.
-
+pwp_split(Codes, C, Before, Text, After, Type) :-
+	append(Before, [C,C1|Rest], Codes),
+        (   C1 == 0'(
+        ->  Type = value,
+            C2 = 0')
+        ;   C1 == 0'[,
+            Type = existence,
+            C2 = 0']
+        ),
+        append(Text,   [C2,C|After], Rest),
+        !.
 
 pwp_use_codes(format(Format), S0, S) :- !,
 	pwp_format(Format, [], S0, S).
