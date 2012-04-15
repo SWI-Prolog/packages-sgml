@@ -28,7 +28,6 @@
 	  ]).
 :- use_module(library(record)).
 :- use_module(library(lists)).
-:- use_module(library(occurs)).
 :- use_module(library(debug)).
 
 /** <module> Select nodes in an XML DOM
@@ -139,11 +138,11 @@ xpath_chk(DOM, Spec, Content) :-
 %
 %	    ==
 %	    product(DOM, Name, URL, Price) :-
-%	    	xpath(DOM, //tr, TR),
-%	    	xpath(TR, td(1), C1),
-%	    	xpath(C1, /self(normalize_space), Name),
-%	    	xpath(C1, a(@href), URL),
-%	    	xpath(TR, td(2, number), Price).
+%		xpath(DOM, //tr, TR),
+%		xpath(TR, td(1), C1),
+%		xpath(C1, /self(normalize_space), Name),
+%		xpath(C1, a(@href), URL),
+%		xpath(TR, td(2, number), Price).
 %	    ==
 %
 %	Suppose we want to select  books   with  genre="thriller" from a
