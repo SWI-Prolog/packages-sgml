@@ -52,6 +52,7 @@ typedef enum
 
 int	register_catalog_file(const ichar *file, catalog_location where);
 int	is_absolute_path(const ichar *iname);
+int	is_url(const ichar *iname);
 ichar   *localpath(const ichar *ref, const ichar *name);
 ichar const *find_in_catalogue(
     int         kind,

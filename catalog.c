@@ -126,6 +126,18 @@ is_absolute_path(const ichar *name)
   return FALSE;
 }
 
+int
+is_url(const ichar *name)
+{ if ( iswalpha(name[0]) )
+  { while(*name && iswalpha(*name))
+      name++;
+    if ( *name && name[0] == ':' && name[1] == '/' && name[2] == '/' )
+      return TRUE;
+  }
+
+  return FALSE;
+}
+
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 localpath() creates an absolute  path  for   name  relative  to ref. The

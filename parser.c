@@ -406,7 +406,7 @@ entity_file(dtd *dtd, dtd_entity *e)
       if ( f )				/* owned by catalog */
       { ichar *file;
 
-	if ( is_absolute_path(f) || !e->baseurl )
+	if ( is_absolute_path(f) || is_url(f) || !e->baseurl )
 	  file = istrdup(f);
 	else
 	  file = localpath(e->baseurl, f);
@@ -2867,7 +2867,8 @@ open_element(dtd_parser *p, dtd_element *e, int warn)
 
     file = find_in_catalogue(CAT_DOCTYPE, e->name->name, NULL, NULL,
 			     p->dtd->dialect != DL_SGML);
-    if ( file )
+
+    if ( file && !is_url(file) )
     { dtd_parser *clone = clone_dtd_parser(p);
 
       gripe(p, ERC_NO_DOCTYPE, e->name->name, file);
@@ -3579,7 +3580,7 @@ process_doctype(dtd_parser *p, const ichar *decl, const ichar *decl0)
 
     if ( !file )
     { gripe(p, ERC_EXISTENCE, L"DTD", dtd->doctype);
-    } else
+    } else if ( !is_url(file) )
     { clone = clone_dtd_parser(p);
       if ( !load_dtd_from_file(clone, file) )
 	gripe(p, ERC_EXISTENCE, L"file", file);
