@@ -32,7 +32,7 @@ DTDFILES=	HTML4.dcl HTML4.dtd HTML4.soc \
 all:		$(TARGETS) $(PROGRAMS)
 
 sgml2pl.@SO@:	$(PLOBJ)
-		$(LD) $(LDSOFLAGS) -o $@ $(PLOBJ) $(LIBS)
+		$(LD) $(LDSOFLAGS) -o $@ $(PLOBJ) $(LIBS) $(LIBPLSO)
 
 install:	$(TARGETS) $(LIBPL) install-dtd
 		mkdir -p $(DESTDIR)$(SOLIBDIR)
