@@ -14,10 +14,10 @@
 
 \title{SWI-Prolog SGML/XML parser}
 \author{Jan Wielemaker \\
-	HCS, \\
+	VU University Amsterdam \\
 	University of Amsterdam \\
 	The Netherlands \\
-	E-mail: \email{J.Wielemaker@uva.nl}}
+	E-mail: \email{J.Wielemaker@vu.nl}}
 
 \maketitle
 
@@ -145,7 +145,7 @@ are based on load_structure/3.
 Same as \term{load_structure}{Source, ListOfContent, [dialect(sgml)]}.
 
     \predicate{load_xml_file}{2}{+Source, -ListOfContent}
-Same as \term{load_structure(Source, ListOfContent, [dialect(xml)]}.
+Same as \term{load_structure}{Source, ListOfContent, [dialect(xml)]}.
 
     \predicate{load_html_file}{2}{+Source, -Content}
 Load \arg{Source} and parse as HTML. \arg{Source} is either the
