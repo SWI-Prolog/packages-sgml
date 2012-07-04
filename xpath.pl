@@ -290,7 +290,10 @@ xpath_function(number, DOM, Number) :- !,			% number
 	normalize_space(string(Text), Text0),
 	catch(atom_number(Text, Number), _, fail).
 xpath_function(@Name, element(_, Attrs, _), Value) :- !,	% @Name
-	memberchk(Name=Value, Attrs).
+	(   ground(Name)
+	->  memberchk(Name=Value, Attrs)
+	;   member(Name=Value, Attrs)
+	).
 xpath_function(quote(Value), _, Value).				% quote(Value)
 
 xpath_condition(Left = Right, Value) :- !,			% =
