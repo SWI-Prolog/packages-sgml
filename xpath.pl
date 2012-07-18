@@ -296,6 +296,13 @@ xpath_function(@Name, element(_, Attrs, _), Value) :- !,	% @Name
 	).
 xpath_function(quote(Value), _, Value).				% quote(Value)
 
+xpath_function(self).
+xpath_function(text).
+xpath_function(normalize_space).
+xpath_function(number).
+xpath_function(@_).
+
+
 xpath_condition(Left = Right, Value) :- !,			% =
 	var_or_function(Left, Value, LeftValue),
 	var_or_function(Right, Value, RightValue),
@@ -311,7 +318,8 @@ xpath_condition(contains(Haystack, Needle), Value) :- !,	% contains(Haystack, Ne
 var_or_function(Arg, _, Arg) :-
 	var(Arg), !.
 var_or_function(Func, Value0, Value) :-
-	xpath_function(Func, Value0, Value), !.
+	xpath_function(Func), !,
+	xpath_function(Func, Value0, Value).
 var_or_function(Value, _, Value).
 
 val_or_function(Arg, _, Arg) :-
