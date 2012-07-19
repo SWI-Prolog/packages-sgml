@@ -57,6 +57,9 @@
 		       net(boolean)
 		     ]).
 
+:- multifile
+	xmlns/2.			% NS, URI
+
 /** <module> XML/SGML writer module
 
 This library provides the inverse functionality   of  the sgml.pl parser
@@ -588,15 +591,37 @@ add_missing_ns([H|T], Atts0, Atts) :-
 %	Generate a namespace (NS) identifier for URI.
 
 generate_ns(URI, NS) :-
+	xmlns(NS, URI), !.
+generate_ns(URI, NS) :-
 	default_ns(URI, NS), !.
 generate_ns(_, NS) :-
 	gensym(xns, NS).
+
+%%	xmlns(?NS, ?URI) is nondet.
+%
+%	Hook to define human readable  abbreviations for XML namespaces.
+%	xml_write/3 tries these locations:
+%
+%	  1. This hook
+%	  2. Defaults (see below)
+%	  3. rdf_db:ns/2 for RDF-DB integration
+%
+%	Default XML namespaces are:
+%
+%	  | xsi   | http://www.w3.org/2001/XMLSchema-instance |
+%	  | xs    | http://www.w3.org/2001/XMLSchema          |
+%	  | xhtml | http://www.w3.org/1999/xhtml	      |
+%	  | soap  | http://www.w3.org/2001/12/soap-envelope   |
+%
+%	@see xml_write/2, rdf_register_ns/2.
 
 :- multifile
 	rdf_db:ns/2.
 
 default_ns('http://www.w3.org/2001/XMLSchema-instance', xsi).
+default_ns('http://www.w3.org/2001/XMLSchema', xs).
 default_ns('http://www.w3.org/1999/xhtml', xhtml).
+default_ns('http://www.w3.org/2001/12/soap-envelope', soap).
 default_ns(URI, NS) :-
 	rdf_db:ns(NS, URI).
 
