@@ -611,7 +611,7 @@ generate_ns(_, NS) :-
 %	  | xsi   | http://www.w3.org/2001/XMLSchema-instance |
 %	  | xs    | http://www.w3.org/2001/XMLSchema          |
 %	  | xhtml | http://www.w3.org/1999/xhtml	      |
-%	  | soap  | http://www.w3.org/2001/12/soap-envelope   |
+%	  | soap  | http://schemas.xmlsoap.org/soap/envelope/ |
 %
 %	@see xml_write/2, rdf_register_ns/2.
 
@@ -621,7 +621,7 @@ generate_ns(_, NS) :-
 default_ns('http://www.w3.org/2001/XMLSchema-instance', xsi).
 default_ns('http://www.w3.org/2001/XMLSchema', xs).
 default_ns('http://www.w3.org/1999/xhtml', xhtml).
-default_ns('http://www.w3.org/2001/12/soap-envelope', soap).
+default_ns('http://schemas.xmlsoap.org/soap/envelope/', soap).
 default_ns(URI, NS) :-
 	rdf_db:ns(NS, URI).
 
