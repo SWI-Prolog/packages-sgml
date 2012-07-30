@@ -88,6 +88,8 @@ xpath_chk(DOM, Spec, Content) :-
 %
 %	    $ =self= :
 %	    Evaluate to the entire element
+%	    $ =content= :
+%	    Evaluate to the content of the element (a list)
 %	    $ =text= :
 %	    Evaluates to all text from the sub-tree as an atom
 %	    $ =normalize_space= :
@@ -280,6 +282,8 @@ modifier(Function, _, _, In, Out) :-
 
 xpath_function(self, DOM, Value) :- !,				% self
 	Value = DOM.
+xpath_function(content, Element, Value) :- !,			% content
+	element_content(Element, Value).
 xpath_function(text, DOM, Text) :- !,				% text
 	text_of_dom(DOM, Text).
 xpath_function(normalize_space, DOM, Text) :- !,		% normalize_space
@@ -298,6 +302,7 @@ xpath_function(quote(Value), _, Value).				% quote(Value)
 
 xpath_function(self).
 xpath_function(text).
+xpath_function(content).
 xpath_function(normalize_space).
 xpath_function(number).
 xpath_function(@_).
@@ -336,7 +341,7 @@ val_or_function(Value, _, Value).
 
 text_of_dom(DOM, Text) :-
 	phrase(text_of(DOM), Tokens),
-	concat_atom(Tokens, Text).
+	atomic_list_concat(Tokens, Text).
 
 text_of(element(_,_,Content)) -->
 	text_of_list(Content).
