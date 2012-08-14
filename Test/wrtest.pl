@@ -171,15 +171,15 @@ eq(A1, A2) :-
 	(   B1 == B2
 	->  true
 	;   format(user_error,
-		   'ERROR: CDATA differs:~n\
-		   \t~p~n\
+		   'ERROR: CDATA differs:~n\c
+		   \t~p~n\c
 		   \t~p~n',
 		   [B1, B2])
 	).
 eq(X, Y) :-
 	format(user_error,
-	       'ERROR: Content differs:~n\
-	       \t~p~n\
+	       'ERROR: Content differs:~n\c
+	       \t~p~n\c
 	       \t~p~n',
 	       [X, Y]).
 
@@ -188,8 +188,8 @@ att_eq(A1, A2) :-			% ordering is unimportant
 	sort(A2, S), !.
 att_eq(A1, A2) :-
 	format(user_error,
-	       'ERROR: Attribute lists differ:~n\
-	       \t~p~n\
+	       'ERROR: Attribute lists differ:~n\c
+	       \t~p~n\c
 	       \t~p~n',
 	       [A1, A2]).
 
