@@ -15,9 +15,13 @@
 
 :- asserta(file_search_path(foreign, '..')).
 :- asserta(file_search_path(library, '..')).
+:- asserta(file_search_path(library, '../../RDF')).
 
 :- use_module(library(sgml)).
 :- use_module(library(sgml_write)).
+:- use_module(library(pretty_print)).
+
+:- dynamic failed/2.
 
 test :-					% default test
 	fp('.').
@@ -43,6 +47,7 @@ test(File, Into, Encoding) :-
 	close(Out).
 
 fp(Dir) :-
+	retractall(failed(_, _)),
 	atom_concat(Dir, '/*', Pattern),
 	expand_file_name(Pattern, Files),
 	(   member(File, Files),
@@ -60,7 +65,7 @@ fp(Dir) :-
 	    fixed_point(File, utf8),
 	    format(user_error, ' done~n', []),
 	    fail
-	;   true
+	;   report_failed
 	).
 
 ml_file(xml).
@@ -87,6 +92,16 @@ blocked('badxmlent.xml').
 %	in element or attribute names.
 
 utf8('utf8-ru.xml').
+
+
+report_failed :-
+	findall(X, failed(X, _), L),
+	length(L, Len),
+	(   Len > 0
+        ->  format('~n*** ~w tests failed ***~n', [Len]),
+	    fail
+        ;   format('~nAll tests passed~n', [])
+	).
 
 
 %%	fixed_point(+File, +Encoding)
@@ -118,23 +133,13 @@ fp(File, Encoding, Load, Write) :-
 	delete_file(TmpFile),
 	(   eq(Term, Term2)
 	->  true
-	;   format(user_error, 'First file:~n', []),
-	    %pp(Term),
-	    save_in_file(f1, Term),
+	;   assert(failed(File, Encoding)),
+	    format(user_error, 'First file:~n', []),
+	    pretty_print(Term),
 	    format(user_error, 'Second file:~n', []),
-	    %pp(Term2),
-	    save_in_file(f2, Term2),
+	    pretty_print(Term2),
 	    fail
 	).
-
-save_in_file(File, Term) :-
-	open(File, write, Out, [encoding(iso_latin_1)]),
-	current_output(C0),
-	set_output(Out),
-	pp(Term),
-	set_output(C0),
-	close(Out).
-
 
 cat(File, Encoding) :-
 	open(File, read, In, [encoding(Encoding)]),
