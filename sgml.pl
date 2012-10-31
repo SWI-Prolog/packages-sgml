@@ -1,11 +1,9 @@
-/*  $Id$
-
-    Part of SWI-Prolog
+/*  Part of SWI-Prolog
 
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@cs.vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (C): 1985-2011, University of Amsterdam
+    Copyright (C): 1985-2012, University of Amsterdam
 			      VU University Amsterdam
 
     This program is free software; you can redistribute it and/or
@@ -60,6 +58,13 @@
 	    xml_quote_cdata/2,		% +In, -Quoted
 	    xml_name/1,			% +In
 	    xml_name/2,			% +In, +Encoding
+
+	    xml_basechar/1,		% +Code
+	    xml_ideographic/1,		% +Code
+	    xml_combining_char/1,	% +Code
+	    xml_digit/1,		% +Code
+	    xml_extender/1,		% +Code
+
 	    iri_xml_namespace/2,	% +IRI, -Namespace
 	    iri_xml_namespace/3,	% +IRI, -Namespace, -LocalName
 	    xml_is_dom/1		% +Term
@@ -451,6 +456,23 @@ xml_quote_cdata(In, Quoted) :-
 
 xml_name(In) :-
 	xml_name(In, ascii).
+
+
+		 /*******************************
+		 *    XML CHARACTER CLASSES	*
+		 *******************************/
+
+%%	xml_basechar(+CodeOrChar) is semidet.
+%%	xml_ideographic(+CodeOrChar) is semidet.
+%%	xml_combining_char(+CodeOrChar) is semidet.
+%%	xml_digit(+CodeOrChar) is semidet.
+%%	xml_extender(+CodeOrChar) is semidet.
+%
+%	XML  character  classification   predicates.    Each   of  these
+%	predicates accept both a character   (one-character  atom) and a
+%	code (integer).
+%
+%	@see http://www.w3.org/TR/2006/REC-xml-20060816
 
 
 		 /*******************************

@@ -1,11 +1,10 @@
-/*  $Id$
-
-    Part of SWI-Prolog
+/*  Part of SWI-Prolog
 
     Author:        Jan Wielemaker
-    E-mail:        wielemak@science.uva.nl
+    E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (C): 1985-2007, University of Amsterdam
+    Copyright (C): 1985-2012, University of Amsterdam
+			      VU University Amsterdam
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -464,6 +463,66 @@ iri_xml_namespace2(term_t iri, term_t namespace)
 }
 
 
+static foreign_t
+pl_xml_basechar(term_t t)
+{ int c;
+
+  if ( PL_get_char_ex(t, &c, FALSE) &&
+       xml_basechar(c) )
+    return TRUE;
+
+  return FALSE;
+}
+
+
+static foreign_t
+pl_xml_ideographic(term_t t)
+{ int c;
+
+  if ( PL_get_char_ex(t, &c, FALSE) &&
+       xml_ideographic(c) )
+    return TRUE;
+
+  return FALSE;
+}
+
+
+static foreign_t
+pl_xml_combining_char(term_t t)
+{ int c;
+
+  if ( PL_get_char_ex(t, &c, FALSE) &&
+       xml_combining_char(c) )
+    return TRUE;
+
+  return FALSE;
+}
+
+
+static foreign_t
+pl_xml_digit(term_t t)
+{ int c;
+
+  if ( PL_get_char_ex(t, &c, FALSE) &&
+       xml_digit(c) )
+    return TRUE;
+
+  return FALSE;
+}
+
+
+static foreign_t
+pl_xml_extender(term_t t)
+{ int c;
+
+  if ( PL_get_char_ex(t, &c, FALSE) &&
+       xml_extender(c) )
+    return TRUE;
+
+  return FALSE;
+}
+
+
 install_t
 install_xml_quote()
 { ATOM_iso_latin_1 = PL_new_atom("iso_latin_1");
@@ -471,9 +530,14 @@ install_xml_quote()
   ATOM_unicode     = PL_new_atom("unicode");
   ATOM_ascii       = PL_new_atom("ascii");
 
-  PL_register_foreign("xml_quote_attribute", 3, xml_quote_attribute, 0);
-  PL_register_foreign("xml_quote_cdata",     3, xml_quote_cdata,     0);
-  PL_register_foreign("xml_name",            2, xml_name,            0);
-  PL_register_foreign("iri_xml_namespace",   3, iri_xml_namespace,   0);
-  PL_register_foreign("iri_xml_namespace",   2, iri_xml_namespace2,  0);
+  PL_register_foreign("xml_quote_attribute", 3,	xml_quote_attribute,   0);
+  PL_register_foreign("xml_quote_cdata",     3,	xml_quote_cdata,       0);
+  PL_register_foreign("xml_name",	     2,	xml_name,	       0);
+  PL_register_foreign("xml_basechar",	     1,	pl_xml_basechar,       0);
+  PL_register_foreign("xml_ideographic",     1,	pl_xml_ideographic,    0);
+  PL_register_foreign("xml_combining_char",  1,	pl_xml_combining_char, 0);
+  PL_register_foreign("xml_digit",	     1,	pl_xml_digit,	       0);
+  PL_register_foreign("xml_extender",	     1,	pl_xml_extender,       0);
+  PL_register_foreign("iri_xml_namespace",   3,	iri_xml_namespace,     0);
+  PL_register_foreign("iri_xml_namespace",   2,	iri_xml_namespace2,    0);
 }
