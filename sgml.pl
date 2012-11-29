@@ -485,18 +485,29 @@ xml_name(In) :-
 %	load_structure/3 and friends.
 
 xml_is_dom(0) :- !, fail.		% catch variables
-xml_is_dom([]) :- !.
-xml_is_dom([H|T]) :- !,
-	xml_is_dom(H),
-	xml_is_dom(T).
-xml_is_dom(element(Name, Attributes, Content)) :- !,
+xml_is_dom(List) :-
+	is_list(List), !,
+	xml_is_content_list(List).
+xml_is_dom(Term) :-
+	xml_is_element(Term).
+
+xml_is_content_list([]).
+xml_is_content_list([H|T]) :-
+	xml_is_content(H),
+	xml_is_content_list(T).
+
+xml_is_content(0) :- !, fail.
+xml_is_content(pi(Pi)) :- !,
+	atom(Pi).
+xml_is_content(CDATA) :-
+	atom(CDATA), !.
+xml_is_content(Term) :-
+	xml_is_element(Term).
+
+xml_is_element(element(Name, Attributes, Content)) :-
 	dom_name(Name),
 	dom_attributes(Attributes),
-	xml_is_dom(Content).
-xml_is_dom(pi(Pi)) :- !,
-	atom(Pi).
-xml_is_dom(CDATA) :-
-	atom(CDATA).
+	xml_is_content_list(Content).
 
 dom_name(NS:Local) :-
 	atom(NS),
