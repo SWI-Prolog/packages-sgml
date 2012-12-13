@@ -81,7 +81,7 @@
 		       dialect(oneof([sgml,xml,xmlns])),
 		       doctype(atom),
 		       dtd(any),
-		       encoding(encoding),
+		       encoding(oneof(['iso-8859-1', 'utf-8'])),
 		       entity(atom,atom),
 		       file(atom),
 		       line(integer),
