@@ -474,19 +474,19 @@ content([], Out, Element, State) :- !,	% empty element
 	;   emit_close(Element, Out, State)
 	)
     ).
-content([Atom], Out, Element, State) :-
-	atom(Atom), !,
+content([CDATA], Out, Element, State) :-
+	atomic(CDATA), !,
 	(   get_state(State, dialect, sgml),
 	    get_state(State, net, true),
-	    \+ sub_atom(Atom, _, _, _, /),
-	    atom_length(Atom, Len),
+	    \+ sub_atom(CDATA, _, _, _, /),
+	    write_length(CDATA, Len, []),
 	    Len < 20
 	->  write(Out, /),
-	    sgml_write_content(Out, Atom, State),
+	    sgml_write_content(Out, CDATA, State),
 	    write(Out, /)
 	;/* XML or not NET */
 	    write(Out, >),
-	    sgml_write_content(Out, Atom, State),
+	    sgml_write_content(Out, CDATA, State),
 	    emit_close(Element, Out, State)
 	).
 content(Content, Out, Element, State) :-
@@ -688,9 +688,11 @@ write_quoted_list([H|T], Out, Escape, EntityMap) :-
 
 
 sgml_write_content(Out, Value, State) :-
+	atom(Value), !,
 	get_state(State, entity_map, EntityMap),
 	write_quoted(Out, Value, "<&>", EntityMap).
-
+sgml_write_content(Out, Value, _) :-
+	write(Out, Value).
 
 write_quoted(Out, Atom, Escape, EntityMap) :-
 	atom_codes(Atom, Codes),
