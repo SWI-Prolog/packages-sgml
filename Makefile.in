@@ -9,6 +9,7 @@ DOC=sgml
 include ../Makefile.defs
 LIBS=@LIBS@
 CFLAGS+= -I.
+# COFLAGS=-gdwarf-2 -g3
 
 LIBOBJ=		parser.o util.o charmap.o catalog.o model.o xmlns.o utf8.o \
 		xml_unicode.o
