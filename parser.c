@@ -1,11 +1,10 @@
-/*  $Id$
-
-    Part of SWI-Prolog
+/*  Part of SWI-Prolog
 
     Author:        Jan Wielemaker
-    E-mail:        wielemak@science.uva.nl
+    E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (C): 1985-2006, University of Amsterdam
+    Copyright (C): 1985-2013, University of Amsterdam
+			      VU University Amsterdam
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -3568,7 +3567,6 @@ process_doctype(dtd_parser *p, const ichar *decl, const ichar *decl0)
 
   if ( !dtd->doctype )			/* i.e. anonymous DTD */
   { ichar *file;
-    dtd_parser *clone;
 
     dtd->doctype = istrdup(id->name);	/* Fill it */
     if ( et )
@@ -3581,7 +3579,8 @@ process_doctype(dtd_parser *p, const ichar *decl, const ichar *decl0)
     if ( !file )
     { gripe(p, ERC_EXISTENCE, L"DTD", dtd->doctype);
     } else if ( !is_url(file) )
-    { clone = clone_dtd_parser(p);
+    { dtd_parser *clone = clone_dtd_parser(p);
+
       if ( !load_dtd_from_file(clone, file) )
 	gripe(p, ERC_EXISTENCE, L"file", file);
       free_dtd_parser(clone);
@@ -3595,8 +3594,9 @@ process_doctype(dtd_parser *p, const ichar *decl, const ichar *decl0)
 local:
   if ( (s=isee_func(dtd, decl, CF_DSO)) ) /* [...] */
   { int grouplevel = 1;
-    data_mode oldmode  = p->dmode;
-    dtdstate  oldstate = p->state;
+    data_mode oldmode   = p->dmode;
+    dtdstate  oldstate  = p->state;
+    int	      olddecode = p->utf8_decode;
     locbuf oldloc;
     const ichar *q;
     icharbuf *saved_ibuf = p->buffer;
@@ -3612,6 +3612,7 @@ local:
     p->dmode = DM_DTD;
     p->state = S_PCDATA;
     p->buffer = new_icharbuf();
+    p->utf8_decode = FALSE;
 
     for( ; *s; s++ )
     { if ( isee_func(dtd, s, CF_LIT) ||	/* skip quoted strings */
@@ -3636,8 +3637,9 @@ local:
     }
     p->dtd->implicit = FALSE;
 
-    p->state    = oldstate;
-    p->dmode    = oldmode;
+    p->state       = oldstate;
+    p->dmode       = oldmode;
+    p->utf8_decode = olddecode;
     free_icharbuf(p->buffer);
     p->buffer = saved_ibuf;
     pop_location(p, &oldloc);
