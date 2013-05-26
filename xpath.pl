@@ -105,7 +105,10 @@ xpath_chk(DOM, Spec, Content) :-
 %
 %	    $ Left = Right :
 %	    Succeeds if the left-hand unifies with the right-hand.
-%	    E.g. normalize_space = 'euro'
+%	    If the left-hand side is a function, this is evaluated.
+%	    The right-hand side is _never_ evaluated, and thus the
+%	    condition `content = content` defines that the content
+%	    of the element is the atom `content`.
 %	    $ contains(Haystack, Needle) :
 %	    Succeeds if Needle is a sub-string of Haystack.
 %
@@ -310,8 +313,7 @@ xpath_function(@_).
 
 xpath_condition(Left = Right, Value) :- !,			% =
 	var_or_function(Left, Value, LeftValue),
-	var_or_function(Right, Value, RightValue),
-	LeftValue = RightValue.
+	LeftValue = Right.
 xpath_condition(contains(Haystack, Needle), Value) :- !,	% contains(Haystack, Needle)
 	val_or_function(Haystack, Value, HaystackValue),
 	val_or_function(Needle, Value, NeedleValue),
