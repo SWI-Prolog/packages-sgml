@@ -5390,7 +5390,7 @@ format_message(dtd_error *e)
       swprintf(s, left, L"%ls", e->argv[0]);
       break;
     case ERC_SYNTAX_ERROR:
-      swprintf(s, left, L"Syntax error: %ls", e->argv[0]);
+      swprintf(s, left, L"%ls", e->argv[0]);
       break;
     case ERC_EXISTENCE:
       swprintf(s, left, L"%ls \"%ls\" does not exist", e->argv[0], e->argv[1]);
