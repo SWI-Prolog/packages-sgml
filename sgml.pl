@@ -312,25 +312,6 @@ dtd_property(DTD, Prop) :-
 		 *	       SGML		*
 		 *******************************/
 
-parser_option(dialect(_)).
-parser_option(shorttag(_)).
-parser_option(file(_)).
-parser_option(line(_)).
-parser_option(space(_)).
-parser_option(number(_)).
-parser_option(defaults(_)).
-parser_option(doctype(_)).
-parser_option(qualify_attributes(_)).
-parser_option(encoding(_)).
-
-set_parser_options(Parser, Options, RestOptions) :-
-	parser_option(Option),
-	select_option(Option, Options, RestOptions0), !,
-	set_sgml_parser(Parser, Option),
-	set_parser_options(Parser, RestOptions0, RestOptions).
-set_parser_options(_, Options, Options).
-
-
 %%	load_structure(+Source, -ListOfContent, :Options) is det.
 %
 %	Parse   Source   and   return   the   resulting   structure   in
@@ -354,12 +335,10 @@ load_structure(stream(In), Term, M:Options) :- !,
 	    Options2 = Options1
 	),
 	setup_call_cleanup(
-	    ( new_sgml_parser(Parser,
-			      [ dtd(DTD)
-			      ]),
-	      def_entities(Options2, Parser, Options3)
-	    ),
-	    parse(Parser, M:Options3, TermRead, In),
+	    new_sgml_parser(Parser,
+			    [ dtd(DTD)
+			    ]),
+	    parse(Parser, M:Options2, TermRead, In),
 	    free_sgml_parser(Parser)),
 	(   ExplicitDTD == true
 	->  (   DTD = dtd(_, DocType),
@@ -380,7 +359,7 @@ load_structure(File, Term, M:Options) :-
 	    close(In)).
 
 parse(Parser, M:Options, Document, In) :-
-	set_parser_options(Parser, Options, Options1),
+	set_parser_options(Options, Parser, Options1),
 	parser_meta_options(Options1, M, Options2),
 	sgml_parse(Parser,
 		   [ document(Document),
@@ -388,19 +367,38 @@ parse(Parser, M:Options, Document, In) :-
 		   | Options2
 		   ]).
 
-parser_meta_options([], _, []).
-parser_meta_options([call(When, Closure)|T0], M, [call(When, M:Closure)|T]) :- !,
-	parser_meta_options(T0, M, T).
-parser_meta_options([H|T0], M, [H|T]) :-
-	parser_meta_options(T0, M, T).
+set_parser_options([], _, []).
+set_parser_options([H|T], Parser, Rest) :-
+	(   set_parser_option(H, Parser)
+	->  set_parser_options(T, Parser, Rest)
+	;   Rest = [H|R2],
+	    set_parser_options(T, Parser, R2)
+	).
+
+set_parser_option(Var, _Parser) :-
+	var(Var), !,
+	instantiation_error(Var).
+set_parser_option(Option, Parser) :-
+	def_entity(Option, Parser), !.
+set_parser_option(Option, Parser) :-
+	parser_option(Option), !,
+	set_sgml_parser(Parser, Option).
+set_parser_option(Name=Value, Parser) :-
+	Option =.. [Name,Value],
+	set_parser_option(Option, Parser).
 
 
-def_entities([], _, []).
-def_entities([H|T], Parser, Opts) :-
-	def_entity(H, Parser), !,
-	def_entities(T, Parser, Opts).
-def_entities([H|T0], Parser, [H|T]) :-
-	def_entities(T0, Parser, T).
+parser_option(dialect(_)).
+parser_option(shorttag(_)).
+parser_option(file(_)).
+parser_option(line(_)).
+parser_option(space(_)).
+parser_option(number(_)).
+parser_option(defaults(_)).
+parser_option(doctype(_)).
+parser_option(qualify_attributes(_)).
+parser_option(encoding(_)).
+
 
 def_entity(entity(Name, Value), Parser) :-
 	get_sgml_parser(Parser, dtd(DTD)),
@@ -413,6 +411,16 @@ def_entity(xmlns(URI), Parser) :-
 	set_sgml_parser(Parser, xmlns(URI)).
 def_entity(xmlns(NS, URI), Parser) :-
 	set_sgml_parser(Parser, xmlns(NS, URI)).
+
+%%	parser_meta_options(+Options0, +Module, -Options)
+%
+%	Qualify meta-calling options to the parser.
+
+parser_meta_options([], _, []).
+parser_meta_options([call(When, Closure)|T0], M, [call(When, M:Closure)|T]) :- !,
+	parser_meta_options(T0, M, T).
+parser_meta_options([H|T0], M, [H|T]) :-
+	parser_meta_options(T0, M, T).
 
 
 		 /*******************************
