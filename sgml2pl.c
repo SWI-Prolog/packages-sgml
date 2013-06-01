@@ -106,7 +106,7 @@ typedef struct _parser_data
 
   term_t      list;			/* output term (if any) */
   term_t      tail;			/* tail of the list */
-  env 	     *stack;			/* environment stack */
+  env	     *stack;			/* environment stack */
   int	      free_on_close;		/* sgml_free parser on close */
 } parser_data;
 
@@ -129,6 +129,7 @@ static functor_t FUNCTOR_equal2;
 static functor_t FUNCTOR_file1;
 static functor_t FUNCTOR_fixed1;
 static functor_t FUNCTOR_line1;
+static functor_t FUNCTOR_linepos1;
 static functor_t FUNCTOR_list1;
 static functor_t FUNCTOR_max_errors1;
 static functor_t FUNCTOR_nameof1;
@@ -200,6 +201,7 @@ initConstants()
   FUNCTOR_notation1	 = mkfunctor("notation", 1);
   FUNCTOR_file1		 = mkfunctor("file", 1);
   FUNCTOR_line1		 = mkfunctor("line", 1);
+  FUNCTOR_linepos1	 = mkfunctor("linepos", 1);
   FUNCTOR_dialect1	 = mkfunctor("dialect", 1);
   FUNCTOR_max_errors1	 = mkfunctor("max_errors", 1);
   FUNCTOR_parse1	 = mkfunctor("parse", 1);
@@ -216,9 +218,9 @@ initConstants()
   FUNCTOR_number1	 = mkfunctor("number", 1);
   FUNCTOR_syntax_errors1 = mkfunctor("syntax_errors", 1);
   FUNCTOR_xml_no_ns1     = mkfunctor("xml_no_ns", 1);
-  FUNCTOR_minus2 	 = mkfunctor("-", 2);
-  FUNCTOR_positions1 	 = mkfunctor("positions", 1);
-  FUNCTOR_event_class1 	 = mkfunctor("event_class", 1);
+  FUNCTOR_minus2	 = mkfunctor("-", 2);
+  FUNCTOR_positions1	 = mkfunctor("positions", 1);
+  FUNCTOR_event_class1	 = mkfunctor("event_class", 1);
   FUNCTOR_doctype1       = mkfunctor("doctype", 1);
   FUNCTOR_allowed1       = mkfunctor("allowed", 1);
   FUNCTOR_context1       = mkfunctor("context", 1);
@@ -421,8 +423,14 @@ pl_set_sgml_parser(term_t parser, term_t option)
   { term_t a = PL_new_term_ref();
 
     _PL_get_arg(1, option, a);
-    if ( !PL_get_integer(a, &p->location.line) )
-      return sgml2pl_error(ERR_TYPE, "integer", a);
+    if ( !PL_get_integer_ex(a, &p->location.line) )
+      return FALSE;
+  } else if ( PL_is_functor(option, FUNCTOR_linepos1) )
+  { term_t a = PL_new_term_ref();
+
+    _PL_get_arg(1, option, a);
+    if ( !PL_get_integer_ex(a, &p->location.linepos) )
+      return FALSE;
   } else if ( PL_is_functor(option, FUNCTOR_charpos1) )
   { term_t a = PL_new_term_ref();
 

@@ -350,15 +350,16 @@ load_structure(stream(In), Term, M:Options) :- !,
 load_structure(Stream, Term, Options) :-
 	is_stream(Stream), !,
 	load_structure(stream(Stream), Term, Options).
-load_structure(File, Term, M:Options) :-
+load_structure(File, Term, Options) :-
 	setup_call_cleanup(
 	    open(File, read, In, [type(binary)]),
-	    load_structure(stream(In), Term, M:[file(File)|Options]),
+	    load_structure(stream(In), Term, Options),
 	    close(In)).
 
 parse(Parser, M:Options, Document, In) :-
 	set_parser_options(Options, Parser, In, Options1),
 	parser_meta_options(Options1, M, Options2),
+	set_input_location(Parser, In),
 	sgml_parse(Parser,
 		   [ document(Document),
 		     source(In)
@@ -421,6 +422,24 @@ parser_meta_options([call(When, Closure)|T0], M, [call(When, M:Closure)|T]) :- !
 	parser_meta_options(T0, M, T).
 parser_meta_options([H|T0], M, [H|T]) :-
 	parser_meta_options(T0, M, T).
+
+
+%%	set_input_location(+Parser, +In:stream) is det.
+%
+%	Set the input location if this was not set explicitly
+
+set_input_location(Parser, _In) :-
+	get_sgml_parser(Parser, file(_)), !.
+set_input_location(Parser, In) :-
+	stream_property(In, file_name(File)), !,
+	set_sgml_parser(Parser, file(File)),
+	stream_property(In, position(Pos)),
+	stream_position_data(line_count,    Pos, LineNo),
+	stream_position_data(line_position, Pos, LinePos),
+%	stream_position_data(char_count,    Pos, CharNo),
+	set_sgml_parser(Parser, line(LineNo)),
+	set_sgml_parser(Parser, linepos(LinePos)).
+
 
 
 		 /*******************************
