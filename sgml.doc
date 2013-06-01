@@ -687,9 +687,14 @@ Sets the file for reporting errors and warnings. Sets the line to 1.
     \termitem{line}{Line}
 Sets the current line. Useful if the stream is not at the start of the
 (file) object for generating proper line-numbers.
+    \termitem{linepos}{LinePos}
+Sets notion of the current column in the source line.
     \termitem{charpos}{Offset}
 Sets the current character location.  See also the \term{file}{File}
 option.
+    \termitem{position}{Position}
+Set source location from a stream position term as obtained using
+\term{stream_property}{Stream, position(Position)}.
     \termitem{dialect}{Dialect}
 Set the markup dialect. Known dialects:
 \begin{description}

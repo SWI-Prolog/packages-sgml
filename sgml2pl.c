@@ -1,11 +1,10 @@
-/*  $Id$
-
-    Part of SWI-Prolog
+/*  Part of SWI-Prolog
 
     Author:        Jan Wielemaker
-    E-mail:        wielemak@science.uva.nl
+    E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (C): 1985-2008, University of Amsterdam
+    Copyright (C): 1985-2013, University of Amsterdam
+			      VU University Amsterdam
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -128,6 +127,7 @@ static functor_t FUNCTOR_entity1;
 static functor_t FUNCTOR_equal2;
 static functor_t FUNCTOR_file1;
 static functor_t FUNCTOR_file4;
+static functor_t FUNCTOR_dstream_position4;
 static functor_t FUNCTOR_fixed1;
 static functor_t FUNCTOR_line1;
 static functor_t FUNCTOR_linepos1;
@@ -158,6 +158,7 @@ static functor_t FUNCTOR_syntax_errors1;
 static functor_t FUNCTOR_xml_no_ns1;
 static functor_t FUNCTOR_minus2;
 static functor_t FUNCTOR_positions1;
+static functor_t FUNCTOR_position1;
 static functor_t FUNCTOR_event_class1;
 static functor_t FUNCTOR_doctype1;
 static functor_t FUNCTOR_allowed1;
@@ -225,6 +226,7 @@ initConstants()
   FUNCTOR_error2         = mkfunctor("error", 2);
   FUNCTOR_xml_no_ns1     = mkfunctor("xml_no_ns", 1);
   FUNCTOR_minus2	 = mkfunctor("-", 2);
+  FUNCTOR_position1	 = mkfunctor("position", 1);
   FUNCTOR_positions1	 = mkfunctor("positions", 1);
   FUNCTOR_event_class1	 = mkfunctor("event_class", 1);
   FUNCTOR_doctype1       = mkfunctor("doctype", 1);
@@ -236,6 +238,7 @@ initConstants()
   FUNCTOR_encoding1	 = mkfunctor("encoding", 1);
   FUNCTOR_xmlns1	 = mkfunctor("xmlns", 1);
   FUNCTOR_xmlns2	 = mkfunctor("xmlns", 2);
+  FUNCTOR_dstream_position4 = PL_new_functor(PL_new_atom("$stream_position"), 4);
 
   ATOM_true = PL_new_atom("true");
   ATOM_false = PL_new_atom("false");
@@ -441,8 +444,21 @@ pl_set_sgml_parser(term_t parser, term_t option)
   { term_t a = PL_new_term_ref();
 
     _PL_get_arg(1, option, a);
-    if ( !PL_get_long(a, &p->location.charpos) )
-      return sgml2pl_error(ERR_TYPE, "integer", a);
+    if ( !PL_get_long_ex(a, &p->location.charpos) )
+      return FALSE;
+  } else if ( PL_is_functor(option, FUNCTOR_position1) )
+  { term_t a = PL_new_term_ref();
+
+    _PL_get_arg(1, option, a);
+    if ( PL_is_functor(a, FUNCTOR_dstream_position4) )
+    { term_t arg = PL_new_term_ref();
+
+      if ( !PL_get_arg(1,a,arg) || !PL_get_long_ex(arg, &p->location.charpos) ||
+	   !PL_get_arg(2,a,arg) || !PL_get_integer_ex(arg,  &p->location.line) ||
+	   !PL_get_arg(3,a,arg) || !PL_get_integer_ex(arg,  &p->location.linepos))
+	return FALSE;
+    } else
+      return PL_type_error("stream_position", a);
   } else if ( PL_is_functor(option, FUNCTOR_dialect1) )
   { term_t a = PL_new_term_ref();
     char *s;

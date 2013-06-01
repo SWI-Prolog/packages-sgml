@@ -450,13 +450,8 @@ set_input_location(Parser, In) :-
 	stream_property(In, file_name(File)), !,
 	set_sgml_parser(Parser, file(File)),
 	stream_property(In, position(Pos)),
-	stream_position_data(line_count,    Pos, LineNo),
-	stream_position_data(line_position, Pos, LinePos),
-%	stream_position_data(char_count,    Pos, CharNo),
-	set_sgml_parser(Parser, line(LineNo)),
-	set_sgml_parser(Parser, linepos(LinePos)).
-
-
+	set_sgml_parser(Parser, position(Pos)).
+set_input_location(_, _).
 
 		 /*******************************
 		 *	     UTILITIES		*
