@@ -1,9 +1,9 @@
 /*  Part of SWI-Prolog
 
     Author:        Jan Wielemaker
-    E-mail:        J.Wielemaker@cs.vu.nl
+    E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (C): 1985-2012, University of Amsterdam
+    Copyright (C): 1985-2013, University of Amsterdam
 			      VU University Amsterdam
 
     This program is free software; you can redistribute it and/or
@@ -71,6 +71,7 @@
 	  ]).
 :- use_module(library(lists)).
 :- use_module(library(option)).
+:- use_module(library(error)).
 
 :- meta_predicate
 	load_structure(+, -, :).
@@ -85,6 +86,7 @@
 		       entity(atom,atom),
 		       file(atom),
 		       line(integer),
+		       offset(integer),
 		       number(oneof([token,integer])),
 		       qualify_attributes(boolean),
 		       shorttag(boolean),
@@ -325,20 +327,16 @@ dtd_property(DTD, Prop) :-
 %	content.
 
 load_structure(stream(In), Term, M:Options) :- !,
-	(   select_option(offset(Offset), Options, Options1)
-	->  seek(In, Offset, bof, _)
-	;   Options1 = Options
-	),
-	(   select_option(dtd(DTD), Options1, Options2)
+	(   select_option(dtd(DTD), Options, Options1)
 	->  ExplicitDTD = true
 	;   ExplicitDTD = false,
-	    Options2 = Options1
+	    Options1 = Options
 	),
 	setup_call_cleanup(
 	    new_sgml_parser(Parser,
 			    [ dtd(DTD)
 			    ]),
-	    parse(Parser, M:Options2, TermRead, In),
+	    parse(Parser, M:Options1, TermRead, In),
 	    free_sgml_parser(Parser)),
 	(   ExplicitDTD == true
 	->  (   DTD = dtd(_, DocType),
@@ -359,7 +357,7 @@ load_structure(File, Term, M:Options) :-
 	    close(In)).
 
 parse(Parser, M:Options, Document, In) :-
-	set_parser_options(Options, Parser, Options1),
+	set_parser_options(Options, Parser, In, Options1),
 	parser_meta_options(Options1, M, Options2),
 	sgml_parse(Parser,
 		   [ document(Document),
@@ -367,25 +365,27 @@ parse(Parser, M:Options, Document, In) :-
 		   | Options2
 		   ]).
 
-set_parser_options([], _, []).
-set_parser_options([H|T], Parser, Rest) :-
-	(   set_parser_option(H, Parser)
-	->  set_parser_options(T, Parser, Rest)
+set_parser_options([], _, _, []).
+set_parser_options([H|T], Parser, In, Rest) :-
+	(   set_parser_option(H, Parser, In)
+	->  set_parser_options(T, Parser, In, Rest)
 	;   Rest = [H|R2],
-	    set_parser_options(T, Parser, R2)
+	    set_parser_options(T, Parser, In, R2)
 	).
 
-set_parser_option(Var, _Parser) :-
+set_parser_option(Var, _Parser, _In) :-
 	var(Var), !,
 	instantiation_error(Var).
-set_parser_option(Option, Parser) :-
+set_parser_option(Option, Parser, _) :-
 	def_entity(Option, Parser), !.
-set_parser_option(Option, Parser) :-
+set_parser_option(offset(Offset), _Parser, In) :- !,
+	seek(In, Offset, bof, _).
+set_parser_option(Option, Parser, _In) :-
 	parser_option(Option), !,
 	set_sgml_parser(Parser, Option).
-set_parser_option(Name=Value, Parser) :-
+set_parser_option(Name=Value, Parser, In) :-
 	Option =.. [Name,Value],
-	set_parser_option(Option, Parser).
+	set_parser_option(Option, Parser, In).
 
 
 parser_option(dialect(_)).
