@@ -353,12 +353,14 @@ load_structure(stream(In), Term, M:Options) :- !,
 	;   ExplicitDTD = false,
 	    Options2 = Options1
 	),
-	new_sgml_parser(Parser,
-			[ dtd(DTD)
-			]),
-	def_entities(Options2, Parser, Options3),
-	call_cleanup(parse(Parser, M:Options3, TermRead, In),
-		     free_sgml_parser(Parser)),
+	setup_call_cleanup(
+	    ( new_sgml_parser(Parser,
+			      [ dtd(DTD)
+			      ]),
+	      def_entities(Options2, Parser, Options3)
+	    ),
+	    parse(Parser, M:Options3, TermRead, In),
+	    free_sgml_parser(Parser)),
 	(   ExplicitDTD == true
 	->  (   DTD = dtd(_, DocType),
 	        dtd_property(DTD, doctype(DocType))
