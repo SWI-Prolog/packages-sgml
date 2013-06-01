@@ -185,6 +185,8 @@ inc_location(dtd_srcloc *l, int chr)
 { if ( chr == '\n' )
   { l->linepos = 0;
     l->line++;
+  } else if ( chr == '\t' )
+  { l->linepos |= 7;
   }
 
   l->linepos++;
