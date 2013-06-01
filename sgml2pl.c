@@ -132,6 +132,8 @@ static functor_t FUNCTOR_line1;
 static functor_t FUNCTOR_linepos1;
 static functor_t FUNCTOR_list1;
 static functor_t FUNCTOR_max_errors1;
+static functor_t FUNCTOR_syntax_error1;
+static functor_t FUNCTOR_error2;
 static functor_t FUNCTOR_nameof1;
 static functor_t FUNCTOR_notation1;
 static functor_t FUNCTOR_omit2;
@@ -217,6 +219,8 @@ initConstants()
   FUNCTOR_ndata1	 = mkfunctor("ndata", 1);
   FUNCTOR_number1	 = mkfunctor("number", 1);
   FUNCTOR_syntax_errors1 = mkfunctor("syntax_errors", 1);
+  FUNCTOR_syntax_error1  = mkfunctor("syntax_error", 1);
+  FUNCTOR_error2         = mkfunctor("error", 2);
   FUNCTOR_xml_no_ns1     = mkfunctor("xml_no_ns", 1);
   FUNCTOR_minus2	 = mkfunctor("-", 2);
   FUNCTOR_positions1	 = mkfunctor("positions", 1);
@@ -1374,39 +1378,55 @@ on_error(dtd_parser *p, dtd_error *error)
 
     if ( (fid=PL_open_foreign_frame()) )
     { int rc;
-      predicate_t pred = PL_predicate("print_message", 2, "user");
-      term_t av = PL_new_term_refs(2);
-      term_t src = PL_new_term_ref();
-      term_t parser = PL_new_term_ref();
-      dtd_srcloc *l = file_location(p, &p->startloc);
 
-      rc = ( unify_parser(parser, p) &&
-	     PL_put_atom_chars(av+0, severity) );
+      if ( pd->max_errors == 0 )
+      { term_t ex = PL_new_term_ref();
+	term_t pos = PL_new_term_ref();
 
-      if ( rc )
-      { if ( l->name.file )
-	{ if ( l->type == IN_FILE )
-	    rc = put_atom_wchars(src, l->name.file);
-	  else
-	    rc = put_atom_wchars(src, l->name.entity);
-	} else
-	{ PL_put_nil(src);
+	rc = PL_unify_term(ex,
+			   PL_FUNCTOR, FUNCTOR_error2,
+			     PL_FUNCTOR, FUNCTOR_syntax_error1,
+			       PL_NWCHARS, wcslen(error->plain_message),
+					   error->plain_message,
+			     PL_TERM, pos);
+
+	rc = PL_raise_exception(ex);
+      } else
+      { predicate_t pred = PL_predicate("print_message", 2, "user");
+	term_t av = PL_new_term_refs(2);
+	term_t src = PL_new_term_ref();
+	term_t parser = PL_new_term_ref();
+	dtd_srcloc *l = file_location(p, &p->startloc);
+
+	rc = ( unify_parser(parser, p) &&
+	       PL_put_atom_chars(av+0, severity) );
+
+	if ( rc )
+	{ if ( l->name.file )
+	  { if ( l->type == IN_FILE )
+	      rc = put_atom_wchars(src, l->name.file);
+	    else
+	      rc = put_atom_wchars(src, l->name.entity);
+	  } else
+	  { PL_put_nil(src);
+	  }
 	}
+
+	if ( rc )
+	  rc = PL_unify_term(av+1,
+			     PL_FUNCTOR_CHARS, "sgml", 4,
+			       PL_TERM, parser,
+			       PL_TERM, src,
+			       PL_INT, l->line,
+			       PL_NWCHARS, wcslen(error->plain_message),
+					   error->plain_message);
+
+	if ( rc )
+	  rc = PL_call_predicate(NULL, PL_Q_NODEBUG, pred, av);
+
+	PL_discard_foreign_frame(fid);
       }
 
-      if ( rc )
-	rc = PL_unify_term(av+1,
-			   PL_FUNCTOR_CHARS, "sgml", 4,
-			     PL_TERM, parser,
-			     PL_TERM, src,
-			     PL_INT, l->line,
-			     PL_NWCHARS, wcslen(error->plain_message),
-					 error->plain_message);
-
-      if ( rc )
-	rc = PL_call_predicate(NULL, PL_Q_NODEBUG, pred, av);
-
-      PL_discard_foreign_frame(fid);
       if ( rc )
 	return TRUE;
     }
