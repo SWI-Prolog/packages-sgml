@@ -29,7 +29,11 @@
 */
 
 :- module(sgml,
-	  [ load_sgml_file/2,		% +File, -ListOfContent
+	  [ load_html/3,		% +Input, -DOM, +Options
+	    load_xml/3,			% +Input, -DOM, +Options
+	    load_sgml/3,		% +Input, -DOM, +Options
+
+	    load_sgml_file/2,		% +File, -ListOfContent
 	    load_xml_file/2,		% +File, -ListOfContent
 	    load_html_file/2,		% +File, -Document
 
@@ -74,7 +78,10 @@
 :- use_module(library(error)).
 
 :- meta_predicate
-	load_structure(+, -, :).
+	load_structure(+, -, :),
+	load_html(+, -, :),
+	load_xml(+, -, :),
+	load_sgml(+, -, :).
 
 :- predicate_options(load_structure/3, 3,
 		     [ charpos(integer),
@@ -94,6 +101,15 @@
 		       xmlns(atom),
 		       xmlns(atom,atom),
 		       pass_to(sgml_parse/2, 2)
+		     ]).
+:- predicate_options(load_html/3, 3,
+		     [ pass_to(load_structure/3, 3)
+		     ]).
+:- predicate_options(load_xml/3, 3,
+		     [ pass_to(load_structure/3, 3)
+		     ]).
+:- predicate_options(load_sgml/3, 3,
+		     [ pass_to(load_structure/3, 3)
 		     ]).
 :- predicate_options(load_dtd/3, 3,
 		     [ dialect(oneof([sgml,xml,xmlns])),
@@ -446,19 +462,84 @@ set_input_location(Parser, In) :-
 		 *	     UTILITIES		*
 		 *******************************/
 
+%%	load_sgml_file(+File, -DOM) is det.
+%
+%	Load SGML from File and unify   the resulting DOM structure with
+%	DOM.
+%
+%	@deprecated	New code should use load_sgml/3.
+
 load_sgml_file(File, Term) :-
-	load_structure(File, Term, [dialect(sgml)]).
+	load_sgml(File, Term, []).
+
+%%	load_xml_file(+File, -DOM) is det.
+%
+%	Load XML from File and unify   the  resulting DOM structure with
+%	DOM.
+%
+%	@deprecated	New code should use load_xml/3.
 
 load_xml_file(File, Term) :-
-	load_structure(File, Term, [dialect(xml)]).
+	load_xml(File, Term, []).
 
-load_html_file(File, Term) :-
+%%	load_html_file(+File, -DOM) is det.
+%
+%	Load HTML from File and unify   the resulting DOM structure with
+%	DOM.
+%
+%	@deprecated	New code should use load_html/3.
+
+load_html_file(File, DOM) :-
+	load_html(File, DOM, []).
+
+%%	load_html(+Input, -DOM, +Options) is det.
+%
+%	Load HTML text from Input and  unify the resulting DOM structure
+%	with DOM. Options are passed   to load_structure/3, after adding
+%	the following default options:
+%
+%	  - dtd(DTD)
+%	  Pass the DTD for HTML as obtained using dtd(html, DTD).
+%	  - dialect(sgml)
+%	  - shorttag(false)
+
+load_html(File, Term, M:Options) :-
 	dtd(html, DTD),
-	load_structure(File, Term,
-		       [ dtd(DTD),
-			 dialect(sgml),
-			 shorttag(false)
-		       ]).
+	merge_options(Options,
+		      [ dtd(DTD),
+			dialect(sgml),
+			shorttag(false)
+		      ], Options1),
+	load_structure(File, Term, M:Options1).
+
+%%	load_xml(+Input, -DOM, +Options) is det.
+%
+%	Load XML text from Input and   unify the resulting DOM structure
+%	with DOM. Options are passed   to load_structure/3, after adding
+%	the following default options:
+%
+%	  - dialect(xml)
+
+load_xml(Input, DOM, M:Options) :-
+	merge_options(Options,
+		      [ dialect(xml)
+		      ], Options1),
+	load_structure(Input, DOM, M:Options1).
+
+%%	load_sgml(+Input, -DOM, +Options) is det.
+%
+%	Load SGML text from Input and  unify the resulting DOM structure
+%	with DOM. Options are passed   to load_structure/3, after adding
+%	the following default options:
+%
+%	  - dialect(sgml)
+
+load_sgml(Input, DOM, M:Options) :-
+	merge_options(Options,
+		      [ dialect(sgml)
+		      ], Options1),
+	load_structure(Input, DOM, M:Options1).
+
 
 
 		 /*******************************
