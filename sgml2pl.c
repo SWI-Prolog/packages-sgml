@@ -127,6 +127,7 @@ static functor_t FUNCTOR_element3;
 static functor_t FUNCTOR_entity1;
 static functor_t FUNCTOR_equal2;
 static functor_t FUNCTOR_file1;
+static functor_t FUNCTOR_file4;
 static functor_t FUNCTOR_fixed1;
 static functor_t FUNCTOR_line1;
 static functor_t FUNCTOR_linepos1;
@@ -202,6 +203,7 @@ initConstants()
   FUNCTOR_nameof1	 = mkfunctor("nameof", 1);
   FUNCTOR_notation1	 = mkfunctor("notation", 1);
   FUNCTOR_file1		 = mkfunctor("file", 1);
+  FUNCTOR_file4		 = mkfunctor("file", 4);
   FUNCTOR_line1		 = mkfunctor("line", 1);
   FUNCTOR_linepos1	 = mkfunctor("linepos", 1);
   FUNCTOR_dialect1	 = mkfunctor("dialect", 1);
@@ -1377,26 +1379,33 @@ on_error(dtd_parser *p, dtd_error *error)
   { fid_t fid;
 
     if ( (fid=PL_open_foreign_frame()) )
-    { int rc;
+    { int rc = TRUE;
+      dtd_srcloc *l = file_location(p, &p->startloc);
 
       if ( pd->max_errors == 0 )
       { term_t ex = PL_new_term_ref();
 	term_t pos = PL_new_term_ref();
 
-	rc = PL_unify_term(ex,
-			   PL_FUNCTOR, FUNCTOR_error2,
-			     PL_FUNCTOR, FUNCTOR_syntax_error1,
-			       PL_NWCHARS, wcslen(error->plain_message),
-					   error->plain_message,
-			     PL_TERM, pos);
-
-	rc = PL_raise_exception(ex);
+	if ( l->name.file )
+	  rc = PL_unify_term(pos,
+			     PL_FUNCTOR, FUNCTOR_file4,
+			       PL_NWCHARS, (size_t)-1, l->name.file,
+			       PL_INT,   l->line,
+			       PL_INT,   l->linepos,
+			       PL_INT64, (int64_t)l->charpos);
+	if ( rc )
+	  rc = PL_unify_term(ex,
+			     PL_FUNCTOR, FUNCTOR_error2,
+			       PL_FUNCTOR, FUNCTOR_syntax_error1,
+			         PL_NWCHARS, (size_t)-1, error->plain_message,
+			       PL_TERM, pos);
+	if ( rc )
+	  rc = PL_raise_exception(ex);
       } else
       { predicate_t pred = PL_predicate("print_message", 2, "user");
 	term_t av = PL_new_term_refs(2);
 	term_t src = PL_new_term_ref();
 	term_t parser = PL_new_term_ref();
-	dtd_srcloc *l = file_location(p, &p->startloc);
 
 	rc = ( unify_parser(parser, p) &&
 	       PL_put_atom_chars(av+0, severity) );
