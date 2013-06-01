@@ -89,7 +89,7 @@ This is called `omitted-tag' handling.
 \end{code}
 
 \begin{code}
-?- load_html_file('test.html', Term),
+?- load_html('test.html', Term, []),
    pretty_print(Term).
 
 [ element(html,
@@ -141,29 +141,19 @@ self-contained files in SGML, HTML, or XML into a structured term. They
 are based on load_structure/3.
 
 \begin{description}
-    \predicate{load_sgml_file}{2}{+Source, -ListOfContent}
-Same as \term{load_structure}{Source, ListOfContent, [dialect(sgml)]}.
+    \predicate{load_sgml}{3}{+Source, -ListOfContent, :Options}
+Calls load_structure/3 with the given \arg{Options}, using the
+default option \term{dialect}{sgml}
 
-    \predicate{load_xml_file}{2}{+Source, -ListOfContent}
-Same as \term{load_structure}{Source, ListOfContent, [dialect(xml)]}.
+    \predicate{load_xml}{3}{+Source, -ListOfContent, :Options}
+Calls load_structure/3 with the given \arg{Options}, using the
+default option \term{dialect}{xml}
 
-    \predicate{load_html_file}{2}{+Source, -Content}
-Load \arg{Source} and parse as HTML. \arg{Source} is either the
-name of a file or term \term{stream}{Handle}. Implemented as
-below. Note that load_html_file/2 re-uses a cached DTD object as defined
-by dtd/2. As DTD objects may be corrupted while loading errornous
-documents sharing is undesirable if the documents are not known to be
-correct. See dtd/2 for details.
-
-\begin{code}
-load_html_file(Source, Term) :-
-        dtd(html, DTD),
-        load_structure(Source, Term,
-                       [ dtd(DTD),
-                         dialect(sgml),
-			 shorttag(false)
-                       ]).
-\end{code}
+    \predicate{load_html}{3}{+Source, :Options}
+Calls load_structure/3 with the given \arg{Options}, using the
+default options \term{dialect}{sgml}, \term{shorttag}{false} and
+\term{dtd}{DTD}, where \arg{DTD} is the HTML DTD as obtained using
+\term{dtd}{html, DTD}.  See dtd/2.
 \end{description}
 
 
