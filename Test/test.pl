@@ -1,13 +1,31 @@
-/*  $Id$
+/*  Part of SWI-Prolog
 
-    Part of SWI-Prolog SGML/XML parser
+    Author:        Jan Wielemaker
+    E-mail:        J.Wielemaker@cs.vu.nl
+    WWW:           http://www.swi-prolog.org
+    Copyright (C): 2000-2013, University of Amsterdam
+			      VU University Amsterdam
 
-    Author:  Jan Wielemaker
-    E-mail:  jan@swi.psy.uva.nl
-    WWW:     http://www.swi.psy.uva.nl/projects/SWI-Prolog/
-    Copying: LGPL-2.  See the file COPYING or http://www.gnu.org
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation; either version 2
+    of the License, or (at your option) any later version.
 
-    Copyright (C) 1990-2000 SWI, University of Amsterdam. All rights reserved.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+    As a special exception, if you link this library with other files,
+    compiled with a Free Software compiler, to produce an executable, this
+    library does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however
+    invalidate any other reasons why the executable file might be covered by
+    the GNU General Public License.
 */
 
 :- module(sgml_test,
@@ -46,7 +64,7 @@ dotest(File) :-
 dotest(_).
 
 test(File) :-
-	format('~NTest ~w ... ', [File]),
+	debug(sgml(test), 'Test ~w ... ', [File]),
 	flush_output,
 	load_file(File, Term),
 	ground(Term),			% make sure
@@ -54,7 +72,7 @@ test(File) :-
 	(   exists_file(OkFile)
 	->  load_prolog_file(OkFile, TermOk, ErrorsOk),
 	    (	compare_dom(Term, TermOk)
-	    ->	format('ok')
+	    ->	true
 	    ;   assert(failed(File)),
 	        format('WRONG'),
 	        format('~NOK:~n'),
@@ -71,8 +89,7 @@ test(File) :-
 		pretty_print(ErrorsOk),
 		format('~NANSWER:~n'),
 		pretty_print(Errors)
-	    ),
-	    nl
+	    )
 	;   show_errors,
 	    format('Loaded, no validating data~n'),
 	    pretty_print(Term)
@@ -97,9 +114,9 @@ report_failed :-
 	findall(X, failed(X), L),
 	length(L, Len),
 	(   Len > 0
-        ->  format('~n*** ~w tests failed ***~n', [Len]),
+        ->  format('~N*** ~w tests failed ***~n', [Len]),
 	    fail
-        ;   format('~nAll tests passed~n', [])
+        ;   format('~NAll tests passed~n', [])
 	).
 
 :- dynamic

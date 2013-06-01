@@ -1,13 +1,31 @@
-/*  $Id$
+/*  Part of SWI-Prolog
 
-    Part of SWI-Prolog SGML/XML parser
+    Author:        Jan Wielemaker
+    E-mail:        J.Wielemaker@cs.vu.nl
+    WWW:           http://www.swi-prolog.org
+    Copyright (C): 2005-2013, University of Amsterdam
+			      VU University Amsterdam
 
-    Author:  Jan Wielemaker
-    E-mail:  jan@swi.psy.uva.nl
-    WWW:     http://www.swi.psy.uva.nl/projects/SWI-Prolog/
-    Copying: LGPL-2.  See the file COPYING or http://www.gnu.org
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation; either version 2
+    of the License, or (at your option) any later version.
 
-    Copyright (C) 1990-2000 SWI, University of Amsterdam. All rights reserved.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+    As a special exception, if you link this library with other files,
+    compiled with a Free Software compiler, to produce an executable, this
+    library does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however
+    invalidate any other reasons why the executable file might be covered by
+    the GNU General Public License.
 */
 
 :- prolog_load_context(directory, CWD),
@@ -55,15 +73,15 @@ fp(Dir) :-
 	    ml_file(Ext),
 	    file_base_name(File, Base),
 	    \+ blocked(Base),
-	    format(user_error, '~w ... ', [Base]),
+	    debug(sgml(test), '~w ... ', [Base]),
 	    (	\+ utf8(Base)
-	    ->  format(user_error, ' (ISO Latin-1) ... ', []),
+	    ->  debug(sgml(test), ' (ISO Latin-1) ... ', []),
 		fixed_point(File, iso_latin_1)
 	    ;	true
 	    ),
-	    format(user_error, ' (UTF-8) ... ', []),
+	    debug(sgml(test), ' (UTF-8) ... ', []),
 	    fixed_point(File, utf8),
-	    format(user_error, ' done~n', []),
+	    debug(sgml(test), ' done~n', []),
 	    fail
 	;   report_failed
 	).
@@ -98,9 +116,9 @@ report_failed :-
 	findall(X, failed(X, _), L),
 	length(L, Len),
 	(   Len > 0
-        ->  format('~n*** ~w tests failed ***~n', [Len]),
+        ->  format('~N*** ~w tests failed ***~n', [Len]),
 	    fail
-        ;   format('~nAll tests passed~n', [])
+        ;   format('~NAll read/write roundtrip tests passed~n', [])
 	).
 
 
@@ -120,15 +138,24 @@ fixed_point(File, Encoding) :-
 	fp(File, Encoding, load_html_file, html_write).
 
 fp(File, Encoding, Load, Write) :-
-	put_char(user_error, r),
+	(   debugging(sgml(test))
+	->  put_char(user_error, r)
+	;   true
+	),
 	call(Load, File, Term),
 	tmp_file(xml, TmpFile),
 	open(TmpFile, write, TmpOut, [encoding(Encoding)]),
-	put_char(user_error, w),
+	(   debugging(sgml(test))
+	->  put_char(user_error, w)
+	;   true
+	),
 	call(Write, TmpOut, Term, []),
 	close(TmpOut),
 %	cat(TmpFile, Encoding),
-	put_char(user_error, r),
+	(   debugging(sgml(test))
+	->  put_char(user_error, r)
+	;   true
+	),
 	call(Load, TmpFile, Term2),
 	delete_file(TmpFile),
 	(   eq(Term, Term2)

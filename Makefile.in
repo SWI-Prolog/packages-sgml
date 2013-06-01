@@ -64,8 +64,8 @@ html-install::
 		$(INSTALL_DATA) sgml.html $(DESTDIR)$(PKGDOC)
 
 check::
-		$(PL) -f Test/test.pl -g test,halt -t 'halt(1)'
-		$(PL) -f Test/wrtest.pl -g test,halt -t 'halt(1)'
+		$(PL) -f Test/test.pl -q -g test,halt -t 'halt(1)'
+		$(PL) -f Test/wrtest.pl -q -g test,halt -t 'halt(1)'
 
 uninstall::
 		(cd $(PLBASE)/$(SOLIB)/$(INSTALL_PLARCH) && rm -f $(TARGETS))
