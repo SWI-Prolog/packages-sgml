@@ -319,7 +319,7 @@ emit([H|T], Out, State) :- !,
 	emit(H, Out, State),
 	emit(T, Out, State).
 emit(CDATA, Out, State) :-
-	atom(CDATA), !,
+	atomic(CDATA), !,
 	sgml_write_content(Out, CDATA, State).
 emit(Element, Out, State) :-
 	\+ \+ emit_element(Element, Out, State).
@@ -688,15 +688,25 @@ write_quoted_list([H|T], Out, Escape, EntityMap) :-
 
 
 sgml_write_content(Out, Value, State) :-
-	atom(Value), !,
+	is_text(Value), !,
 	get_state(State, entity_map, EntityMap),
 	write_quoted(Out, Value, "<&>", EntityMap).
 sgml_write_content(Out, Value, _) :-
 	write(Out, Value).
 
+is_text(Value) :- atom(Value), !.
+is_text(Value) :- string(Value), !.
+
 write_quoted(Out, Atom, Escape, EntityMap) :-
+	atom(Atom), !,
 	atom_codes(Atom, Codes),
 	writeq(Codes, Out, Escape, EntityMap).
+write_quoted(Out, String, Escape, EntityMap) :-
+	string(String), !,
+	string_to_list(String, Codes),
+	writeq(Codes, Out, Escape, EntityMap).
+write_quoted(_, String, _, _) :-
+	type_error(atom_or_string, String).
 
 
 writeq([], _, _, _).
