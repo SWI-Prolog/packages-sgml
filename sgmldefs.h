@@ -60,7 +60,7 @@ typedef wchar_t ichar;			/* input character */
 
 #define INPUT_CHARSET_SIZE	256	/* for now */
 #define SYMBOLHASHSIZE		256
-#define MAXSTRINGLEN	       2048
+#define MAXSTRINGLEN	       4096
 #define MAXNMLEN		256
 #define MAXDECL		      10240
 #define MAXATTELEM		256	/* #elements in one ATTLIST */

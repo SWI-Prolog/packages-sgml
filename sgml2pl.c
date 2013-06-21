@@ -473,6 +473,10 @@ pl_set_sgml_parser(term_t parser, term_t option)
       set_dialect_dtd(p->dtd, DL_XMLNS);
     else if ( streq(s, "sgml") )
       set_dialect_dtd(p->dtd, DL_SGML);
+    else if ( streq(s, "html") )
+      set_dialect_dtd(p->dtd, DL_HTML);
+    else if ( streq(s, "html5") )
+      set_dialect_dtd(p->dtd, DL_HTML5);
     else
       return sgml2pl_error(ERR_DOMAIN, "sgml_dialect", a);
   } else if ( PL_is_functor(option, FUNCTOR_space1) )
@@ -653,6 +657,10 @@ pl_get_sgml_parser(term_t parser, term_t option)
     switch(p->dtd->dialect)
     { case DL_SGML:
 	return PL_unify_atom_chars(a, "sgml");
+      case DL_HTML:
+	return PL_unify_atom_chars(a, "html");
+      case DL_HTML5:
+	return PL_unify_atom_chars(a, "html5");
       case DL_XML:
 	return PL_unify_atom_chars(a, "xml");
       case DL_XMLNS:

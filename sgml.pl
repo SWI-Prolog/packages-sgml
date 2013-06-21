@@ -191,7 +191,13 @@ diagnosed to mess with the entity resolution by Fabien Todescato.
 :- multifile
 	dtd_alias/2.
 
-dtd_alias(html, 'HTML4').
+:- create_prolog_flag(html_dialect, html5, [type(atom)]).
+
+dtd_alias(html4, 'HTML4').
+dtd_alias(html5, 'HTML5').
+dtd_alias(html,  DTD) :-
+	current_prolog_flag(html_dialect, Dialect),
+	dtd_alias(Dialect, DTD).
 
 %%	dtd(+Type, -DTD) is det.
 %
@@ -499,11 +505,11 @@ load_html_file(File, DOM) :-
 %	  - shorttag(false)
 
 load_html(File, Term, M:Options) :-
-	dtd(html, DTD),
+	current_prolog_flag(html_dialect, Dialect),
+	dtd(Dialect, DTD),
 	merge_options(Options,
 		      [ dtd(DTD),
-			dialect(sgml),
-			shorttag(false)
+			dialect(Dialect)
 		      ], Options1),
 	load_structure(File, Term, M:Options1).
 

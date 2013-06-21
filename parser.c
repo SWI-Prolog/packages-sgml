@@ -402,7 +402,7 @@ entity_file(dtd *dtd, dtd_entity *e)
 			    e->name->name,
 			    e->extid,
 			    e->exturl,
-			    dtd->dialect != DL_SGML);
+			    IS_XML_DIALECT(dtd->dialect));
 
       if ( f )				/* owned by catalog */
       { ichar *file;
@@ -630,7 +630,7 @@ expand_entities(dtd_parser *p, const ichar *in, int len, ocharbuf *out)
 	continue;
       }
 
-      if ( dtd->dialect != DL_SGML )
+      if ( IS_XML_DIALECT(dtd->dialect) )
 	gripe(p, ERC_SYNTAX_ERROR, L"Illegal entity", estart);
     }
 
@@ -1148,7 +1148,7 @@ itake_unquoted(dtd_parser *p, ichar const *in, ichar *out, int len)
   while ( !HasClass(dtd, c, CH_BLANK) &&
 	  c != '\0' )
   { if ( c == end2 && (dtd->shorttag ||
-		       (in[1] == '\0' && dtd->dialect != DL_SGML)) )
+		       (in[1] == '\0' && IS_XML_DIALECT(dtd->dialect))) )
       break;
 
     if ( --len > 0 )
@@ -1233,11 +1233,12 @@ set_dialect_dtd(dtd *dtd, dtd_dialect dialect)
 
     switch(dialect)
     { case DL_SGML:
-      { dtd->case_sensitive = FALSE;
+      case DL_HTML:
+      case DL_HTML5:
+	dtd->case_sensitive = FALSE;
 	dtd->space_mode = SP_SGML;
-	dtd->shorttag = TRUE;
+	dtd->shorttag = (dialect == DL_SGML);
 	break;
-      }
       case DL_XML:
       case DL_XMLNS:
       { const ichar **el;
@@ -2867,7 +2868,7 @@ open_element(dtd_parser *p, dtd_element *e, int warn)
   { const ichar *file;
 
     file = find_in_catalogue(CAT_DOCTYPE, e->name->name, NULL, NULL,
-			     p->dtd->dialect != DL_SGML);
+			     IS_XML_DIALECT(p->dtd->dialect));
 
     if ( file && !is_url(file) )
     { dtd_parser *clone = clone_dtd_parser(p);
@@ -3256,9 +3257,11 @@ process_attributes(dtd_parser *p, dtd_element *e, const ichar *decl,
 	  add_attribute(p, e, a);
 
 	  if ( !e->undefined &&
-	       !(dtd->dialect != DL_SGML &&
+	       !(IS_XML_DIALECT(dtd->dialect) &&
 		 (istreq(L"xmlns", nm->name) ||
-		  istrprefix(L"xmlns:", nm->name))) )
+		  istrprefix(L"xmlns:", nm->name))) &&
+	       !(dtd->dialect == DL_HTML5 &&
+		 istrprefix(L"data-", nm->name)) )
 	    gripe(p, ERC_NO_ATTRIBUTE, e->name->name, nm->name);
 	}
 	atts[attn].definition = a;
@@ -3277,7 +3280,7 @@ process_attributes(dtd_parser *p, dtd_element *e, const ichar *decl,
 
 	    for(nl=a->typeex.nameof; nl; nl = nl->next)
 	    { if ( nl->value == nm )
-	      { if ( dtd->dialect != DL_SGML )
+	      { if ( IS_XML_DIALECT(dtd->dialect) )
 		  gripe(p, ERC_SYNTAX_WARNING,
 			"Value short-hand in XML mode", decl);
 		atts[attn].flags	= 0;
@@ -3427,7 +3430,7 @@ process_begin_element(dtd_parser *p, const ichar *decl)
     if ( (s=process_attributes(p, e, decl, atts, &natts)) )
       decl=s;
 
-    if ( dtd->dialect != DL_SGML )
+    if ( IS_XML_DIALECT(dtd->dialect) )
     { if ( (s=isee_func(dtd, decl, CF_ETAGO2)) )
       { empty = TRUE;			/* XML <tag/> */
 	decl = s;
@@ -3436,10 +3439,17 @@ process_begin_element(dtd_parser *p, const ichar *decl)
       if ( dtd->dialect == DL_XMLNS )
 	update_xmlns(p, e, natts, atts);
 #endif
-      if ( dtd->dialect != DL_SGML )
-	update_space_mode(p, e, natts, atts);
-    } else
+      update_space_mode(p, e, natts, atts);
+    } else				/* SGML, HTML */
     { int i;
+
+      if ( (s=isee_func(dtd, decl, CF_ETAGO2)) )
+      { if ( !IS_HTML_DIALECT(dtd->dialect) )
+	  gripe(p, ERC_SYNTAX_WARNING, L"Empty tag (<../>) in SGML mode", decl);
+
+	empty = TRUE;			/* HTML5 <tag/> */
+	decl = s;
+      }
 
       for(i=0; i<natts; i++)
       { if ( atts[i].definition->def == AT_CONREF )
@@ -3455,7 +3465,7 @@ process_begin_element(dtd_parser *p, const ichar *decl)
       natts = add_default_attributes(p, e, natts, atts);
 
     if ( empty ||
-	 (dtd->dialect == DL_SGML &&
+	 (IS_SGML_DIALECT(dtd->dialect) &&
 	  e->structure &&
 	  e->structure->type == C_EMPTY &&
 	  !e->undefined) )
@@ -3576,7 +3586,7 @@ process_doctype(dtd_parser *p, const ichar *decl, const ichar *decl0)
     else
       file = istrdup(find_in_catalogue(CAT_DOCTYPE,
 				       dtd->doctype, NULL, NULL,
-				       dtd->dialect != DL_SGML));
+				       IS_XML_DIALECT(dtd->dialect)));
 
     if ( !file )
     { gripe(p, ERC_EXISTENCE, L"DTD", dtd->doctype);
@@ -3761,6 +3771,8 @@ process_pi(dtd_parser *p, const ichar *decl)
 
     switch(dtd->dialect)
     { case DL_SGML:
+      case DL_HTML:
+      case DL_HTML5:
 	set_dialect_dtd(dtd, DL_XML);
         break;
       case DL_XML:
@@ -4940,7 +4952,7 @@ reprocess:
 	add_icharbuf(p->buffer, chr);
 	p->state = S_ENT;
       } else
-      {	if ( dtd->dialect != DL_SGML )
+      {	if ( IS_XML_DIALECT(dtd->dialect) )
 	{ wchar_t buf[3];
 	  buf[0] = '&';
 	  buf[1] = chr;
@@ -5125,7 +5137,7 @@ reprocess:
     }
     case S_CMT1:			/* <!-- */
     { if ( f[CF_CMT] == chr )		/* <!--- */
-      { if ( dtd->dialect != DL_SGML )
+      { if ( IS_XML_DIALECT(dtd->dialect) )
 	  gripe(p, ERC_SYNTAX_ERROR, L"Illegal comment", L"<!---");
       }
       p->state = S_CMT;
@@ -5149,7 +5161,7 @@ reprocess:
 	  (*p->on_decl)(p, (ichar*)"");
 	p->state = S_PCDATA;
       } else
-      { if ( dtd->dialect != DL_SGML )
+      { if ( IS_XML_DIALECT(dtd->dialect) )
 	  gripe(p, ERC_SYNTAX_ERROR, L"Illegal comment", L"");
 	if ( f[CF_CMT] != chr )
 	  p->state = S_CMT;
