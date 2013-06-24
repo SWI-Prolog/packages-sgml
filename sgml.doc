@@ -38,6 +38,7 @@ document's DTD. The parser is designed to be small, fast and flexible.
 \newpage
 
 \section{Introduction}
+\label{sec:sgml-intro}
 
 Markup languages have recently regained popularity for two reasons. One
 is document exchange, which is largely based on HTML, an instance of
@@ -61,6 +62,7 @@ an SP interface to SWI-Prolog written by Anjo Anjewierden.
 
 
 \section{Bluffer's Guide}
+\label{sec:sgml-bluffers-guide}
 
 This package allows you to parse SGML, XML and HTML data into a Prolog
 data structure. The high-level interface defined in \pllib{sgml}
@@ -135,6 +137,7 @@ atom representing the element content or attribute value.%
 
 
 \subsection{`Goodies' Predicates}
+\label{sec:sgml-goodies}
 
 These predicates are for basic use of the library, converting entire and
 self-contained files in SGML, HTML, or XML into a structured term. They
@@ -160,8 +163,10 @@ obtained using \term{dtd}{html, DTD}. See dtd/2.
 
 
 \section{Predicate Reference}
+\label{sec:sgml-predicates}
 
 \subsection{Loading Structured Documents}
+\label{sec:sgml-load-structure}
 
 SGML or XML files are loaded through the common predicate
 load_structure/3. This is a predicate with many options. For
@@ -460,6 +465,7 @@ Same as iri_xml_namespace/3, but avoids creating an atom for the
 
 
 \subsection{DTD-Handling}
+\label{sec:sgml-dtd}
 
 The DTD (\textbf{D}ocument \textbf{T}ype \textbf{D}efinition) is a
 separate entity in sgml2pl, that can be created, freed, defined and
@@ -631,6 +637,7 @@ Unify \arg{Decl} with a list if \term{system}{+File} and/or
 \end{description}
 
 \subsubsection{The DOCTYPE declaration}
+\label{sec:sgml-doctype}
 
 As this parser allows for processing partial documents and process the
 DTD separately, the DOCTYPE declaration plays a special role.
@@ -670,6 +677,7 @@ elements_in_xml_document(File, Elements) :-
 \end{code}
 
 \subsection{Parsing Primitives}
+\label{sec:sgml-primitives}
 
 \begin{description}
     \predicate{new_sgml_parser}{2}{-Parser, +Options}
@@ -1007,6 +1015,7 @@ identifier. See \secref{xmlns} for details.
 \end{description}
 
 \subsubsection{Partial Parsing}
+\label{sec:sgml-partial-documents}
 
 In some cases, part of a document needs to be parsed. One option is to
 use load_structure/2 or one of its variations and extract
@@ -1054,6 +1063,7 @@ on_begin(Tag, Attr, Parser) :-
 \end{code}
 
 \subsection{Type checking}
+\label{sec:sgml-type}
 
 \begin{description}
     \predicate{xml_is_dom}{1}{@{Term}}
@@ -1061,7 +1071,8 @@ True if \arg{Term} is an SGML/XML term as produced by one of the above
 predciates and acceptable by xml_write/3 and friends.
 \end{description}
 
-\section{Stream encoding issues}		\label{sec:encoding}
+\section{Stream encoding issues}
+\label{sec:sgml-encoding}
 
 The parser can deal with ISO Latin-1 and UTF-8 encoded files, doing
 decoding based on the encoding argument provided to
@@ -1135,6 +1146,7 @@ rdf_element(Id, Term) :-
 \end{code}
 
 \section{External entities}
+\label{sec:sgml-external-entities}
 
 While processing an SGML document the document may refer to external
 data. This occurs in three places: external parameter entities, normal
@@ -1186,8 +1198,10 @@ resources can be used to store external entities.
 \input{pwp.tex}
 
 \section{Writing markup}
+\label{sec:sgml-write-markup}
 
 \subsection{Writing documents}
+\label{sec:sgml-write}
 
 The library \pllib{sgml_write} provides the inverse of the parser,
 converting the parser's output back into a file. This process is fairly
@@ -1265,6 +1279,7 @@ xml_write/3.
 
 
 \subsection{XML Quote primitives}
+\label{sec:xml-escaping}
 
 In most cases, the preferred way to create an XML document is to create
 a Prolog tree of \term{element}{Name, Attributes, Content} terms and
@@ -1313,7 +1328,8 @@ Backward compatibility version for xml_name/2. Assumes \const{ascii}
 encoding.
 \end{description}
 
-\section{Unsupported features}
+\section{Unsupported SGML features}
+\label{sec:sgml-unsupported}
 
 The current parser is rather limited. While it is able to deal with many
 serious documents, it omits several less-used features of SGML and XML.
@@ -1365,28 +1381,8 @@ In particular, XInclude is not implemented because the designers of
 XInclude can't make up their minds whether to base it on elements or
 attributes yet, let alone details.
 
-\section{Installation}
-
-\subsection{Unix systems}
-
-Installation on Unix system uses the commonly found \program{configure},
-\program{make} and \program{make install} sequence. SWI-Prolog
-should be installed before building this package. If SWI-Prolog is not
-installed as \program{pl}, the environment variable \env{PL} must be set
-to the name of the SWI-Prolog executable. Installation is now
-accomplished using:
-
-\begin{code}
-% ./configure
-% make
-% make install
-\end{code}
-
-This installs the foreign libraries in \file{$PLBASE/lib/$PLARCH} and
-the Prolog library files in \file{$PLBASE/library}, where \file{$PLBASE}
-refers to the SWI-Prolog `home-directory'.
-
 \section{Acknowledgements}
+\label{sec:sgml-acknowledgements}
 
 The Prolog representation for parsed documents is based on the
 SWI-Prolog interface to SP by Anjo Anjewierden.
