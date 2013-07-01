@@ -672,10 +672,16 @@ sgml_write_attribute(Out, Values, State) :-
 	write_quoted_list(Values, Out, """<&>", EntityMap),
 	put_char(Out, '"').
 sgml_write_attribute(Out, Value, State) :-
+	is_text(Value), !,
 	get_state(State, entity_map, EntityMap),
 	put_char(Out, '"'),
 	write_quoted(Out, Value, """<&>", EntityMap),
 	put_char(Out, '"').
+sgml_write_attribute(Out, Value, _State) :-
+	number(Value), !,
+	write(Out, Value).
+sgml_write_attribute(_, Value, _) :-
+	type_error(sgml_attribute_value, Value).
 
 write_quoted_list([], _, _, _).
 write_quoted_list([H|T], Out, Escape, EntityMap) :-
