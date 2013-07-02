@@ -232,8 +232,9 @@ returned. See \secref{implicitdtd}.
 
     \termitem{dialect}{+Dialect}
 Specify the parsing dialect. Supported are \const{sgml} (default),
-\const{html}, \const{html5}, \const{xml} and \const{xmlns}. See
-the option \const{dialect} of set_sgml_parser/2 for details.
+\const{html4}, \const{html5}, \const{html} (same as \const{html4},
+\const{xml} and \const{xmlns}. See the option \const{dialect} of
+set_sgml_parser/2 for details.
 
     \termitem{shorttag}{+Bool}
 Define whether SHORTTAG abbreviation is accepted.  The default is true
@@ -725,6 +726,8 @@ case-insensitive and standard SGML abbreviation is allowed (abreviated
 attributes and omitted tags).
 
     \termitem{html}{}
+\nodescription
+    \termitem{html4}{}
 This is the same as \const{sgml}, but implies \term{shorttag}{false}
 and accepts XML empty element declarations (e.g.,
 \verb$<img src="..."/>$).

@@ -473,7 +473,7 @@ pl_set_sgml_parser(term_t parser, term_t option)
       set_dialect_dtd(p->dtd, DL_XMLNS);
     else if ( streq(s, "sgml") )
       set_dialect_dtd(p->dtd, DL_SGML);
-    else if ( streq(s, "html") )
+    else if ( streq(s, "html") || streq(s, "html4") )
       set_dialect_dtd(p->dtd, DL_HTML);
     else if ( streq(s, "html5") )
       set_dialect_dtd(p->dtd, DL_HTML5);

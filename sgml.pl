@@ -501,8 +501,8 @@ load_html_file(File, DOM) :-
 %
 %	  - dtd(DTD)
 %	  Pass the DTD for HTML as obtained using dtd(html, DTD).
-%	  - dialect(sgml)
-%	  - shorttag(false)
+%	  - dialect(Dialect)
+%	  Current dialect from the Prolog flag =html_dialect=
 
 load_html(File, Term, M:Options) :-
 	current_prolog_flag(html_dialect, Dialect),
