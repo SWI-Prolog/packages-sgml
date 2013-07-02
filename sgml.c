@@ -108,7 +108,7 @@ wprint_escaped(FILE *f, const wchar_t *s, int len)
     } else if (x == '\n')
     { fprintf(f, "\\n");		/* \n */
     } else
-    { fprintf(f, "\\%03o", x);
+      { fprintf(f, "\\%03o", (unsigned int)x);
     }
   }
 }
