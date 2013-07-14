@@ -679,7 +679,7 @@ sgml_write_attribute(Out, Value, State) :-
 	put_char(Out, '"').
 sgml_write_attribute(Out, Value, _State) :-
 	number(Value), !,
-	write(Out, Value).
+	format(Out, '"~w"', [Value]).
 sgml_write_attribute(_, Value, _) :-
 	type_error(sgml_attribute_value, Value).
 
