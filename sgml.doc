@@ -261,6 +261,10 @@ to be a sequence of digits. The \const{-} sign is not allowed and
 handle numeric attributes as tokens. If conversion to integer is
 enabled, negative values are silently accepted.
 
+    \termitem{case_sensitive_attributes}{+Boolean}
+Treat attribute values as case sensitive. The default is \const{true}
+for XML and \const{false} for SGML and HTML dialects.
+
     \termitem{defaults}{+Bool}
 Determines how default and fixed values from the DTD are used.  By
 default, defaults are included in the output if they do not appear in

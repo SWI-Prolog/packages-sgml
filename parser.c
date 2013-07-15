@@ -1236,6 +1236,7 @@ set_dialect_dtd(dtd *dtd, dtd_dialect dialect)
       case DL_HTML:
       case DL_HTML5:
 	dtd->case_sensitive = FALSE;
+	dtd->att_case_sensitive = FALSE;
 	dtd->space_mode = SP_SGML;
 	dtd->shorttag = (dialect == DL_SGML);
 	break;
@@ -1245,6 +1246,7 @@ set_dialect_dtd(dtd *dtd, dtd_dialect dialect)
 	dtd_parser p;
 
 	dtd->case_sensitive = TRUE;
+	dtd->att_case_sensitive = TRUE;
 	dtd->encoding = SGML_ENC_UTF8;
 	dtd->space_mode = SP_PRESERVE;
 	dtd->shorttag = FALSE;
@@ -1268,6 +1270,9 @@ set_option_dtd(dtd *dtd, dtd_option option, int set)
 { switch(option)
   { case OPT_SHORTTAG:
       dtd->shorttag = set;
+      break;
+    case OPT_CASE_SENSITIVE_ATTRIBUTES:
+      dtd->att_case_sensitive = set;
       break;
   }
 
@@ -3107,7 +3112,7 @@ get_attribute_value(dtd_parser *p, ichar const *decl, sgml_attribute *att)
 	  : HasClass(dtd, c, CH_NAME) ? NAM_FIRST : /* oops! */ ANY_OTHER;
 	if ( d != buf )
 	  *d++ = ' ';
-	if ( dtd->case_sensitive )
+	if ( dtd->att_case_sensitive )
 	{ *d++ = c;
 	  while ((c = *s++) != '\0' && !HasClass(dtd, c, CH_BLANK))
 	  { token |= HasClass(dtd, c, CH_DIGIT) ? 0
@@ -3145,7 +3150,7 @@ get_attribute_value(dtd_parser *p, ichar const *decl, sgml_attribute *att)
     if ( token == YET_EMPTY || (token & ANY_OTHER) != 0)
       gripe(p, ERC_SYNTAX_WARNING, L"Attribute value requires quotes", buf);
 
-    if (!dtd->case_sensitive && att->definition->type != AT_CDATA)
+    if (!dtd->att_case_sensitive && att->definition->type != AT_CDATA)
       istrlower(buf);
   }
 

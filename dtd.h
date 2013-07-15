@@ -168,7 +168,8 @@ typedef enum
 #define IS_XML_DIALECT(d)  ((int)(d) >= (int)DL_XML)
 
 typedef enum
-{ OPT_SHORTTAG				/* do/don't accept shorttag */
+{ OPT_SHORTTAG,				/* do/don't accept shorttag */
+  OPT_CASE_SENSITIVE_ATTRIBUTES		/* attribute values case(in)sensitive */
 } dtd_option;
 
 
@@ -425,6 +426,7 @@ typedef struct _dtd
   dtd_dialect		dialect;	/* DL_* */
   int			case_sensitive;	/* Tags are case-sensitive */
   int			ent_case_sensitive; /* Entities are case-sensitive */
+  int			att_case_sensitive; /* Att values are case-sensitive */
   ichar		       *doctype;	/* defined document type */
   dtd_symbol_table     *symbols;	/* symbol-table */
   dtd_entity           *pentities;	/* defined parameter entities */

@@ -165,6 +165,7 @@ static functor_t FUNCTOR_allowed1;
 static functor_t FUNCTOR_context1;
 static functor_t FUNCTOR_defaults1;
 static functor_t FUNCTOR_shorttag1;
+static functor_t FUNCTOR_case_sensitive_attributes1;
 static functor_t FUNCTOR_qualify_attributes1;
 static functor_t FUNCTOR_encoding1;
 static functor_t FUNCTOR_xmlns1;
@@ -234,6 +235,7 @@ initConstants()
   FUNCTOR_context1       = mkfunctor("context", 1);
   FUNCTOR_defaults1	 = mkfunctor("defaults", 1);
   FUNCTOR_shorttag1	 = mkfunctor("shorttag", 1);
+  FUNCTOR_case_sensitive_attributes1 = mkfunctor("case_sensitive_attributes", 1);
   FUNCTOR_qualify_attributes1 = mkfunctor("qualify_attributes", 1);
   FUNCTOR_encoding1	 = mkfunctor("encoding", 1);
   FUNCTOR_xmlns1	 = mkfunctor("xmlns", 1);
@@ -531,6 +533,15 @@ pl_set_sgml_parser(term_t parser, term_t option)
       return sgml2pl_error(ERR_TYPE, "boolean", a);
 
     set_option_dtd(p->dtd, OPT_SHORTTAG, val);
+  } else if ( PL_is_functor(option, FUNCTOR_case_sensitive_attributes1) )
+  { term_t a = PL_new_term_ref();
+    int val;
+
+    _PL_get_arg(1, option, a);
+    if ( !PL_get_bool(a, &val) )
+      return sgml2pl_error(ERR_TYPE, "boolean", a);
+
+    set_option_dtd(p->dtd, OPT_CASE_SENSITIVE_ATTRIBUTES, val);
   } else if ( PL_is_functor(option, FUNCTOR_number1) )
   { term_t a = PL_new_term_ref();
     char *s;
