@@ -355,11 +355,12 @@ load_structure(stream(In), Term, M:Options) :- !,
 	;   ExplicitDTD = false,
 	    Options1 = Options
 	),
+	move_front(Options1, dialect(_), Options2), % dialect sets defaults
 	setup_call_cleanup(
 	    new_sgml_parser(Parser,
 			    [ dtd(DTD)
 			    ]),
-	    parse(Parser, M:Options1, TermRead, In),
+	    parse(Parser, M:Options2, TermRead, In),
 	    free_sgml_parser(Parser)),
 	(   ExplicitDTD == true
 	->  (   DTD = dtd(_, DocType),
@@ -378,6 +379,12 @@ load_structure(File, Term, Options) :-
 	    open(File, read, In, [type(binary)]),
 	    load_structure(stream(In), Term, Options),
 	    close(In)).
+
+move_front(Options0, Opt, Options) :-
+	selectchk(Opt, Options0, Options1), !,
+	Options = [Opt|Options1].
+move_front(Options, _, Options).
+
 
 parse(Parser, M:Options, Document, In) :-
 	set_parser_options(Options, Parser, In, Options1),
