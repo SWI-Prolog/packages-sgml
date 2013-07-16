@@ -291,7 +291,7 @@ unify_dtd(term_t t, dtd *dtd)
 { if ( dtd->doctype )
     return PL_unify_term(t, PL_FUNCTOR, FUNCTOR_dtd2,
 			 PL_POINTER, dtd,
-			 PL_CHARS, dtd->doctype);
+			 PL_NWCHARS, (size_t)-1, dtd->doctype);
   else
     return PL_unify_term(t, PL_FUNCTOR, FUNCTOR_dtd2,
 			 PL_POINTER, dtd,
