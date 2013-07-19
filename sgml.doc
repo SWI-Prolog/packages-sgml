@@ -248,7 +248,7 @@ unquoted URLs containing \chr{/}.
 Sets the `space-handling-mode' for the initial environment. This mode is
 inherited by the other environments, which can override the inherited
 value using the XML reserved attribute \const{xml:space}. See
-\secref{space}.
+\secref{xml-whitespace}.
 
     \termitem{number}{+NumberMode}
 Determines how attributes of type \const{NUMBER} and \const{NUMBERS} are
@@ -295,7 +295,7 @@ errors it encounters.
 \end{description}
 \end{description}
 
-\subsection{Handling white-space}		\label{sec:space}
+\subsection{Handling white-space}		\label{sec:xml-whitespace}
 
 SGML2PL has four modes for handling white-space. The initial mode can be
 switched using the \term{space}{SpaceMode} option to
@@ -770,7 +770,7 @@ attributes are often interpreted in the namespace of their element.
 
     \termitem{space}{SpaceMode}
 Define the initial handling of white-space in PCDATA.  This attribute is
-described in \secref{space}.
+described in \secref{xml-whitespace}.
 
     \termitem{number}{NumberMode}
 If \const{token} (default), attributes of type number are passed as a
