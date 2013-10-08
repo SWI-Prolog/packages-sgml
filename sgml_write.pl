@@ -709,7 +709,7 @@ write_quoted(Out, Atom, Escape, EntityMap) :-
 	writeq(Codes, Out, Escape, EntityMap).
 write_quoted(Out, String, Escape, EntityMap) :-
 	string(String), !,
-	string_to_list(String, Codes),
+	string_codes(String, Codes),
 	writeq(Codes, Out, Escape, EntityMap).
 write_quoted(_, String, _, _) :-
 	type_error(atom_or_string, String).

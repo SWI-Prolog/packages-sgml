@@ -614,7 +614,7 @@ pwp_use_codes(Atomic, S0, S) :-
 	atomic(Atomic), !,
 	(   number(Atomic) -> number_codes(Atomic, Codes)
 	;   atom(Atomic)   -> atom_codes(Atomic, Codes)
-	;   string(Atomic) -> string_to_list(Atomic, Codes)
+	;   string(Atomic) -> string_codes(Atomic, Codes)
 	;   pwp_format('~w', [Atomic], S0, S)
 	),
 	append(Codes, S, S0).
