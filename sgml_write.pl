@@ -327,7 +327,7 @@ emit(Element, Out, State) :-
 emit_element(pi(PI), Out, State) :- !,
 	get_state(State, entity_map, EntityMap),
 	write(Out, <?),
-	write_quoted(Out, PI, "", EntityMap),
+	write_quoted(Out, PI, '', EntityMap),
 	(   get_state(State, dialect, xml) ->
 	    write(Out, ?>)
 	;   write(Out, >)
@@ -669,13 +669,13 @@ sgml_write_attribute(Out, Values, State) :-
 	is_list(Values), !,
 	get_state(State, entity_map, EntityMap),
 	put_char(Out, '"'),
-	write_quoted_list(Values, Out, """<&>", EntityMap),
+	write_quoted_list(Values, Out, '"<&>', EntityMap),
 	put_char(Out, '"').
 sgml_write_attribute(Out, Value, State) :-
 	is_text(Value), !,
 	get_state(State, entity_map, EntityMap),
 	put_char(Out, '"'),
-	write_quoted(Out, Value, """<&>", EntityMap),
+	write_quoted(Out, Value, '"<&>', EntityMap),
 	put_char(Out, '"').
 sgml_write_attribute(Out, Value, _State) :-
 	number(Value), !,
@@ -696,7 +696,7 @@ write_quoted_list([H|T], Out, Escape, EntityMap) :-
 sgml_write_content(Out, Value, State) :-
 	is_text(Value), !,
 	get_state(State, entity_map, EntityMap),
-	write_quoted(Out, Value, "<&>", EntityMap).
+	write_quoted(Out, Value, '<&>', EntityMap).
 sgml_write_content(Out, Value, _) :-
 	write(Out, Value).
 
@@ -715,9 +715,12 @@ write_quoted(_, String, _, _) :-
 	type_error(atom_or_string, String).
 
 
+%%	writeq(+Text:codes, +Out:stream, +Escape:atom, +Escape:assoc) is det.
+
 writeq([], _, _, _).
 writeq([H|T], Out, Escape, EntityMap) :-
-	(   memberchk(H, Escape)
+	(   char_code(HC, H),
+	    sub_atom(Escape, _, _, _, HC)
 	->  write_entity(H, Out, EntityMap)
 	;   H >= 256
 	->  (   stream_property(Out, encoding(Enc)),
