@@ -272,7 +272,7 @@ emit_xml_encoding(_, _).
 %	attribute; so the only time this is useful is when it is illegal!
 
 emit_doctype(_Options, Data, Out) :-
-	(   memberchk(element(html,Att,_), Data)
+	(   Data = [_|_], memberchk(element(html,Att,_), Data)
 	;   Data = element(html,Att,_)
 	),
 	memberchk(version=Version, Att),
@@ -289,8 +289,8 @@ emit_doctype(Options, Data, Out) :-
 	    SysId == (-),
 	    \+ memberchk(doctype(_), Options)
 	),
-	(   Data  =   element(DocType,_,_)
-	;   memberchk(element(DocType,_,_), Data)
+	(   Data = element(DocType,_,_)
+	;   Data = [_|_], memberchk(element(DocType,_,_), Data)
 	;   memberchk(doctype(DocType), Options)
 	),
 	!,
