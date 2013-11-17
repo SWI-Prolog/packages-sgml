@@ -121,6 +121,25 @@ xpath_chk(DOM, Spec, Content) :-
 %	    of the element is the atom `content`.
 %	    $ contains(Haystack, Needle) :
 %	    Succeeds if Needle is a sub-string of Haystack.
+%	    $ XPath :
+%	    Succeeds if XPath matches in the currently selected
+%	    sub-DOM.  Fot example, the following expression finds
+%	    an =h3= element inside a =div= element, where the =div=
+%	    element itself contains an =h2= child with a =strong=
+%	    child.
+%
+%	      ==
+%	      //div(h2/strong)/h3
+%	      ==
+%
+%	    This is equivalent to the conjunction of Xpath goals below.
+%
+%	      ==
+%	         ...,
+%	         xpath(DOM, //div, Div),
+%	         xpath(Div, h2/strong, _),
+%	         xpath(Div, h3, Result)
+%	      ==
 %
 %	Examples:
 %
@@ -331,6 +350,8 @@ xpath_condition(contains(Haystack, Needle), Value) :- !,	% contains(Haystack, Ne
 	(   sub_atom(HaystackValue, _, _, _, NeedleValue)
 	->  true
 	).
+xpath_condition(Spec, Dom) :-
+	in_dom(Spec, Dom, _).
 
 var_or_function(Arg, _, Arg) :-
 	var(Arg), !.
