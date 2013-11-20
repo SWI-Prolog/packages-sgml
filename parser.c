@@ -3024,7 +3024,7 @@ attributes. Basically, if the attribute is quoted, we need:
 	* If CDATA, map all blank to space characters, then expand
 	  entities
 
-	* If !CDATA expand all entities, canonise white space by
+	* If !CDATA expand all entities, canonicalise white space by
 	  deleting leading and trailing space and squishing multiple
 	  space characters to a single (lower for us) case.
 

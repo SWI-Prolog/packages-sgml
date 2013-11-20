@@ -318,7 +318,7 @@ the XML dialect.
 
     \termitem{space}{default}
 In addition to \const{sgml} space-mode, all consequtive white-space is
-reduced to a single space-character. This mode canonises all white
+reduced to a single space-character. This mode canonicalises all white
 space.
 
     \termitem{space}{remove}
@@ -412,7 +412,7 @@ The call-back \const{xmlns} is called as XML namespaces are noticed.
 It can be used to extend a canonical mapping for later use
 by the \const{urlns} call-back. The following illustrates this behaviour.
 Any namespace containing \const{rdf-syntax} in its URL or that is used as
-\const{rdf} namespace is canonised to \const{rdf}. This implies that any
+\const{rdf} namespace is canonicalised to \const{rdf}. This implies that any
 attribute and element name from the RDF namespace appears as
 \verb$rdf:<name>$
 
