@@ -19,6 +19,7 @@
 
 <!-- Added HTML5 named entities *not* included. -->
 <!-- JW: Added role -->
+<!-- JW: Modified id from ID to CDATA as HTML5 allows for arbitrary ids -->
 
 <!ENTITY % global "
     accesskey CDATA #IMPLIED
@@ -29,7 +30,7 @@
     draggable (true | false) #IMPLIED
     dropzone NAMES #IMPLIED
     hidden (hidden) #IMPLIED
-    id ID #IMPLIED
+    id CDATA #IMPLIED
     itemid CDATA #IMPLIED
     itemprop CDATA #IMPLIED
     itemref IDREFS #IMPLIED
