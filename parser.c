@@ -2278,7 +2278,11 @@ process_element_declaraction(dtd_parser *p, const ichar *decl)
   def = new_element_definition(dtd);
   for(i=0; i<en; i++)
   { find_element(dtd, eid[i]);
-    assert(eid[i]->element->structure == NULL);
+    if ( eid[i]->element->structure )
+    { if ( eid[i]->element->structure->type != C_EMPTY )
+	gripe(p, ERC_SYNTAX_WARNING, L"Redefined element", decl);
+      free_element_definition(eid[i]->element->structure);
+    }
     eid[i]->element->structure = def;
     eid[i]->element->undefined = FALSE;
   }
