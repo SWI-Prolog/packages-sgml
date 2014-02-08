@@ -529,10 +529,12 @@ write_mixed_content_element(H, Out, State) :-
 	->  emit(H, Out, State)
 	;   functor(H, pi, 1)
 	->  emit(H, Out, State)
+	;   var(H)
+	->  instantiation_error(H)
 	;   H = sdata(Data)		% cannot be written without entity!
 	->  print_message(warning, sgml_write(sdata_as_cdata(Data))),
 	    sgml_write_content(Out, Data, State)
-	;   assertion(fail)
+	;   type_error(sgml_content, H)
 	).
 
 
