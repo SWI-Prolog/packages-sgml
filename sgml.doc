@@ -1261,7 +1261,6 @@ Set the initial namespace map.  \arg{Map} is a list of
 \const{ident} is added to use xml_write/3 to generate XML
 that is embedded in a larger XML document.
     \termitem{net}{Bool}
-
 Use/do not use \jargon{Null End Tags}. For XML, this applies only to
 empty elements, so you get \verb$<foo/>$ (default,
 \term{net}{true}) or \verb$<foo></foo>$
@@ -1364,7 +1363,7 @@ The SGML SHORTTAG syntax is only partially implemented. Currently,
 \verb$<tag>content</tag>$, which can also be written as
 \verb$<tag>content</>$.
 Empty start tags (\verb$<>$), unclosed start tags
-(\verb$<a<b</verb>) and unclosed end tags (<verb></a<b$) are not
+(\verb$<a<b</verb>$) and unclosed end tags (\verb$<verb></a<b$) are not
 supported.
     \item [SGML declaration]
 The `SGML declaration' is fixed, though most of the parameters are
