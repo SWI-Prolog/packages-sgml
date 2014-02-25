@@ -787,10 +787,13 @@
   %global;
   >
 
+<!-- JW: Added version to accomodate RDFa -->
+
 <!ELEMENT html O O (head, body)>
 <!ATTLIST html
   %global;
   manifest CDATA #IMPLIED
+  version  CDATA #IMPLIED
   >
 
 <!ELEMENT legend - - (%phrase;)*>
