@@ -738,7 +738,7 @@ and accepts XML empty element declarations (e.g.,
 
     \termitem{html5}{}
 In addition to \const{html}, accept attributes named \verb$data-$
-without warning.
+without warning.  This value initialises the charset to UTF-8.
 
     \termitem{xml}{}
 This dialect is selected automatically if the processing instruction

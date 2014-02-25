@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (C): 1985-2013, University of Amsterdam
+    Copyright (C): 1985-2014, University of Amsterdam
 			      VU University Amsterdam
 
     This library is free software; you can redistribute it and/or
@@ -1232,9 +1232,10 @@ set_dialect_dtd(dtd *dtd, dtd_dialect dialect)
   { dtd->dialect = dialect;
 
     switch(dialect)
-    { case DL_SGML:
+    { case DL_HTML5:
+	dtd->encoding = SGML_ENC_UTF8;
+      case DL_SGML:
       case DL_HTML:
-      case DL_HTML5:
 	dtd->case_sensitive = FALSE;
 	dtd->att_case_sensitive = FALSE;
 	dtd->space_mode = SP_SGML;
