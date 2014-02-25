@@ -152,7 +152,7 @@ default option \term{dialect}{sgml}
 Calls load_structure/3 with the given \arg{Options}, using the
 default option \term{dialect}{xml}
 
-    \predicate{load_html}{3}{+Source, :Options}
+    \predicate{load_html}{3}{+Source, -ListOfContent, :Options}
 Calls load_structure/3 with the given \arg{Options}, using the
 default options \term{dialect}{HTMLDialect}, where \arg{HTMLDialect}
 is \const{html4} or \const{html5} (default), depending on the Prolog
