@@ -20,6 +20,7 @@
 <!-- Added HTML5 named entities *not* included. -->
 <!-- JW: Added role -->
 <!-- JW: Modified id from ID to CDATA as HTML5 allows for arbitrary ids -->
+<!-- JW: Extended to accommodate RDFa -->
 
 <!ENTITY % global "
     accesskey CDATA #IMPLIED
@@ -36,7 +37,7 @@
     itemref IDREFS #IMPLIED
     itemscope (itemscope) #IMPLIED
     itemtype CDATA #IMPLIED
-    lang NAME #IMPLIED
+    lang CDATA #IMPLIED
     spellcheck (true | false) #IMPLIED
     style CDATA #IMPLIED
     tabindex CDATA #IMPLIED
@@ -95,7 +96,20 @@
     ontimeupdate CDATA #IMPLIED
     onvolumechange CDATA #IMPLIED
     onwaiting CDATA #IMPLIED
+
     role CDATA #IMPLIED
+
+    vocab CDATA #IMPLIED
+    prefix CDATA #IMPLIED
+    about CDATA #IMPLIED
+    property CDATA #IMPLIED
+    resource CDATA #IMPLIED
+    datatype CDATA #IMPLIED
+    content CDATA #IMPLIED
+    typeof CDATA #IMPLIED
+    inlist CDATA #IMPLIED
+    rev CDATA #IMPLIED
+    rel CDATA #IMPLIED
     ">
 <!ENTITY % phrase "a | area | link | meta | style | abbr | address | audio | b | bdi | bdo | br | button | canvas | cite | code | command | data | datalist | del | em | embed | i | iframe | img | input | ins | kbd | keygen | label | map | mark | menu | meter | noscript | object | output | progress | q | ruby | s | samp | script | section | select | small | span | strong | sub | sup | svg | textarea | time | u | var | video | wbr | (#PCDATA)">
 <!ENTITY % flow "article | aside | blockquote | details | dfn | div | dl | fieldset | figure | footer | form | h1 | h2 | h3 | h4 | h5 | h6 | header | hgroup | hr | nav | ol | p | pre | table | ul | %phrase;">
@@ -107,7 +121,6 @@
   target CDATA #IMPLIED
   download CDATA #IMPLIED
   ping CDATA #IMPLIED
-  rel CDATA #IMPLIED
   media CDATA #IMPLIED
   hreflang NAME #IMPLIED
   type CDATA #IMPLIED
@@ -123,7 +136,6 @@
   target CDATA #IMPLIED
   download CDATA #IMPLIED
   ping CDATA #IMPLIED
-  rel CDATA #IMPLIED
   media CDATA #IMPLIED
   hreflang NAME #IMPLIED
   type CDATA #IMPLIED
@@ -133,7 +145,6 @@
 <!ATTLIST link
   %global;
   href CDATA #IMPLIED
-  rel CDATA #IMPLIED
   media CDATA #IMPLIED
   hreflang NAME #IMPLIED
   type CDATA #IMPLIED
@@ -145,7 +156,6 @@
   %global;
   name NAME #IMPLIED
   http-equiv CDATA #IMPLIED
-  content CDATA #IMPLIED
   charset CDATA #IMPLIED
   >
 
