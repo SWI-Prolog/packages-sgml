@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (C): 1985-2013, University of Amsterdam
+    Copyright (C): 1985-2014, University of Amsterdam
 			      VU University Amsterdam
 
     This library is free software; you can redistribute it and/or
@@ -1171,13 +1171,14 @@ on_end(dtd_parser *p, dtd_element *e)
 
       PL_discard_foreign_frame(fid);
       if ( rc )
-	return TRUE;
+	goto ok;
     }
 
-    pd->exception = PL_exception(0);
-    return FALSE;
+    if ( (pd->exception = PL_exception(0)) )
+      return FALSE;
   }
 
+ok:
   if ( pd->tail && !pd->stopped )
   { if ( !PL_unify_nil(pd->tail) )
       return FALSE;

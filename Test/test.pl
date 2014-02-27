@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@cs.vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (C): 2000-2013, University of Amsterdam
+    Copyright (C): 2000-2014, University of Amsterdam
 			      VU University Amsterdam
 
     This program is free software; you can redistribute it and/or
@@ -48,7 +48,8 @@
 :- dynamic failed/1.
 
 test :-
-	testdir(.).
+	testdir(.),
+	test_callback.
 
 testdir(Dir) :-
 	retractall(failed(_)),
@@ -194,4 +195,37 @@ compare_attributes(A1, A2) :-
 	L1 == L2.
 
 
+		 /*******************************
+		 *	    OTHER TESTS		*
+		 *******************************/
 
+:- thread_local content/1.
+
+test_callback :-
+	retractall(content(_)),
+	File = 'utf8.xml',
+	open(File, read, In),
+	new_sgml_parser(Parser, []),
+        set_sgml_parser(Parser, file(File)),
+        set_sgml_parser(Parser, dialect(xml)),
+	sgml_parse(Parser,
+                   [ source(In),
+                     call(begin, on_begin),
+                     call(end, on_end)
+                   ]),
+        close(In),
+	findall(X, content(X), Xs),
+	length(Xs, 2),
+	maplist(cdata, Xs).
+
+cdata([]).
+cdata([Atom]) :- atom(Atom).
+
+on_begin(name, _Attr, Parser) :-
+	sgml_parse(Parser,
+                   [ document(Content),
+                     parse(content)
+                   ]),
+	assertz(content(Content)).
+
+on_end(_Tag, _Parser).
