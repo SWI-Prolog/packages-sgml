@@ -159,13 +159,16 @@ typedef enum
 { DL_SGML,				/* Use SGML */
   DL_HTML,				/* Pre-HTML5 */
   DL_HTML5,				/* HTML5 extensions of SGML */
+  DL_XHTML,				/* Pre-HTML5 */
+  DL_XHTML5,				/* HTML5 extensions of SGML */
   DL_XML,				/* Use XML */
   DL_XMLNS				/* Use XML + Namespaces */
 } dtd_dialect;
 
 #define IS_SGML_DIALECT(d) ((int)(d) <= (int)DL_HTML5)
-#define IS_HTML_DIALECT(d) ((d) == DL_HTML || (d) == DL_HTML5)
-#define IS_XML_DIALECT(d)  ((int)(d) >= (int)DL_XML)
+#define IS_HTML_DIALECT(d) ((d) >= DL_HTML && (d) <= DL_XHTML5)
+#define IS_HTML5_DIALECT(d) ((d) == DL_HTML5 || (d) == DL_XHTML5)
+#define IS_XML_DIALECT(d)  ((int)(d) >= (int)DL_XHTML)
 
 typedef enum
 { OPT_SHORTTAG,				/* do/don't accept shorttag */
