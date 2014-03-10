@@ -1241,6 +1241,8 @@ set_dialect_dtd(dtd *dtd, dtd_dialect dialect)
 	dtd->space_mode = SP_SGML;
 	dtd->shorttag = (dialect == DL_SGML);
 	break;
+      case DL_XHTML5:
+      case DL_XHTML:
       case DL_XML:
       case DL_XMLNS:
       { const ichar **el;
@@ -3270,7 +3272,7 @@ process_attributes(dtd_parser *p, dtd_element *e, const ichar *decl,
 	       !(IS_XML_DIALECT(dtd->dialect) &&
 		 (istreq(L"xmlns", nm->name) ||
 		  istrprefix(L"xmlns:", nm->name))) &&
-	       !(dtd->dialect == DL_HTML5 &&
+	       !(IS_HTML5_DIALECT(dtd->dialect) &&
 		 istrprefix(L"data-", nm->name)) )
 	    gripe(p, ERC_NO_ATTRIBUTE, e->name->name, nm->name);
 	}
@@ -3577,7 +3579,7 @@ process_doctype(dtd_parser *p, const ichar *decl, const ichar *decl0)
     et->type = ET_PUBLIC;
     decl = s;
   } else if ( isee_func(dtd, decl, CF_DSO) )
-    goto local;
+    goto local;				/* <!DOCTYPE type [ ... */
 
   if ( et )
   { et->name = id;
@@ -3781,10 +3783,16 @@ process_pi(dtd_parser *p, const ichar *decl)
 
     switch(dtd->dialect)
     { case DL_SGML:
-      case DL_HTML:
-      case DL_HTML5:
 	set_dialect_dtd(dtd, DL_XML);
         break;
+      case DL_HTML:
+	set_dialect_dtd(dtd, DL_XHTML);
+        break;
+      case DL_HTML5:
+	set_dialect_dtd(dtd, DL_XHTML5);
+        break;
+      case DL_XHTML:
+      case DL_XHTML5:
       case DL_XML:
       case DL_XMLNS:
 	break;
