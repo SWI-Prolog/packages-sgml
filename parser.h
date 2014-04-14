@@ -185,6 +185,7 @@ typedef struct _dtd_parser
   data_mode dmode;			/* How to handle characters */
   int	   first;			/* Just seen <tag> */
   int	   waiting_for_net;		/* waiting for / in <shorttag/mode/ */
+  size_t max_memory;			/* maximum buffer size */
   icharbuf *buffer;			/* buffer for temp data */
   ocharbuf *cdata;			/* collected character data */
   int	   blank_cdata;			/* CDATA is all blank */

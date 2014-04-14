@@ -295,6 +295,10 @@ errors it encounters.
 	\begin{quote}
 	\term{error}{limit_exceeded(max_errors, Max), _}
 	\end{quote}
+
+    \termitem{max_memory}{+Max}
+Sets the maximum buffer size in bytes available for input data and CDATA output. If this limit is reached a resource error is raised. Using \term{max_memory}{0} (the default) means no resource limit will be enforced.
+
 \end{description}
 \end{description}
 

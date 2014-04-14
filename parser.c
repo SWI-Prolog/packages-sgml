@@ -3098,7 +3098,7 @@ get_attribute_value(dtd_parser *p, ichar const *decl, sgml_attribute *att)
   if ( end != NULL )
   { ocharbuf out;
 
-    init_ocharbuf(&out);
+    init_ocharbuf(&out, p->max_memory);
     expand_entities(p, start, len, &out);
 
     if ( att->definition->type == AT_CDATA )
@@ -3639,7 +3639,7 @@ local:
       inc_location(&p->location, *q);
     p->dmode = DM_DTD;
     p->state = S_PCDATA;
-    p->buffer = new_icharbuf();
+    p->buffer = new_icharbuf(p->max_memory);
     p->utf8_decode = FALSE;
 
     for( ; *s; s++ )
@@ -3955,8 +3955,8 @@ new_dtd_parser(dtd *dtd)
   p->mark_state	 = MS_INCLUDE;
   p->dmode       = DM_DTD;
   p->encoded	 = TRUE;		/* encoded octet stream */
-  p->buffer	 = new_icharbuf();
-  p->cdata	 = new_ocharbuf();
+  p->buffer	 = new_icharbuf(0);
+  p->cdata	 = new_ocharbuf(0);
   p->event_class = EV_EXPLICIT;
   set_src_dtd_parser(p, IN_NONE, NULL);
 
@@ -3977,8 +3977,8 @@ clone_dtd_parser(dtd_parser *p)
   clone->state	      =	S_PCDATA;
   clone->mark_state   =	MS_INCLUDE;
   clone->dmode	      =	DM_DTD;
-  clone->buffer	      =	new_icharbuf();
-  clone->cdata	      =	new_ocharbuf();
+  clone->buffer	      =	new_icharbuf(clone->max_memory);
+  clone->cdata	      =	new_ocharbuf(clone->max_memory);
 
   return clone;
 }
@@ -4770,6 +4770,13 @@ putchar_dtd_parser(dtd_parser *p, int chr)
   int lpos = p->location.linepos;
 
   p->location.charpos++;		/* TBD: actually `bytepos' */
+
+  if ( p->buffer->limit_reached )
+  { return gripe(p, ERC_RESOURCE, L"input buffer");
+  }
+  if ( p->cdata->limit_reached )
+  { return gripe(p, ERC_RESOURCE, L"CDATA buffer");
+  }
 
 #ifdef UTF8
   if ( p->state == S_UTF8 )

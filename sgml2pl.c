@@ -167,6 +167,7 @@ static functor_t FUNCTOR_defaults1;
 static functor_t FUNCTOR_shorttag1;
 static functor_t FUNCTOR_case_sensitive_attributes1;
 static functor_t FUNCTOR_system_entities1;
+static functor_t FUNCTOR_max_memory1;
 static functor_t FUNCTOR_qualify_attributes1;
 static functor_t FUNCTOR_encoding1;
 static functor_t FUNCTOR_xmlns1;
@@ -238,6 +239,7 @@ initConstants()
   FUNCTOR_shorttag1	 = mkfunctor("shorttag", 1);
   FUNCTOR_case_sensitive_attributes1 = mkfunctor("case_sensitive_attributes", 1);
   FUNCTOR_system_entities1 = mkfunctor("system_entities", 1);
+  FUNCTOR_max_memory1	 = mkfunctor("max_memory", 1);
   FUNCTOR_qualify_attributes1 = mkfunctor("qualify_attributes", 1);
   FUNCTOR_encoding1	 = mkfunctor("encoding", 1);
   FUNCTOR_xmlns1	 = mkfunctor("xmlns", 1);
@@ -557,6 +559,19 @@ pl_set_sgml_parser(term_t parser, term_t option)
       return sgml2pl_error(ERR_TYPE, "boolean", a);
 
     set_option_dtd(p->dtd, OPT_SYSTEM_ENTITIES, val);
+  } else if ( PL_is_functor(option, FUNCTOR_max_memory1) )
+  { term_t a = PL_new_term_ref();
+    int val;
+
+    _PL_get_arg(1, option, a);
+    if ( !PL_get_integer(a, &val) )
+      return sgml2pl_error(ERR_TYPE, "integer", a);
+
+    p->max_memory = val;
+    if ( p->buffer )
+      p->buffer->limit = val;
+    if ( p->cdata )
+      p->cdata->limit = val;
   } else if ( PL_is_functor(option, FUNCTOR_number1) )
   { term_t a = PL_new_term_ref();
     char *s;

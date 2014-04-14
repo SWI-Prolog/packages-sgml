@@ -269,11 +269,13 @@ as <...>
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 icharbuf *
-new_icharbuf()
+new_icharbuf(size_t limit)
 { icharbuf *buf = sgml_malloc(sizeof(*buf));
 
   buf->allocated = 0;
   buf->size = 0;
+  buf->limit = limit;
+  buf->limit_reached = FALSE;
   buf->data = NULL;
 
   return buf;
@@ -292,7 +294,12 @@ free_icharbuf(icharbuf *buf)
 void
 __add_icharbuf(icharbuf *buf, int chr)
 { if ( buf->size == buf->allocated )
-  { buf->allocated = (buf->allocated ? buf->allocated*2 : 128);
+  { size_t sz = (buf->allocated ? buf->allocated*2 : 128);
+    if ( buf->limit && sz*sizeof(ichar) > buf->limit )
+    { buf->limit_reached = 1;
+      return;
+    }
+    buf->allocated = sz;
 
     if ( buf->data )
       buf->data = sgml_realloc(buf->data, buf->allocated*sizeof(ichar));
@@ -335,9 +342,11 @@ character that doesn't fit ISO Latin-1 is added to the buffer.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 ocharbuf *
-init_ocharbuf(ocharbuf *buf)
+init_ocharbuf(ocharbuf *buf, size_t limit)
 { buf->size      = 0;
   buf->allocated = sizeof(buf->localbuf)/sizeof(wchar_t);
+  buf->limit     = limit;
+  buf->limit_reached = FALSE;
   buf->data.w    = buf->localbuf;
 
   return buf;
@@ -345,10 +354,10 @@ init_ocharbuf(ocharbuf *buf)
 
 
 ocharbuf *
-new_ocharbuf()
+new_ocharbuf(size_t limit)
 { ocharbuf *buf = sgml_malloc(sizeof(*buf));
 
-  return init_ocharbuf(buf);
+  return init_ocharbuf(buf, limit);
 }
 
 
@@ -383,7 +392,12 @@ malloc_ocharbuf(ocharbuf *buf)
 void
 add_ocharbuf(ocharbuf *buf, int chr)
 { if ( buf->size == buf->allocated )
-  { buf->allocated *= 2;
+  { size_t sz = buf->allocated * 2;
+    if ( buf->limit && sz*sizeof(wchar_t) > buf->limit )
+    { buf->limit_reached = TRUE;
+      return;
+    }
+    buf->allocated = sz;
 
     if ( buf->data.w != (wchar_t*)buf->localbuf )
     { buf->data.w = sgml_realloc(buf->data.w, buf->allocated*sizeof(wchar_t));

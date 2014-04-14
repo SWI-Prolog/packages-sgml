@@ -37,12 +37,16 @@
 typedef struct
 { int allocated;
   int size;
+  int limit;
+  int limit_reached;
   ichar *data;
 } icharbuf;
 
 typedef struct
 { int allocated;
   int size;
+  int limit;
+  int limit_reached;
   union
   { wchar_t *w;				/* UCS */
   } data;
@@ -78,15 +82,15 @@ void		sgml_nomem(void);
 	       __add_icharbuf(buf, chr); \
 	   } while(0)
 
-icharbuf *	new_icharbuf(void);
+icharbuf *	new_icharbuf(size_t limit);
 void		free_icharbuf(icharbuf *buf);
 void		__add_icharbuf(icharbuf *buf, int chr);
 void		del_icharbuf(icharbuf *buf);
 void		terminate_icharbuf(icharbuf *buf);
 void		empty_icharbuf(icharbuf *buf);
 
-ocharbuf *	init_ocharbuf(ocharbuf *buf);
-ocharbuf *	new_ocharbuf(void);
+ocharbuf *	init_ocharbuf(ocharbuf *buf, size_t limit);
+ocharbuf *	new_ocharbuf(size_t limit);
 void		free_ocharbuf(ocharbuf *buf);
 ocharbuf *	malloc_ocharbuf(ocharbuf *buf);
 void		add_ocharbuf(ocharbuf *buf, int chr);
