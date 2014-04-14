@@ -4570,7 +4570,7 @@ end_document_dtd_parser(dtd_parser *p)
       break;
     default:
       rval = gripe(p, ERC_SYNTAX_ERROR,
-		   L"Unexpected end-of-file in ???");
+		   L"Unexpected end-of-file in ???", L"");
       break;
   }
 
