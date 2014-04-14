@@ -102,6 +102,7 @@ blocked('cent-nul.xml').
 blocked('defent.sgml').
 blocked('comment.xml').
 blocked('badxmlent.xml').
+blocked('nosysent.xml').
 
 
 %%	utf8(+File)

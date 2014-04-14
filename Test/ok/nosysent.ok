@@ -1,0 +1,2 @@
+[element(foo,[],[])].
+[sgml(sgml_parser(1193912),'nosysent.xml',5,'SYSTEM entity /etc/passwd not allowed.  Use system_entities(true)')].
