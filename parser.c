@@ -4419,19 +4419,18 @@ process_entity(dtd_parser *p, const ichar *name)
 	return gripe(p, ERC_EXISTENCE, L"entity", name);
     }
 
-    if ( e->type == ET_SYSTEM &&
-	 e->content == EC_SGML &&
-         !dtd->system_entities )
-    { return TRUE;
-    }
-
     if ( !e->value &&
 	 e->content == EC_SGML &&
 	 (file=entity_file(p->dtd, e)) )
     { int rc;
 
-      empty_icharbuf(p->buffer);		/* dubious */
-      rc = sgml_process_file(p, file, SGML_SUB_DOCUMENT);
+      if ( dtd->system_entities )
+      { empty_icharbuf(p->buffer);		/* dubious */
+	rc = sgml_process_file(p, file, SGML_SUB_DOCUMENT);
+      } else
+      { gripe(p, ERC_ET_SYSTEM, file);
+	rc = TRUE;
+      }
       sgml_free(file);
       return rc;
     }
@@ -5435,6 +5434,10 @@ format_message(dtd_error *e)
     case ERC_LIMIT:
       swprintf(s, left, L"%ls limit exceeded", e->argv[0]);
       break;
+    case ERC_ET_SYSTEM:
+      swprintf(s, left, L"SYSTEM entity %ls not allowed.  "
+	                L"Use system_entities(true)", e->argv[0]);
+      break;
     case ERC_VALIDATE:
       swprintf(s, left, L"%ls", e->argv[0]);
       break;
@@ -5448,6 +5451,7 @@ format_message(dtd_error *e)
       swprintf(s, left, L"Redefined %ls \"%ls\"", e->argv[0], e->argv[1]);
       break;
     default:
+      *s = 0;
       ;
   }
 
@@ -5484,6 +5488,10 @@ gripe(dtd_parser *p, dtd_error_id e, ...)
       error.argv[0]  = va_arg(args, wchar_t *);
       break;
     case ERC_LIMIT:
+      error.severity = ERS_WARNING;
+      error.argv[0]  = va_arg(args, wchar_t *);
+      break;
+    case ERC_ET_SYSTEM:
       error.severity = ERS_WARNING;
       error.argv[0]  = va_arg(args, wchar_t *);
       break;

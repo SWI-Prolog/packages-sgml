@@ -220,8 +220,10 @@ typedef enum
 	/* Message, found */
   ERC_EXISTENCE,			/* Existence error */
 	/* Type, name */
-  ERC_REDEFINED				/* Redefined object */
+  ERC_REDEFINED,			/* Redefined object */
 	/* Type, name */
+  ERC_ET_SYSTEM			/* Disallowed SYSTEM entity */
+        /* name */
 #ifdef DTD_MINOR_ERRORS
   ,					/* reopen list */
   ERC_SYNTAX_WARNING,			/* Syntax warning (i.e. fixed) */
