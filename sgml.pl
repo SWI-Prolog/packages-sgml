@@ -98,6 +98,7 @@
 		       qualify_attributes(boolean),
 		       shorttag(boolean),
 		       case_sensitive_attributes(boolean),
+                       system_entities(boolean),
 		       space(oneof([sgml,preserve,defailt,remove])),
 		       xmlns(atom),
 		       xmlns(atom,atom),
@@ -422,6 +423,7 @@ set_parser_option(Name=Value, Parser, In) :-
 parser_option(dialect(_)).
 parser_option(shorttag(_)).
 parser_option(case_sensitive_attributes(_)).
+parser_option(system_entities(_)).
 parser_option(file(_)).
 parser_option(line(_)).
 parser_option(space(_)).

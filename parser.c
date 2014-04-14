@@ -1187,6 +1187,7 @@ new_dtd(const ichar *doctype)
   dtd->space_mode = SP_SGML;
   dtd->ent_case_sensitive = TRUE;	/* case-sensitive entities */
   dtd->shorttag    = TRUE;		/* allow for <tag/value/ */
+  dtd->system_entities = FALSE;		/* expand SYSTEM entities */
   dtd->number_mode = NU_TOKEN;
 
   return dtd;
@@ -1276,6 +1277,9 @@ set_option_dtd(dtd *dtd, dtd_option option, int set)
       break;
     case OPT_CASE_SENSITIVE_ATTRIBUTES:
       dtd->att_case_sensitive = set;
+      break;
+    case OPT_SYSTEM_ENTITIES:
+      dtd->system_entities = set;
       break;
   }
 
@@ -4413,6 +4417,12 @@ process_entity(dtd_parser *p, const ichar *name)
 	e = dtd->default_entity;
       else
 	return gripe(p, ERC_EXISTENCE, L"entity", name);
+    }
+
+    if ( e->type == ET_SYSTEM &&
+	 e->content == EC_SGML &&
+         !dtd->system_entities )
+    { return TRUE;
     }
 
     if ( !e->value &&

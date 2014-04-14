@@ -172,7 +172,8 @@ typedef enum
 
 typedef enum
 { OPT_SHORTTAG,				/* do/don't accept shorttag */
-  OPT_CASE_SENSITIVE_ATTRIBUTES		/* attribute values case(in)sensitive */
+  OPT_CASE_SENSITIVE_ATTRIBUTES,	/* attribute values case(in)sensitive */
+  OPT_SYSTEM_ENTITIES			/* expand system entities */
 } dtd_option;
 
 
@@ -444,6 +445,7 @@ typedef struct _dtd
   dtd_space_mode	space_mode;	/* Default for handling white-space */
   dtd_number_mode	number_mode;	/* How to treat number attributes */
   int			shorttag;	/* support SHORTTAG */
+  int			system_entities; /* expand SYSTEM entities */
   int			references;	/* destruction reference count */
 } dtd;
 

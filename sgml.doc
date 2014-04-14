@@ -265,6 +265,9 @@ enabled, negative values are silently accepted.
 Treat attribute values as case sensitive. The default is \const{true}
 for XML and \const{false} for SGML and HTML dialects.
 
+    \termitem{system_entities}{+Boolean}
+Define whether SYSTEM entities are expanded. The default is \const{false}.
+
     \termitem{defaults}{+Bool}
 Determines how default and fixed values from the DTD are used.  By
 default, defaults are included in the output if they do not appear in
