@@ -1966,8 +1966,7 @@ pl_sgml_parse(term_t parser, term_t options)
 	pd->positions = FALSE;
       else
 	return sgml2pl_error(ERR_DOMAIN, "positions", a);
-    } else
-      return sgml2pl_error(ERR_DOMAIN, "sgml_option", head);
+    } /* else ignored option */
   }
   if ( !PL_get_nil(tail) )
     return sgml2pl_error(ERR_TYPE, "list", tail);
