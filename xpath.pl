@@ -307,6 +307,7 @@ modifier(last, I, L, Value, Value) :- !,			% last
 modifier(last-Expr, I, L, Value, Value) :- !,			% last-Expr
 	I =:= L-Expr.
 modifier(Function, _, _, In, Out) :-
+	xpath_function(Function), !,
 	xpath_function(Function, In, Out).
 modifier(Function, _, _, In, Out) :-
 	xpath_condition(Function, In),
@@ -333,11 +334,12 @@ xpath_function(@Name, element(_, Attrs, _), Value) :- !,	% @Name
 xpath_function(quote(Value), _, Value).				% quote(Value)
 
 xpath_function(self).
-xpath_function(text).
 xpath_function(content).
+xpath_function(text).
 xpath_function(normalize_space).
 xpath_function(number).
 xpath_function(@_).
+xpath_function(quote(_)).
 
 
 xpath_condition(Left = Right, Value) :- !,			% =
