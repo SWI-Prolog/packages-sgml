@@ -351,6 +351,9 @@ dtd_property(DTD, Prop) :-
 %	returned for consistency with  the   representation  of  element
 %	content.
 
+load_structure(Spec, _, _) :-
+	\+ ground(Spec),
+	instantiation_error(Spec).
 load_structure(stream(In), Term, M:Options) :- !,
 	(   select_option(dtd(DTD), Options, Options1)
 	->  ExplicitDTD = true
