@@ -5170,11 +5170,7 @@ reprocess:
       }
     }
     case S_CMT1:			/* <!-- */
-    { if ( f[CF_CMT] == chr )		/* <!--- */
-      { if ( IS_XML_DIALECT(dtd->dialect) )
-	  gripe(p, ERC_SYNTAX_ERROR, L"Illegal comment", L"<!---");
-      }
-      p->state = S_CMT;
+    { p->state = S_CMT;
       return TRUE;
     }
     case S_CMT:
