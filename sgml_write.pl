@@ -525,6 +525,8 @@ write_mixed_content([H|T], Out, Element, State) :-
 write_mixed_content_element(H, Out, State) :-
 	(   atom(H)
 	->  sgml_write_content(Out, H, State)
+	;   string(H)
+	->  sgml_write_content(Out, H, State)
 	;   functor(H, element, 3)
 	->  emit(H, Out, State)
 	;   functor(H, pi, 1)
