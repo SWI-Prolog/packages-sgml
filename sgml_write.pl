@@ -484,6 +484,10 @@ content([CDATA], Out, Element, State) :-
 	->  write(Out, /),
 	    sgml_write_content(Out, CDATA, State),
 	    write(Out, /)
+	;   verbatim_element(Element, State)
+	->  write(Out, >),
+	    write(Out, CDATA),
+	    emit_close(Element, Out, State)
 	;/* XML or not NET */
 	    write(Out, >),
 	    sgml_write_content(Out, CDATA, State),
@@ -510,6 +514,14 @@ content(Content, Out, Element, State) :-
 	write_mixed_content(Content, Out, Element, State),
 	emit_close(Element, Out, State).
 
+verbatim_element(Element, State) :-
+	verbatim_element(Element),
+	get_state(State, dtd, DTD),
+	DTD \== (-),
+	dtd_property(DTD, doctype(html)).
+
+verbatim_element(script).
+verbatim_element(style).
 
 emit_close(Element, Out, State) :-
 	write(Out, '</'),
