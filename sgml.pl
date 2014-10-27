@@ -628,6 +628,8 @@ xml_is_content(pi(Pi)) :- !,
 	atom(Pi).
 xml_is_content(CDATA) :-
 	atom(CDATA), !.
+xml_is_content(CDATA) :-
+	string(CDATA), !.
 xml_is_content(Term) :-
 	xml_is_element(Term).
 
