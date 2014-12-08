@@ -188,7 +188,7 @@ do_quote(term_t in, term_t quoted, char **map, int maxchr)
 
 	changes++;
       } else if ( c > maxchr )
-      { char buf[10];
+      { char buf[20];
 
 	sprintf(buf, "&#%d;", c);
 	if ( !add_str_buf(&buffer, buf) )
@@ -214,7 +214,7 @@ do_quote(term_t in, term_t quoted, char **map, int maxchr)
 
 	changes++;
       } else if ( c > maxchr )
-      { char buf[10];
+      { char buf[20];
 
 	sprintf(buf, "&#%d;", c);
 	if ( !add_str_bufW(&buffer, buf) )
