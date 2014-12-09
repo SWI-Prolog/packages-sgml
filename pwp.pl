@@ -82,7 +82,7 @@ and the children elements are recursively expanded.
 	halt and no page is generated.
 
     * pwp:use = Term
-    * pwp:how = text | xml | text-file | xml-file
+    * pwp:how = text | xml | text-file | xml-file | pwp-file
 
 	Term is a Prolog term; variables in Term are bound by the context.
 	An empty Term is regarded as a missing value for this attribute.
@@ -133,6 +133,10 @@ and the children elements are recursively expanded.
 	    The file is loaded as XML, and the sequence of XML items thus
 	    obtained used.  This means that PWP provides XML inclusion
 	    without depending on the parser to support XInclude.
+
+	- If pwp:how is pwp-file,
+	    Like xml-file, but PWP attributes are evaluated and processed.
+            The current context variables are passed to the PWP processor.
 
 	The default value for pwp:how is text.
 
@@ -516,6 +520,15 @@ pwp_attach(X, [X|Ys], Ys).
 
 pwp_element('-', _, Kids, Use, How, _, M, Context, Xml) :- !,
 	pwp_use(Use, How, Kids, M, Context, Xml).
+pwp_element(Tag, Atts, [Value], Use, How, Magic, M, Context,
+	    element(Tag,Atts1,Kids1)) :-
+	verbatim_element(Tag), nonvar(Magic), atomic(Value),
+        !,
+        %% Apply substition of c(..)c variables also to content of
+        %% <script> and <style> tags:
+        pwp_substitute([cdata=Value|Atts], Magic, Context, 
+                       [cdata=Value1|Atts1]),
+	pwp_use(Use, How, [Value1], M, Context, Kids1).
 pwp_element(Tag, Atts, Kids, Use, How, Magic, M, Context,
 	    element(Tag,Atts1,Kids1)) :-
 	(   nonvar(Magic)
@@ -526,28 +539,37 @@ pwp_element(Tag, Atts, Kids, Use, How, Magic, M, Context,
 
 pwp_use('', _, Kids, M, Context, Kids1) :- !,
 	pwp_list(Kids, Kids1, M, Context).
-pwp_use(Use, How, _, _, Context, Kids1) :-
+pwp_use(Use, How, _, M, Context, Kids1) :-
 	atom_to_term(Use, Term, Bindings),
 	pwp_unite(Bindings, Context),
-	pwp_how(How, Term, Kids1).
+	pwp_how(How, Term, M, Context, Kids1).
 
-pwp_how('text', Term, [CData]) :- !,
+pwp_how('text', Term, _,_, [CData]) :- !,
 	pwp_use_codes(Term, Codes, []),
 	atom_codes(CData, Codes).
-pwp_how('xml', Term, Kids1) :-
+pwp_how('xml', Term, _,_, Kids1) :-
 	(   Term == []   -> Kids1 = Term
 	;   Term = [_|_] -> Kids1 = Term
 	;                   Kids1 = [Term]
 	).
-pwp_how('text-file', Term, [CData]) :-
+pwp_how('text-file', Term, _,_, [CData]) :-
 	pwp_use_codes(Term, Codes, []),
 	atom_codes(FileName, Codes),
 	read_file_to_codes(FileName, FileCodes, []),
 	atom_codes(CData, FileCodes).
-pwp_how('xml-file', Term, Kids1) :-
+pwp_how('xml-file', Term, _,_, Kids1) :-
 	pwp_use_codes(Term, Codes, []),
 	atom_codes(FileName, Codes),
 	load_xml_file(FileName, Kids1).
+pwp_how('pwp-file', Term, M,Context, Kids1) :-
+	pwp_use_codes(Term, Codes, []),
+	atom_codes(FileName, Codes),
+        ( memberchk('SCRIPT_DIRECTORY'=ScriptDir,Context) -> true
+        ; ScriptDir='.'
+        ),
+        absolute_file_name(FileName, PathName, [relative_to(ScriptDir)]),
+	load_xml_file(PathName, Kids0),
+	pwp_xml(M:Kids0, Kids1, Context), !.
 
 
 pwp_substitute([], _, _, []).
@@ -653,3 +675,8 @@ pwp_is_codes([C|Cs]) :-
 
 pwp_format(Format, Arguments, S0, S) :-
 	format(codes(S0, S), Format, Arguments).
+
+
+verbatim_element(script).
+verbatim_element(style).
+
