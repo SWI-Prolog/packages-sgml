@@ -265,6 +265,13 @@ enabled, negative values are silently accepted.
 Treat attribute values as case sensitive. The default is \const{true}
 for XML and \const{false} for SGML and HTML dialects.
 
+    \termitem{case_preserving_attributes}{+Boolean}
+Treat attribute values as case insensitive but do not alter their
+case. The default is \const{false}.  Setting this option sets the
+\const{case_sensitive_attributes} to the same value.  This option
+was added to support HTML quasi quotations and most likely has
+little value in other contexts.
+
     \termitem{system_entities}{+Boolean}
 Define whether SYSTEM entities are expanded. The default is \const{false}.
 

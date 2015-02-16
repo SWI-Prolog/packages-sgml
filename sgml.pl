@@ -98,6 +98,7 @@
 		       qualify_attributes(boolean),
 		       shorttag(boolean),
 		       case_sensitive_attributes(boolean),
+		       case_preserving_attributes(boolean),
                        system_entities(boolean),
                        max_memory(integer),
 		       space(oneof([sgml,preserve,defailt,remove])),
@@ -427,6 +428,7 @@ set_parser_option(Name=Value, Parser, In) :-
 parser_option(dialect(_)).
 parser_option(shorttag(_)).
 parser_option(case_sensitive_attributes(_)).
+parser_option(case_preserving_attributes(_)).
 parser_option(system_entities(_)).
 parser_option(max_memory(_)).
 parser_option(file(_)).
