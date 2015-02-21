@@ -86,7 +86,7 @@
 :- predicate_options(load_structure/3, 3,
 		     [ charpos(integer),
 		       defaults(boolean),
-		       dialect(oneof([sgml,xml,xmlns])),
+		       dialect(oneof([html,html4,html5,sgml,xhtml,xhtml5,xml,xmlns])),
 		       doctype(atom),
 		       dtd(any),
 		       encoding(oneof(['iso-8859-1', 'utf-8'])),
