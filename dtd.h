@@ -173,6 +173,7 @@ typedef enum
 typedef enum
 { OPT_SHORTTAG,				/* do/don't accept shorttag */
   OPT_CASE_SENSITIVE_ATTRIBUTES,	/* attribute values case(in)sensitive */
+  OPT_CASE_PRESERVING_ATTRIBUTES,	/* attribute values case(in)preserving */
   OPT_SYSTEM_ENTITIES			/* expand system entities */
 } dtd_option;
 
@@ -433,6 +434,7 @@ typedef struct _dtd
   int			case_sensitive;	/* Tags are case-sensitive */
   int			ent_case_sensitive; /* Entities are case-sensitive */
   int			att_case_sensitive; /* Att values are case-sensitive */
+  int			att_case_preserving; /* Preserve attribute value case */
   ichar		       *doctype;	/* defined document type */
   dtd_symbol_table     *symbols;	/* symbol-table */
   dtd_entity           *pentities;	/* defined parameter entities */

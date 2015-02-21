@@ -1278,6 +1278,10 @@ set_option_dtd(dtd *dtd, dtd_option option, int set)
     case OPT_CASE_SENSITIVE_ATTRIBUTES:
       dtd->att_case_sensitive = set;
       break;
+    case OPT_CASE_PRESERVING_ATTRIBUTES:
+      dtd->att_case_preserving = set;
+      dtd->att_case_sensitive = set;
+      break;
     case OPT_SYSTEM_ENTITIES:
       dtd->system_entities = set;
       break;
@@ -3195,8 +3199,13 @@ get_attribute_value(dtd_parser *p, ichar const *decl, sgml_attribute *att)
       { dtd_name_list *nl;
 
 	for(nl=att->definition->typeex.nameof; nl; nl = nl->next)
-	{ if ( istreq(nl->value->name, buf) )
-	    goto passed;
+	{ if ( dtd->att_case_preserving )
+	  { if ( istrcaseeq(nl->value->name, buf) )
+	      goto passed;
+	  } else
+	  { if ( istreq(nl->value->name, buf) )
+	      goto passed;
+	  }
 	}
 	gripe(p, ERC_SYNTAX_WARNING, L"unexpected value", decl);
       }
