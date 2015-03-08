@@ -119,6 +119,8 @@ xpath_chk(DOM, Spec, Content) :-
 %	    The right-hand side is _never_ evaluated, and thus the
 %	    condition `content = content` defines that the content
 %	    of the element is the atom `content`.
+%	    The functions `lower_case` and `upper_case` can be applied
+%	    to Right (see example below).
 %	    $ contains(Haystack, Needle) :
 %	    Succeeds if Needle is a sub-string of Haystack.
 %	    $ XPath :
@@ -186,6 +188,12 @@ xpath_chk(DOM, Spec, Content) :-
 %	    thriller(DOM, Book) :-
 %		xpath(DOM, //book(@genre=thiller), Book).
 %	    ==
+%
+%	Math the elements `<table align="center">` _and_ `<table align="CENTER">`:
+%
+%	    ```prolog
+%		//table(@align=lower_case(center))
+%	    ```
 
 xpath(DOM, Spec, Content) :-
 	in_dom(Spec, DOM, Content).
@@ -344,7 +352,7 @@ xpath_function(quote(_)).
 
 xpath_condition(Left = Right, Value) :- !,			% =
 	var_or_function(Left, Value, LeftValue),
-	LeftValue = Right.
+	process_equality(LeftValue, Right).
 xpath_condition(contains(Haystack, Needle), Value) :- !,	% contains(Haystack, Needle)
 	val_or_function(Haystack, Value, HaystackValue),
 	val_or_function(Needle, Value, NeedleValue),
@@ -354,6 +362,39 @@ xpath_condition(contains(Haystack, Needle), Value) :- !,	% contains(Haystack, Ne
 	).
 xpath_condition(Spec, Dom) :-
 	in_dom(Spec, Dom, _).
+
+
+%%	process_equality(+Left, +Right) is semidet.
+% Provides (very) partial support for XSLT functions that can be applied
+% according to the XPath 2 specification.
+%
+% For example the XPath expression in [1],
+% and the equivalent Prolog expression in [2],
+% would both match the HTML element in [2].
+%
+% ```xpath
+% [1]   //table[align=lower-case(center)]
+% ```
+%
+% ```prolog
+% [2]   //table(@align=lower_case(center))
+% ```
+%
+% ```html
+% [2]   <table align="CENTER">
+% ```
+
+% Equivalent to function `fn:lower-case` in XSLT.
+% @see http://www.xsltfunctions.com/xsl/fn_lower-case.html
+process_equality(Left, lower_case(Right)) :- !,
+	downcase_atom(Left, Right).
+% Equivalent to function `fn:upper-case` in XSLT.
+% @see http://www.xsltfunctions.com/xsl/fn_upper-case.html
+process_equality(Left, upper_case(Right)) :- !,
+	upcase_atom(Left, Right).
+process_equality(Left, Right):-
+	Left = Right.
+
 
 var_or_function(Arg, _, Arg) :-
 	var(Arg), !.
