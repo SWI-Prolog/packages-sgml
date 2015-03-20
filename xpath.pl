@@ -365,34 +365,28 @@ xpath_condition(Spec, Dom) :-
 
 
 %%	process_equality(+Left, +Right) is semidet.
-% Provides (very) partial support for XSLT functions that can be applied
-% according to the XPath 2 specification.
 %
-% For example the XPath expression in [1],
-% and the equivalent Prolog expression in [2],
-% would both match the HTML element in [2].
+%	Provides (very) partial support for XSLT   functions that can be
+%	applied according to the XPath 2 specification.
 %
-% ```xpath
-% [1]   //table[align=lower-case(center)]
-% ```
+%	For example the XPath expression  in   [1],  and  the equivalent
+%	Prolog expression in [2], would both   match the HTML element in
+%	[3].
 %
-% ```prolog
-% [2]   //table(@align=lower_case(center))
-% ```
-%
-% ```html
-% [2]   <table align="CENTER">
-% ```
+%	  ==
+%	  [1] //table[align=lower-case(center)]
+%	  [2] //table(@align=lower_case(center))
+%	  [3] <table align="CENTER">
+%	  ==
 
-% Equivalent to function `fn:lower-case` in XSLT.
-% @see http://www.xsltfunctions.com/xsl/fn_lower-case.html
+process_equality(Left, Right) :-
+	var(Right), !,
+	Left = Right.
 process_equality(Left, lower_case(Right)) :- !,
 	downcase_atom(Left, Right).
-% Equivalent to function `fn:upper-case` in XSLT.
-% @see http://www.xsltfunctions.com/xsl/fn_upper-case.html
 process_equality(Left, upper_case(Right)) :- !,
 	upcase_atom(Left, Right).
-process_equality(Left, Right):-
+process_equality(Left, Right) :-
 	Left = Right.
 
 
