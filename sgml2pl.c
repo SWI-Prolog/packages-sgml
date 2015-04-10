@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (C): 1985-2014, University of Amsterdam
+    Copyright (C): 1985-2015, University of Amsterdam
 			      VU University Amsterdam
 
     This library is free software; you can redistribute it and/or
@@ -1797,7 +1797,8 @@ set_callback_predicates(parser_data *pd, term_t option)
   module_t m = NULL;
 
   _PL_get_arg(2, option, a);
-  PL_strip_module(a, &m, a);
+  if ( !PL_strip_module(a, &m, a) )
+    return FALSE;
   if ( !PL_get_atom(a, &pname) )
     return sgml2pl_error(ERR_TYPE, "atom", a);
   _PL_get_arg(1, option, a);
