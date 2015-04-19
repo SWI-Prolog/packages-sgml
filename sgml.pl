@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (C): 1985-2013, University of Amsterdam
+    Copyright (C): 1985-2015, University of Amsterdam
 			      VU University Amsterdam
 
     This program is free software; you can redistribute it and/or
@@ -76,6 +76,7 @@
 :- use_module(library(lists)).
 :- use_module(library(option)).
 :- use_module(library(error)).
+:- use_module(library(iostream)).
 
 :- meta_predicate
 	load_structure(+, -, :),
@@ -343,19 +344,22 @@ dtd_property(DTD, Prop) :-
 %%	load_structure(+Source, -ListOfContent, :Options) is det.
 %
 %	Parse   Source   and   return   the   resulting   structure   in
-%	ListOfContent.  Source  is  either   a    term   of  the  format
-%	stream(StreamHandle) or a  file-name.  Options   is  a  list  of
-%	options controlling the conversion process.
+%	ListOfContent. Source is handed to  open_any/5, which allows for
+%	processing an extensible set of input sources.
 %
 %	A proper XML document contains only   a  single toplevel element
 %	whose name matches the document type.   Nevertheless,  a list is
 %	returned for consistency with  the   representation  of  element
 %	content.
 
-load_structure(Spec, _, _) :-
-	\+ ground(Spec),
-	instantiation_error(Spec).
-load_structure(stream(In), Term, M:Options) :- !,
+load_structure(Spec, DOM, Options) :-
+	Options = _:Plain,
+	setup_call_cleanup(
+	    open_any(Spec, read, In, Close, Plain),
+	    load_structure_from_stream(In, DOM, Options),
+	    close_any(Close)).
+
+load_structure_from_stream(In, Term, M:Options) :- !,
 	(   select_option(dtd(DTD), Options, Options1)
 	->  ExplicitDTD = true
 	;   ExplicitDTD = false,
@@ -377,14 +381,6 @@ load_structure(stream(In), Term, M:Options) :- !,
 	;   free_dtd(DTD)
 	),
 	Term = TermRead.
-load_structure(Stream, Term, Options) :-
-	is_stream(Stream), !,
-	load_structure(stream(Stream), Term, Options).
-load_structure(File, Term, Options) :-
-	setup_call_cleanup(
-	    open(File, read, In, [type(binary)]),
-	    load_structure(stream(In), Term, Options),
-	    close(In)).
 
 move_front(Options0, Opt, Options) :-
 	selectchk(Opt, Options0, Options1), !,
