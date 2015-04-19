@@ -532,13 +532,31 @@ load_html_file(File, DOM) :-
 %	  Pass the DTD for HTML as obtained using dtd(html, DTD).
 %	  - dialect(Dialect)
 %	  Current dialect from the Prolog flag =html_dialect=
+%	  - max_errors(-1)
+%	  - syntax_errors(quiet)
+%	  Most HTML encountered in the wild contains errors. Even in the
+%	  context of errors, the resulting DOM term is often a
+%	  reasonable guess at the intend of the author.
+%
+%	You may also want to use  the library(http/http_open) to support
+%	loading from HTTP and HTTPS URLs. For example:
+%
+%	==
+%	:- use_module(library(http/http_open)).
+%	:- use_module(library(sgml)).
+%
+%	load_html_url(URL, DOM) :-
+%	    load_html(URL, DOM, []).
+%	==
 
 load_html(File, Term, M:Options) :-
 	current_prolog_flag(html_dialect, Dialect),
 	dtd(Dialect, DTD),
 	merge_options(Options,
 		      [ dtd(DTD),
-			dialect(Dialect)
+			dialect(Dialect),
+			max_errors(-1),
+			syntax_errors(quiet)
 		      ], Options1),
 	load_structure(File, Term, M:Options1).
 
