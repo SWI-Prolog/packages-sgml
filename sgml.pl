@@ -713,3 +713,24 @@ call_params(decl,  decl(cdata,parser)).
 call_params(error, error(severity,message,parser)).
 call_params(xmlns, xmlns(namespace,url,parser)).
 call_params(urlns, urlns(url,url,parser)).
+
+		 /*******************************
+		 *	     SANDBOX		*
+		 *******************************/
+
+:- multifile
+	sandbox:safe_primitive/1,
+	sandbox:safe_meta_predicate/1.
+
+sandbox:safe_meta_predicate(sgml:load_structure/3).
+sandbox:safe_primitive(sgml:dtd(Dialect, _)) :-
+	dtd_alias(Dialect, _).
+sandbox:safe_primitive(sgml:xml_quote_attribute(_,_,_)).
+sandbox:safe_primitive(sgml:xml_quote_cdata(_,_,_)).
+sandbox:safe_primitive(sgml:xml_name(_,_)).
+sandbox:safe_primitive(sgml:xml_basechar(_)).
+sandbox:safe_primitive(sgml:xml_ideographic(_)).
+sandbox:safe_primitive(sgml:xml_combining_char(_)).
+sandbox:safe_primitive(sgml:xml_digit(_)).
+sandbox:safe_primitive(sgml:xml_extender(_)).
+sandbox:safe_primitive(sgml:iri_xml_namespace(_,_,_)).
