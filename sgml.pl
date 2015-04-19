@@ -139,13 +139,28 @@
 /** <module> SGML, XML and HTML parser
 
 This library allows you to parse SGML, XML   and HTML data into a Prolog
-data  structure.  The  high-level  interface  defined  in  library(sgml)
-provides  access  at  the  file-level,  while  the  low-level  interface
-(load_structure/3) defined in  the  foreign   module  works  with Prolog
-streams. Please examine the source as a  starting point for dealing with
-data from other sources  than  files,   such  as  SWI-Prolog  resources,
-network-sockets, character strings, etc. The   first example below loads
-an HTML file.
+data structure. The library defines several families of predicates:
+
+  $ High-level predicates :
+  Most users will only use load_html/3, load_xml/3 or load_sgml/3 to
+  parse arbitrary input into a _DOM_ structure.  These predicates all
+  call load_structure/3, which provides more options and may be
+  used for processing non-standard documents.
+
+  The DOM structure can be used by library(xpath) to extract information
+  from the document.
+
+  $ The low-level parser :
+  The actual parser is written in C and consists of two parts: one for
+  processing DTD (Document Type Definitions) and one for parsing data.
+  The data can either be parsed to a Prolog (_DOM_) term or the parser
+  can perform callbacks for the DOM _events_.
+
+  $ Utility predicates :
+  Finally, this library provides prmitives for classifying characters
+  and strings according to the XML specification such as xml_name/1 to
+  verify whether an atom is a valid XML name (identifier).  It also
+  provides primitives to quote attributes and CDATA elements.
 */
 
 :- multifile user:file_search_path/2.
