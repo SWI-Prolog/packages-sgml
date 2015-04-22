@@ -369,8 +369,9 @@ dtd_property(DTD, Prop) :-
 
 load_structure(Spec, DOM, Options) :-
 	Options = _:Plain,
+	merge_options(Plain, [type(binary)], Plain2),
 	setup_call_cleanup(
-	    open_any(Spec, read, In, Close, Plain),
+	    open_any(Spec, read, In, Close, Plain2),
 	    load_structure_from_stream(In, DOM, Options),
 	    close_any(Close)).
 
