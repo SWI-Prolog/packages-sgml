@@ -90,7 +90,7 @@
 		       dialect(oneof([html,html4,html5,sgml,xhtml,xhtml5,xml,xmlns])),
 		       doctype(atom),
 		       dtd(any),
-		       encoding(oneof(['iso-8859-1', 'utf-8'])),
+		       encoding(oneof(['iso-8859-1', 'utf-8', 'us-ascii'])),
 		       entity(atom,atom),
 		       file(atom),
 		       line(integer),
@@ -366,14 +366,42 @@ dtd_property(DTD, Prop) :-
 %	whose name matches the document type.   Nevertheless,  a list is
 %	returned for consistency with  the   representation  of  element
 %	content.
+%
+%	The  encoding(+Encoding)  option   is    treated   special   for
+%	compatibility reasons:
+%
+%	  - If `Encoding` is one of =iso-8859-1=, =us-ascii= or =utf-8=,
+%	    the stream is opened in binary mode and the option is passed
+%	    to the SGML parser.
+%	  - If `Encoding` is present, but not one of the above, the
+%	    stream is opened in text mode using the given encoding.
+%	  - Otherwise (no `Encoding`), the stream is opened in binary
+%	    mode and doing the correct decoding is left to the parser.
 
 load_structure(Spec, DOM, Options) :-
-	Options = _:Plain,
-	merge_options(Plain, [type(binary)], Plain2),
+	Options = M:Plain,
+	(   select_option(encoding(Encoding), Options, NoEnc)
+	->  (   sgml_encoding(Encoding)
+	    ->	merge_options(Plain, [type(binary)], OpenOptions),
+		SGMLOptions = Options
+	    ;	OpenOptions = Plain,
+		SGMLOptions = M:NoEnc
+	    )
+	;   merge_options(Plain, [type(binary)], OpenOptions),
+	    SGMLOptions = Options
+	),
 	setup_call_cleanup(
-	    open_any(Spec, read, In, Close, Plain2),
-	    load_structure_from_stream(In, DOM, Options),
+	    open_any(Spec, read, In, Close, OpenOptions),
+	    load_structure_from_stream(In, DOM, SGMLOptions),
 	    close_any(Close)).
+
+sgml_encoding(Enc) :-
+	downcase_atom(Enc, Enc1),
+	sgml_encoding_l(Enc1).
+
+sgml_encoding_l('iso-8859-1').
+sgml_encoding_l('us-ascii').
+sgml_encoding_l('utf-8').
 
 load_structure_from_stream(In, Term, M:Options) :- !,
 	(   select_option(dtd(DTD), Options, Options1)
