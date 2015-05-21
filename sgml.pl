@@ -380,7 +380,7 @@ dtd_property(DTD, Prop) :-
 
 load_structure(Spec, DOM, Options) :-
 	Options = M:Plain,
-	(   select_option(encoding(Encoding), Options, NoEnc)
+	(   select_option(encoding(Encoding), Plain, NoEnc)
 	->  (   sgml_encoding(Encoding)
 	    ->	merge_options(Plain, [type(binary)], OpenOptions),
 		SGMLOptions = Options
