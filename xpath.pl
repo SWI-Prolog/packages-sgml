@@ -125,7 +125,7 @@ xpath_chk(DOM, Spec, Content) :-
 %	    Succeeds if Needle is a sub-string of Haystack.
 %	    $ XPath :
 %	    Succeeds if XPath matches in the currently selected
-%	    sub-DOM.  Fot example, the following expression finds
+%	    sub-DOM.  For example, the following expression finds
 %	    an =h3= element inside a =div= element, where the =div=
 %	    element itself contains an =h2= child with a =strong=
 %	    child.
