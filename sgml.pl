@@ -102,7 +102,7 @@
 		       case_preserving_attributes(boolean),
                        system_entities(boolean),
                        max_memory(integer),
-		       space(oneof([sgml,preserve,defailt,remove])),
+		       space(oneof([sgml,preserve,default,remove])),
 		       xmlns(atom),
 		       xmlns(atom,atom),
 		       pass_to(sgml_parse/2, 2)
