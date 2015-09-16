@@ -382,7 +382,7 @@ load_structure(Spec, DOM, Options) :-
 	Options = M:Plain,
 	(   select_option(encoding(Encoding), Plain, NoEnc)
 	->  (   sgml_encoding(Encoding)
-	    ->	merge_options(Plain, [type(binary)], OpenOptions),
+	    ->	merge_options(NoEnc, [type(binary)], OpenOptions),
 		SGMLOptions = Options
 	    ;	OpenOptions = Plain,
 		SGMLOptions = M:NoEnc
