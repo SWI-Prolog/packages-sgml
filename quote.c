@@ -21,11 +21,12 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <config.h>
 #include <SWI-Stream.h>			/* encoding */
 #include <SWI-Prolog.h>
 #include <stdlib.h>
 #ifdef HAVE_MALLOC_H
-#include HAVE_MALLOC_H
+#include <malloc.h>
 #endif
 #include "error.h"
 #include <errno.h>
