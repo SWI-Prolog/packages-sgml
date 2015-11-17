@@ -89,6 +89,8 @@ xpath_chk(DOM, Spec, Content) :-
 %
 %	    $ Integer :
 %	    The N-th element with the given name
+%	    $ Variable :
+%	    The N-th element with the given name
 %	    $ =last= :
 %	    The last element with the given name.
 %	    $ =last= - IntExpr :
