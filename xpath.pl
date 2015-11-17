@@ -307,6 +307,9 @@ modifiers([H|T], I, L, Value0, Value) :-
 	modifier(H, I, L, Value0, Value1),
 	modifiers(T, I, L, Value1, Value).
 
+modifier(N, I, _, Value, Value) :-				% allows for *retrieving* index of matched element
+	var(N), integer(I), !,
+	N = I.
 modifier(N, I, _, Value, Value) :-				% Integer
 	integer(N), !,
 	N =:= I.
