@@ -88,7 +88,7 @@ xsdp_subtype_of(Type, Super) :-
 	(   nonvar(Type)
 	->  subtype_of(Type, Super0),
 	    Super0 \== (-),
-	    xsdp_subtype_of(Type, Super)
+	    xsdp_subtype_of(Super0, Super)
 	;   subtype_of(Sub0, Super),
 	    xsdp_subtype_of(Type, Sub0)
 	).
