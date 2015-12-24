@@ -1124,8 +1124,6 @@ unify_attribute_list(dtd_parser *p, term_t alist,
   return FALSE;
 }
 
-
-
 static int
 on_begin(dtd_parser *p, dtd_element *e, int argc, sgml_attribute *argv)
 { parser_data *pd = p->closure;
@@ -1133,6 +1131,28 @@ on_begin(dtd_parser *p, dtd_element *e, int argc, sgml_attribute *argv)
   if ( pd->stopped )
     return TRUE;
 
+  if ( pd->on_begin )
+  { fid_t fid;
+
+    if ( (fid = PL_open_foreign_frame()) )
+    { int rc;
+      term_t av = PL_new_term_refs(3);
+
+      rc = ( put_element_name(p, av+0, e) &&
+	     unify_attribute_list(p, av+1, argc, argv) &&
+	     unify_parser(av+2, p) &&
+	     call_prolog(pd, pd->on_begin, av)
+	   );
+
+      PL_discard_foreign_frame(fid);
+      if ( rc )
+	goto ok;
+    }
+
+    pd->exception = PL_exception(0);
+    return FALSE;
+  }
+ok:
   if ( pd->tail )
   { term_t content = PL_new_term_ref();	/* element content */
     term_t alist   = PL_new_term_ref();	/* attribute list */
@@ -1169,31 +1189,8 @@ on_begin(dtd_parser *p, dtd_element *e, int argc, sgml_attribute *argv)
     return FALSE;
   }
 
-  if ( pd->on_begin )
-  { fid_t fid;
-
-    if ( (fid = PL_open_foreign_frame()) )
-    { int rc;
-      term_t av = PL_new_term_refs(3);
-
-      rc = ( put_element_name(p, av+0, e) &&
-	     unify_attribute_list(p, av+1, argc, argv) &&
-	     unify_parser(av+2, p) &&
-	     call_prolog(pd, pd->on_begin, av)
-	   );
-
-      PL_discard_foreign_frame(fid);
-      if ( rc )
-	return TRUE;
-    }
-
-    pd->exception = PL_exception(0);
-    return FALSE;
-  }
-
   return TRUE;
 }
-
 
 static int
 on_end(dtd_parser *p, dtd_element *e)
