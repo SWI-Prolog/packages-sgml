@@ -63,6 +63,8 @@
 	    xml_name/1,			% +In
 	    xml_name/2,			% +In, +Encoding
 
+	    xsd_number_string/2,	% ?Number, ?String
+
 	    xml_basechar/1,		% +Code
 	    xml_ideographic/1,		% +Code
 	    xml_combining_char/1,	% +Code

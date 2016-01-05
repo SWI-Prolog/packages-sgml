@@ -1353,6 +1353,27 @@ Backward compatibility version for xml_name/2. Assumes \const{ascii}
 encoding.
 \end{description}
 
+
+\subsection{XSD lexical forms}
+\label{sec:xsd-lexical-form}
+
+\index{XML-Schema,lexical forms}%
+The predicates in this section translate between values and their
+lexical forms for XML-Schema data types.
+
+\begin{description}
+    \predicate{xsd_number_string}{2}{?Number, ?String}
+This predicate is similar to number_string/2, but accepts floating point
+numbers according to the XML syntax rather than the Prolog syntax. In
+particular, XML does not require a `0' (zero) before and after the
+decimal dot and accepts the constants \const{NaN} and \const{INF}. If a
+Prolog float is converted into a string it returns the XML canonical
+form. This form always has one digit before the decimal dot, at least
+one digit after it and an exponential component using the capital
+\const{E}.  This predicate behaves as number_string/2 for integers.
+\end{description}
+
+
 \section{Unsupported SGML features}
 \label{sec:sgml-unsupported}
 

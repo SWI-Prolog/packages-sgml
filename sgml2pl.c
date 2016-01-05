@@ -2696,12 +2696,13 @@ pl_sgml_register_catalog_file(term_t file, term_t where)
 		 *******************************/
 
 extern install_t install_xml_quote(void);
+extern install_t install_xsd(void);
 #ifdef O_STATISTICS
 extern void sgml_statistics(void);
 #endif
 
 install_t
-install()
+install(void)
 { initConstants();
 
   init_ring();
@@ -2721,6 +2722,7 @@ install()
   PL_register_foreign("$dtd_property",	  2, pl_dtd_property, 0);
 
   install_xml_quote();
+  install_xsd();
 #ifdef O_STATISTICS
   atexit(sgml_statistics);
 #endif
@@ -2728,6 +2730,6 @@ install()
 
 
 install_t
-uninstall()
+uninstall(void)
 { stop_ring();
 }
