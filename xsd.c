@@ -50,23 +50,29 @@ xsd_number_string(term_t number, term_t string)
   if ( PL_get_nchars(string, &len, &in, CVT_ATOM|CVT_STRING|CVT_LIST) )
   { char *s = in;
 
-    if ( strlen(s) == len )		/* no 0-characters */
-    { if ( !strcmp(s, "NaN") == 0 )
+    if ( strlen(s) == len )			/* no 0-characters */
+    { int isfloat = FALSE;
+
+      if ( !strcmp(s, "NaN") == 0 )
       { int decl = 0, dect = 0;
 
-	if ( issign(*s) ) s++;		/* [+-]? */
+	if ( issign(*s) ) s++;			/* [+-]? */
 	if ( strcmp(s, "INF") == 0 )
 	  goto ok;
 
-	while(isdigit(*s)) decl++, s++;	/* [0-9]* */
-	if ( isdot(*s) ) s++;		/* [.]? */
-	while(isdigit(*s)) dect++, s++;	/* [0-9]* */
+	while(isdigit(*s)) decl++, s++;		/* [0-9]* */
+	if ( isdot(*s) )			/* [.]? */
+	{ s++;
+	  isfloat = TRUE;
+	  while(isdigit(*s)) dect++, s++;	/* [0-9]* */
+	}
 	if ( decl+dect == 0 )
 	  goto syntax_error;
 	if ( isexp(*s) )
 	{ int exp = 0;
 
 	  s++;
+	  isfloat = TRUE;
 	  if ( issign(*s) ) s++;		/* [+-]? */
 	  while(isdigit(*s)) exp++, s++;	/* [0-9]+ */
 	  if ( exp == 0 )
@@ -75,7 +81,14 @@ xsd_number_string(term_t number, term_t string)
       }
 
     ok:
-      return PL_unify_float(number, strtod(in, NULL));
+      if ( isfloat )
+      { return PL_unify_float(number, strtod(in, NULL));
+      } else
+      { term_t n = PL_new_term_ref();
+	return ( PL_chars_to_term(in, n) &&
+		 PL_unify(number, n)
+	       );
+      }
     } else
     {
     syntax_error:
