@@ -89,25 +89,25 @@ xpath_chk(DOM, Spec, Content) :-
 %	argument values are:
 %
 %	    $ index(?Index) :
-%	    True if the element is the Index-th child of its parent.
-%	    Index can be one of:
+%	    True if the element is the Index-th child of its parent,
+%	    where 1 denotes the first child. Index can be one of:
 %	      $ `Var` :
-%	      `Var` is unified with the current index (1-based).
+%	      `Var` is unified with the index of the matched element.
 %	      $ =last= :
 %	      True for the last element.
 %	      $ =last= - `IntExpr` :
-%	      True for the last-minus-nth (0-based) element. For
-%	      example, `last-1` is the element before the last.
+%	      True for the last-minus-nth element. For example,
+%	      `last-1` is the element directly preceding the last one.
 %	      $ `IntExpr` :
-%	      True the the element matching `IntExpr`.
+%	      True for the element whose index equals `IntExpr`.
 %	    $ Integer :
-%	    The N-th element with the given name.  Same as
-%	    index(Integer).
+%	    The N-th element with the given name, with 1 denoting the
+%	    first element. Same as index(Integer).
 %	    $ =last= :
 %	    The last element with the given name. Same as
 %	    index(last).
 %	    $ =last= - IntExpr :
-%	    The IntExpr-th element counting from the last (0-based).
+%	    The IntExpr-th element before the last.
 %	    Same as index(last-IntExpr).
 %
 %	Defined function argument values are:
