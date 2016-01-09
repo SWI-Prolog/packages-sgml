@@ -89,6 +89,8 @@ xpath_chk(DOM, Spec, Content) :-
 %
 %	    $ Integer :
 %	    The N-th element with the given name
+%	    $ Variable :
+%	    The N-th element with the given name
 %	    $ =last= :
 %	    The last element with the given name.
 %	    $ =last= - IntExpr :
@@ -307,6 +309,9 @@ modifiers([H|T], I, L, Value0, Value) :-
 	modifier(H, I, L, Value0, Value1),
 	modifiers(T, I, L, Value1, Value).
 
+modifier(N, I, _, Value, Value) :-				% allows for *retrieving* index of matched element
+	var(N), integer(I), !,
+	N = I.
 modifier(N, I, _, Value, Value) :-				% Integer
 	integer(N), !,
 	N =:= I.
