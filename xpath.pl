@@ -39,6 +39,7 @@
 :- use_module(library(record)).
 :- use_module(library(lists)).
 :- use_module(library(debug)).
+:- use_module(library(error)).
 
 /** <module> Select nodes in an XML DOM
 
@@ -87,14 +88,27 @@ xpath_chk(DOM, Spec, Content) :-
 %	arguments are processed from left  to right. Defined conditional
 %	argument values are:
 %
+%	    $ index(?Index) :
+%	    True if the element is the Index-th child of its parent.
+%	    Index can be one of:
+%	      $ `Var` :
+%	      `Var` is unified with the current index (1-based).
+%	      $ =last= :
+%	      True for the last element.
+%	      $ =last= - `IntExpr` :
+%	      True for the last-minus-nth (0-based) element. For
+%	      example, `last-1` is the element before the last.
+%	      $ `IntExpr` :
+%	      True the the element matching `IntExpr`.
 %	    $ Integer :
-%	    The N-th element with the given name
-%	    $ Variable :
-%	    The N-th element with the given name
+%	    The N-th element with the given name.  Same as
+%	    index(Integer).
 %	    $ =last= :
-%	    The last element with the given name.
+%	    The last element with the given name. Same as
+%	    index(last).
 %	    $ =last= - IntExpr :
-%	    The IntExpr-th element counting from the last (0-based)
+%	    The IntExpr-th element counting from the last (0-based).
+%	    Same as index(last-IntExpr).
 %
 %	Defined function argument values are:
 %
@@ -228,11 +242,18 @@ element_spec(Var, _, _) :-
 	var(Var), !,
 	instantiation_error(Var).
 element_spec(NS:Term, NS:Name, Modifiers) :- !,
-	Term =.. [Name0|Modifiers],
+	callable_name_arguments(Term, Name0, Modifiers),
 	star(Name0, Name).
 element_spec(Term, Name, Modifiers) :- !,
-	Term =.. [Name0|Modifiers],
+	callable_name_arguments(Term, Name0, Modifiers),
 	star(Name0, Name).
+
+callable_name_arguments(Atom, Name, Arguments) :-
+	atom(Atom), !,
+	Name = Atom, Arguments = [].
+callable_name_arguments(Compound, Name, Arguments) :-
+	compound_name_arguments(Compound, Name, Arguments).
+
 
 star(*, _) :- !.
 star(Name, Name).
@@ -309,22 +330,36 @@ modifiers([H|T], I, L, Value0, Value) :-
 	modifier(H, I, L, Value0, Value1),
 	modifiers(T, I, L, Value1, Value).
 
-modifier(N, I, _, Value, Value) :-				% allows for *retrieving* index of matched element
-	var(N), integer(I), !,
-	N = I.
-modifier(N, I, _, Value, Value) :-				% Integer
-	integer(N), !,
-	N =:= I.
-modifier(last, I, L, Value, Value) :- !,			% last
-	I =:= L.
-modifier(last-Expr, I, L, Value, Value) :- !,			% last-Expr
-	I =:= L-Expr.
+modifier(M, _, _, _, _) :-
+	var(M), !,
+	instantiation_error(M).
+modifier(Index, I, L, Value0, Value) :-
+	implicit_index_modifier(Index), !,
+	Value = Value0,
+	index_modifier(Index, I, L).
+modifier(index(Index), I, L, Value, Value) :- !,
+	index_modifier(Index, I, L).
 modifier(Function, _, _, In, Out) :-
 	xpath_function(Function), !,
 	xpath_function(Function, In, Out).
 modifier(Function, _, _, In, Out) :-
 	xpath_condition(Function, In),
 	Out = In.
+
+implicit_index_modifier(I) :-
+	integer(I), !.
+implicit_index_modifier(last).
+implicit_index_modifier(last-_Expr).
+
+index_modifier(Var, I, _L) :-
+	var(Var), !,
+	Var = I.
+index_modifier(last, I, L) :- !,
+	I =:= L.
+index_modifier(last-Expr, I, L) :- !,
+	I =:= L-Expr.
+index_modifier(N, I, _) :-
+	N =:= I.
 
 xpath_function(self, DOM, Value) :- !,				% self
 	Value = DOM.
