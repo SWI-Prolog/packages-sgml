@@ -138,7 +138,7 @@ xpath_chk(DOM, Spec, Content) :-
 %
 %	      ==
 %	         ...,
-%	         xpath(DOM, //div, Div),
+%	         xpath(DOM, //(div), Div),
 %	         xpath(Div, h2/strong, _),
 %	         xpath(Div, h3, Result)
 %	      ==
