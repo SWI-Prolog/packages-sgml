@@ -292,9 +292,10 @@ count_named_elements(Content, Name, Count) :-
 	count_named_elements(Content, Name, 0, Count).
 
 count_named_elements([], _, Count, Count).
-count_named_elements([element(Name,_,_)|T], Name, C0, C) :- !,
+count_named_elements([element(Name,_,_)|T], Name0, C0, C) :-
+	\+ Name \= Name0, !,
 	C1 is C0+1,
-	count_named_elements(T, Name, C1, C).
+	count_named_elements(T, Name0, C1, C).
 count_named_elements([_|T], Name, C0, C) :-
 	count_named_elements(T, Name, C0, C).
 
