@@ -233,9 +233,13 @@ in_dom(A//B, DOM, Value) :- !,
 	in_dom(//B, Value0, Value).
 in_dom(Spec, element(_, _, Content), Value) :-
 	element_spec(Spec, Name, Modifiers),
-	count_named_elements(Content, Name, CLen),
-	CLen > 0,
-	nth_element(N, Name, E, Content),
+	(   var(Name)
+	->  length(Content, CLen),
+	    nth1(N, Content, E)
+	;   count_named_elements(Content, Name, CLen),
+	    CLen > 0,
+	    nth_element(N, Name, E, Content)
+	),
 	modifiers(Modifiers, N, CLen, E, Value).
 
 element_spec(Var, _, _) :-
