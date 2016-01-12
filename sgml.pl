@@ -783,3 +783,4 @@ sandbox:safe_primitive(sgml:xml_combining_char(_)).
 sandbox:safe_primitive(sgml:xml_digit(_)).
 sandbox:safe_primitive(sgml:xml_extender(_)).
 sandbox:safe_primitive(sgml:iri_xml_namespace(_,_,_)).
+sandbox:safe_primitive(sgml:xsd_number_string(_,_)).
