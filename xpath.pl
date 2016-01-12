@@ -40,6 +40,7 @@
 :- use_module(library(lists)).
 :- use_module(library(debug)).
 :- use_module(library(error)).
+:- use_module(library(sgml)).
 
 /** <module> Select nodes in an XML DOM
 
@@ -125,7 +126,28 @@ xpath_chk(DOM, Spec, Content) :-
 %	    Extract an integer or float from the value.  Ignores
 %	    leading and trailing white-space
 %	    $ =|@|=Attribute :
-%	    Evaluates to the value of the given attribute
+%	    Evaluates to the value of the given attribute.  Attribute
+%	    can be a compound term. In this case the functor name
+%	    denotes the element and arguments perform transformations
+%	    on the attribute value.  Defined transformations are:
+%
+%	      - number
+%	      Translate the value into a number using
+%	      xsd_number_string/2 from library(sgml).
+%	      - integer
+%	      As `number`, but subsequently transform the value
+%	      into an integer using the round/1 function.
+%	      - float
+%	      As `number`, but subsequently transform the value
+%	      into an integer using the float/1 function.
+%	      - string
+%	      Translate the value into a Prolog string.
+%	      - lower
+%	      Translate the value to lower case, preserving
+%	      the type.
+%	      - upper
+%	      Translate the value to upper case, preserving
+%	      the type.
 %
 %	In addition, the argument-list can be _conditions_:
 %
@@ -205,11 +227,20 @@ xpath_chk(DOM, Spec, Content) :-
 %		xpath(DOM, //book(@genre=thiller), Book).
 %	    ==
 %
-%	Math the elements `<table align="center">` _and_ `<table align="CENTER">`:
+%	Match the elements `<table align="center">` _and_ `<table
+%	align="CENTER">`:
 %
 %	    ```prolog
-%		//table(@align=lower_case(center))
+%		//table(@align(lower) = center)
 %	    ```
+%
+%	Get the `width` and `height` of a `div` element as a number well
+%	as the `div` node itself.  Note that `div` is an infix operator
+%	and therefore it the expression needs to be embraced.
+%
+%	    ==
+%		xpath(DOM, //(div(@width(number)=W, @height(number)=H)), Div)
+%	    ==
 
 xpath(DOM, Spec, Content) :-
 	in_dom(Spec, DOM, Content).
@@ -374,10 +405,14 @@ xpath_function(normalize_space, DOM, Text) :- !,		% normalize_space
 xpath_function(number, DOM, Number) :- !,			% number
 	text_of_dom(DOM, Text0),
 	normalize_space(string(Text), Text0),
-	catch(atom_number(Text, Number), _, fail).
+	catch(xsd_number_string(Number, Text), _, fail).
 xpath_function(@Name, element(_, Attrs, _), Value) :- !,	% @Name
-	(   ground(Name)
+	(   atom(Name)
 	->  memberchk(Name=Value, Attrs)
+	;   compound(Name)
+	->  compound_name_arguments(Name, AName, AOps),
+	    memberchk(AName=Value0, Attrs),
+	    translate_attribute(AOps, Value0, Value)
 	;   member(Name=Value, Attrs)
 	).
 xpath_function(quote(Value), _, Value).				% quote(Value)
@@ -390,6 +425,31 @@ xpath_function(number).
 xpath_function(@_).
 xpath_function(quote(_)).
 
+translate_attribute([], Value, Value).
+translate_attribute([H|T], Value0, Value) :-
+	translate_attr(H, Value0, Value1),
+	translate_attribute(T, Value1, Value).
+
+translate_attr(number, Value0, Value) :-
+	xsd_number_string(Value, Value0).
+translate_attr(integer, Value0, Value) :-
+	xsd_number_string(Value1, Value0),
+	Value = round(Value1).
+translate_attr(float, Value0, Value) :-
+	xsd_number_string(Value1, Value0),
+	Value = float(Value1).
+translate_attr(string, Value0, Value) :-
+	atom_string(Value0, Value).
+translate_attr(lower, Value0, Value) :-
+	(   atom(Value0)
+	->  downcase_atom(Value0, Value)
+	;   string_lower(Value0, Value)
+	).
+translate_attr(upper, Value0, Value) :-
+	(   atom(Value0)
+	->  upcase_atom(Value0, Value)
+	;   string_upper(Value0, Value)
+	).
 
 xpath_condition(Left = Right, Value) :- !,			% =
 	var_or_function(Left, Value, LeftValue),
