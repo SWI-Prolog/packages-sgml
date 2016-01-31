@@ -66,6 +66,7 @@ html-install::
 check::
 		$(PL) -f Test/test.pl -q -g test,halt -t 'halt(1)'
 		$(PL) -f Test/wrtest.pl -q -g test,halt -t 'halt(1)'
+		$(PL) -f test_xsd.pl -g test_xsd,halt -t 'halt(1)'
 
 uninstall::
 		(cd $(PLBASE)/$(SOLIB)/$(INSTALL_PLARCH) && rm -f $(TARGETS))

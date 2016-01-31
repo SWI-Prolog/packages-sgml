@@ -1359,7 +1359,8 @@ encoding.
 
 \index{XML-Schema,lexical forms}%
 The predicates in this section translate between values and their
-lexical forms for XML-Schema data types.
+lexical forms for XML-Schema data types.  They are implementated in C
+to achieve the best possible performance.
 
 \begin{description}
     \predicate{xsd_number_string}{2}{?Number, ?String}
@@ -1371,6 +1372,50 @@ Prolog float is converted into a string it returns the XML canonical
 form. This form always has one digit before the decimal dot, at least
 one digit after it and an exponential component using the capital
 \const{E}.  This predicate behaves as number_string/2 for integers.
+
+    \predicate{xsd_time_string}{3}{?DateTime, ?Type, ?String}
+Serialize and deserialize the XSD date and time formats.  The converion
+is represented by the table below.
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Prolog term}	   & \textbf{Type} & \textbf{XSD string} \\
+\hline
+date(Y,M,D)		   & xsd:date	   & YYYY-MM-DD \\
+date_time(Y,M,D,H,Mi,S)	   & xsd:dateTime  & YYYY-MM-DDTHH-MM-SS \\
+date_time(Y,M,D,H,Mi,S,0)  & xsd:dateTime  & YYYY-MM-DDTHH-MM-SSZ \\
+date_time(Y,M,D,H,Mi,S,TZ) & xsd:dateTime  & YYYY-MM-DDTHH-MM-SS[+-]HH:MM \\
+time(H,M,S)		   & xsd:time	   & HH:MM:SS \\
+year_month(Y,M)		   & xsd:gYearMonth& YYYY-MM \\
+month_day(M,D)		   & xsd:gMonthDay & MM-DD \\
+D			   & xsd:gDay	   & DD \\
+M			   & xsd:gMonth	   & MM \\
+Y			   & xsd:gYear	   & YYYY \\
+\hline
+\end{tabular}
+\end{center}
+
+For the \textit{Prolog term} all variables denote integers except for
+\arg{S}, which represents seconds as either an integer or float. The
+\arg{TZ} argument is the offset from UTC in \emph{seconds}. The
+\arg{Type} is written as xsd:\arg{name}, but is in fact the full URI of
+the XSD data type, e.g., \url{http://www.w3.org/2001/XMLSchema#date}. In
+the \textit{XSD string} notation, the letters YMDHS denote digits. The
+notation SS is either a two-digit integer or a decimal number with two
+digits before the floating point, e.g. \exam{05.3} to denote 5.3
+seconds.
+
+For most conversions, \arg{Type} may be specified unbound and is unified
+with the resulting type. For ambiguous conversins, \arg{Type} must be
+specified or an instantiation_error is raised. When converting from
+Prolog to XSD serialization, D, M and Y are ambiguous.  When convertion
+from XSD serialization to Prolog, only DD and MM are ambiguous.
+
+The domain of numerical values is verified and a corresponding
+domain_error exception is raised if the domain is violated. There is no
+test for the existence of a date and thus \exam{"2016-02-31"}, although
+non-existing is accepted as valid.
 \end{description}
 
 

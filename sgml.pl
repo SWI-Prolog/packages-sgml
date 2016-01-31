@@ -64,6 +64,7 @@
 	    xml_name/2,			% +In, +Encoding
 
 	    xsd_number_string/2,	% ?Number, ?String
+	    xsd_time_string/3,		% ?Term, ?Type, ?String
 
 	    xml_basechar/1,		% +Code
 	    xml_ideographic/1,		% +Code
@@ -784,3 +785,4 @@ sandbox:safe_primitive(sgml:xml_digit(_)).
 sandbox:safe_primitive(sgml:xml_extender(_)).
 sandbox:safe_primitive(sgml:iri_xml_namespace(_,_,_)).
 sandbox:safe_primitive(sgml:xsd_number_string(_,_)).
+sandbox:safe_primitive(sgml:xsd_time_string(_,_,_)).
