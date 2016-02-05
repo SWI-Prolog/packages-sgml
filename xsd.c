@@ -277,6 +277,8 @@ parse_date_parts(const char *in, int *av, size_t avlen)
 	case 'Z': ADDINT(TZ);    in++; break;
 	case '.': ADDINT(DECIMAL); in++;
         { int v = 0;
+	  if ( !isdigit(in[0]) )
+	    return 2;
 	  while(isdigit(in[0]))
 	  { v = v*10+DV(0);
 	    in++;
@@ -378,7 +380,11 @@ valid_date(int v[3])
 
 static int
 valid_time(const time *t)
-{ if ( valid_hour(t->hour) &&
+{ if ( t->hour == 24 && t->minute == 0 &&
+       (t->sec_is_float ? t->second.f == 0.0 : t->second.i == 0) )
+    return TRUE;			/* 24:00:00[.0+] */
+
+  if ( valid_hour(t->hour) &&
        valid_minute(t->minute) )
   { if ( t->sec_is_float )
       return valid_second_f(t->second.f);
@@ -392,11 +398,12 @@ valid_time(const time *t)
 
 static int
 valid_tz(int hoff, int moff)
-{ if ( hoff >= 0 && hoff <= 12 )
+{ if ( hoff >= 0 && hoff <= 13 )
+    return valid_minute(moff);
+  else if ( hoff == 14 && moff == 0 )
     return TRUE;
   else
     return int_domain("tz_hour", hoff);
-  return valid_minute(moff);
 }
 
 

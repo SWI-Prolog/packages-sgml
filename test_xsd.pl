@@ -106,6 +106,9 @@ test(string_time, T = date_time(2016,01,30,20,29,15)) :-
 test(string_time, T = date_time(2016,01,30,20,29,15.25)) :-
 	xsd_time_string(T, Y, "2016-01-30T20:29:15.25"),
 	assertion(Y == xsd:dateTime).
+test(string_time, T = date_time(2016,01,30,24,0,0)) :-
+	xsd_time_string(T, Y, "2016-01-30T24:00:00"),
+	assertion(Y == xsd:dateTime).
 test(string_time, T = date_time(2016,01,30,20,29,15,0)) :-
 	xsd_time_string(T, Y, "2016-01-30T20:29:15Z"),
 	assertion(Y == xsd:dateTime).
@@ -117,6 +120,9 @@ test(string_time, T = date_time(2016,01,30,20,29,15,3600)) :-
 	assertion(Y == xsd:dateTime).
 test(string_time, T = date_time(2016,01,30,20,29,05.6,3600)) :-
 	xsd_time_string(T, Y, "2016-01-30T20:29:05.6+01:00"),
+	assertion(Y == xsd:dateTime).
+test(string_time, T = date_time(2016,01,30,20,29,05.6,50400)) :-
+	xsd_time_string(T, Y, "2016-01-30T20:29:05.6+14:00"),
 	assertion(Y == xsd:dateTime).
 test(string_time, T = time(20,29,15)) :-
 	xsd_time_string(T, Y, "20:29:15"),
