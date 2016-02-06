@@ -1,7 +1,7 @@
 ################################################################
 # SWI-Prolog `sgml' package
 # Author:    Jan Wielemaker. J.Wielemaker@vu.nl
-# Copyright: LGPL (see COPYING or www.gnu.org
+# Copyright: Simplified BSD license
 ################################################################
 
 PACKAGE=sgml
