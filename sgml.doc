@@ -1400,10 +1400,10 @@ For the \textit{Prolog term} all variables denote integers except for
 \arg{S}, which represents seconds as either an integer or float. The
 \arg{TZ} argument is the offset from UTC in \emph{seconds}. The
 \arg{Type} is written as xsd:\arg{name}, but is in fact the full URI of
-the XSD data type, e.g., \url{http://www.w3.org/2001/XMLSchema#date}. In
-the \textit{XSD string} notation, the letters YMDHS denote digits. The
-notation SS is either a two-digit integer or a decimal number with two
-digits before the floating point, e.g. \exam{05.3} to denote 5.3
+the XSD data type, e.g., \verb$http://www.w3.org/2001/XMLSchema#date$.
+In the \textit{XSD string} notation, the letters YMDHS denote digits.
+The notation SS is either a two-digit integer or a decimal number with
+two digits before the floating point, e.g. \exam{05.3} to denote 5.3
 seconds.
 
 For most conversions, \arg{Type} may be specified unbound and is unified
