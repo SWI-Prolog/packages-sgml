@@ -48,7 +48,7 @@
 :- asserta(user:file_search_path(library, '../../RDF')).
 :- asserta(user:file_search_path(foreign, '..')).
 :- use_module(library(sgml)).
-:- use_module(library(pretty_print)).
+:- use_module(library(pprint)).
 
 :- dynamic failed/1.
 
@@ -199,6 +199,8 @@ compare_attributes(A1, A2) :-
 	sort(A2, L2),
 	L1 == L2.
 
+pretty_print(Term) :-
+	print_term(Term, [output(current_output)]).
 
 		 /*******************************
 		 *	    OTHER TESTS		*

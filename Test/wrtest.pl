@@ -42,7 +42,7 @@
 
 :- use_module(library(sgml)).
 :- use_module(library(sgml_write)).
-:- use_module(library(pretty_print)).
+:- use_module(library(pprint)).
 
 :- dynamic failed/2.
 
@@ -277,3 +277,6 @@ eat_blanks([H|T0], T) :-
 	code_type(H, space), !,
 	eat_blanks(T0, T).
 eat_blanks(L, L).
+
+pretty_print(Term) :-
+	print_term(Term, [output(current_output)]).
