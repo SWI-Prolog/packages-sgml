@@ -1363,7 +1363,7 @@ lexical forms for XML-Schema data types.  They are implementated in C
 to achieve the best possible performance.
 
 \begin{description}
-    \predicate{xsd_number_string}{2}{?Number, ?String}
+    \predicate[det]{xsd_number_string}{2}{?Number, ?String}
 This predicate is similar to number_string/2, but accepts floating point
 numbers according to the XML syntax rather than the Prolog syntax. In
 particular, XML does not require a `0' (zero) before and after the
@@ -1373,7 +1373,10 @@ form. This form always has one digit before the decimal dot, at least
 one digit after it and an exponential component using the capital
 \const{E}.  This predicate behaves as number_string/2 for integers.
 
-    \predicate{xsd_time_string}{3}{?DateTime, ?Type, ?String}
+Throws a \term{syntax_error}{xsd_number} if \arg{String} is given and
+is not a well-formed XSD number.
+
+    \predicate[det]{xsd_time_string}{3}{?DateTime, ?Type, ?String}
 Serialize and deserialize the XSD date and time formats.  The converion
 is represented by the table below.
 
