@@ -82,6 +82,8 @@ xsd_number_string(term_t number, term_t string)
 	  if ( exp == 0 )
 	    goto syntax_error;
 	}
+	if ( *s )
+	  goto syntax_error;
       } else
       { isfloat = TRUE;
       }
