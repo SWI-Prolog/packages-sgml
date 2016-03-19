@@ -413,7 +413,14 @@ xpath_function(number, DOM, Number) :- !,			% number
 	catch(xsd_number_string(Number, Text), _, fail).
 xpath_function(@Name, element(_, Attrs, _), Value) :- !,	% @Name
 	(   atom(Name)
-	->  memberchk(Name=Value, Attrs)
+	->  memberchk(Name=Value0, Attrs),
+	    % Special support for the `class` attribute that can contain
+	    % multiple values in a space-separated list
+	    (   Name == class
+	    ->  atomic_list_concat(Values, ' ', Value0),
+	        member(Value, Values)
+	    ;   Value = Value0
+	    )
 	;   compound(Name)
 	->  compound_name_arguments(Name, AName, AOps),
 	    memberchk(AName=Value0, Attrs),
