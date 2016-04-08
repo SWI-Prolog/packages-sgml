@@ -100,6 +100,9 @@ test(time_string, S == "30") :-
 test(string_time, T = date(2016,01,30)) :-
 	xsd_time_string(T, Y, "2016-01-30"),
 	assertion(Y == xsd:date).
+test(string_time, T = date(-2016,01,30)) :-
+	xsd_time_string(T, Y, "-2016-01-30"),
+	assertion(Y == xsd:date).
 test(string_time, T = date_time(2016,01,30,20,29,15)) :-
 	xsd_time_string(T, Y, "2016-01-30T20:29:15"),
 	assertion(Y == xsd:dateTime).
@@ -139,6 +142,9 @@ test(string_time, T = month_day(1,30)) :-
 test(string_time, T = 2016) :-
 	xsd_time_string(T, Y, "2016"),
 	assertion(Y == xsd:gYear).
+test(string_time, T = -2016) :-
+	xsd_time_string(T, Y, "-2016"),
+	assertion(Y == xsd:gYear).
 test(string_time, T = 1) :-
 	xsd_time_string(T, xsd:gMonth, "01").
 test(string_time, T = 30) :-
@@ -150,12 +156,18 @@ test(string_error, error(syntax_error(xsd_time))) :-
 	xsd_time_string(_, _, "").
 test(string_error, error(domain_error(day,35))) :-
 	xsd_time_string(_, _, "2016-01-35").
+test(string_error, error(domain_error(year,0))) :-
+	xsd_time_string(_, _, "0000-01-25").
 test(string_error, error(domain_error(second,65))) :-
 	xsd_time_string(_, _, "20:29:65").
 test(string_time, error(domain_error(day,35))) :-
 	xsd_time_string(_, xsd:gDay, "35").
 test(string_time, error(domain_error(month,13))) :-
 	xsd_time_string(_, xsd:gMonth, "13").
+test(string_error, error(domain_error(year,0))) :-
+	xsd_time_string(_, _, "0000").
+test(string_error, error(domain_error(year,0))) :-
+	xsd_time_string(_, _, "0000-04").
 test(string_time, error(instantiation_error)) :-
 	xsd_time_string(_, _, "13").
 
