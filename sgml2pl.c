@@ -1784,8 +1784,7 @@ pl_open_dtd(term_t ref, term_t options, term_t stream)
 	set_dialect_dtd(dtd, DL_SGML);
       else
 	return sgml2pl_error(ERR_DOMAIN, "sgml_dialect", a);
-    } else
-      return sgml2pl_error(ERR_DOMAIN, "dtd_option", option);
+    }
   }
   if ( !PL_get_nil(tail) )
     return sgml2pl_error(ERR_TYPE, "list", options);

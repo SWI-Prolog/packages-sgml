@@ -413,6 +413,9 @@ sgml_encoding(Enc) :-
 sgml_encoding_l('iso-8859-1').
 sgml_encoding_l('us-ascii').
 sgml_encoding_l('utf-8').
+sgml_encoding_l('utf8').
+sgml_encoding_l('iso_latin_1').
+sgml_encoding_l('ascii').
 
 load_structure_from_stream(In, Term, M:Options) :- !,
 	(   select_option(dtd(DTD), Options, Options1)
