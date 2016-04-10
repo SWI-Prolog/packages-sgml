@@ -269,11 +269,11 @@ dtd(Type, DTD) :-
 load_dtd(DTD, DtdFile) :-
 	load_dtd(DTD, DtdFile, []).
 load_dtd(DTD, DtdFile, Options) :-
-	split_dtd_options(Options, DTDOptions, FileOptions),
+	sgml_open_options(sgml:Options, OpenOptions, sgml:DTDOptions),
 	setup_call_cleanup(
 	    open_dtd(DTD, DTDOptions, DtdOut),
 	    setup_call_cleanup(
-		open(DtdFile, read, DtdIn, FileOptions),
+		open(DtdFile, read, DtdIn, OpenOptions),
 		copy_stream_data(DtdIn, DtdOut),
 		close(DtdIn)),
 	    close(DtdOut)).
@@ -387,6 +387,13 @@ dtd_property(DTD, Prop) :-
 %	    mode and doing the correct decoding is left to the parser.
 
 load_structure(Spec, DOM, Options) :-
+	sgml_open_options(Options, OpenOptions, SGMLOptions),
+	setup_call_cleanup(
+	    open_any(Spec, read, In, Close, OpenOptions),
+	    load_structure_from_stream(In, DOM, SGMLOptions),
+	    close_any(Close)).
+
+sgml_open_options(Options, OpenOptions, SGMLOptions) :-
 	Options = M:Plain,
 	(   select_option(encoding(Encoding), Plain, NoEnc)
 	->  (   sgml_encoding(Encoding)
@@ -397,11 +404,7 @@ load_structure(Spec, DOM, Options) :-
 	    )
 	;   merge_options(Plain, [type(binary)], OpenOptions),
 	    SGMLOptions = Options
-	),
-	setup_call_cleanup(
-	    open_any(Spec, read, In, Close, OpenOptions),
-	    load_structure_from_stream(In, DOM, SGMLOptions),
-	    close_any(Close)).
+	).
 
 sgml_encoding(Enc) :-
 	downcase_atom(Enc, Enc1),
