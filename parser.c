@@ -5209,7 +5209,7 @@ reprocess:
     case S_CMTE1:			/* <!--...-- seen */
     { if ( f[CF_MDC] == chr )		/* > */
       { if ( p->on_decl )
-	  (*p->on_decl)(p, (ichar*)"");
+	  (*p->on_decl)(p, (ichar*)L"");
 	p->state = S_PCDATA;
       } else
       { if ( IS_XML_DIALECT(dtd->dialect) )
