@@ -51,11 +51,11 @@
 
 The library xpath.pl provides predicates to select nodes from an XML DOM
 tree as produced by library(sgml) based  on descriptions inspired by the
-XPATH language.
+XPath language.
 
 The   predicate   xpath/3   selects   a   sub-structure   of   the   DOM
-non-deterministically based on an  xpath-like   specification.  Not  all
-selectors of XPATH are implemented, but the ability to mix xpath/3 calls
+non-deterministically based on an  XPath-like   specification.  Not  all
+selectors of XPath are implemented, but the ability to mix xpath/3 calls
 with arbitrary Prolog code  provides  a   powerful  tool  for extracting
 information from XML parse-trees.
 
@@ -177,7 +177,7 @@ xpath_chk(DOM, Spec, Content) :-
 %	      //div(h2/strong)/h3
 %	      ==
 %
-%	    This is equivalent to the conjunction of Xpath goals below.
+%	    This is equivalent to the conjunction of XPath goals below.
 %
 %	      ==
 %	         ...,
