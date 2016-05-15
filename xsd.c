@@ -485,25 +485,36 @@ xsd_time_string(term_t term, term_t type, term_t string)
 
     if ( PL_is_functor(term, FUNCTOR_date3) )	/* date(Y,M,D) */
     { int v[3];
+      char *sign = "";
 
       if ( !get_int_args(term, 3, v) || !valid_date(v) )
 	return FALSE;
       at = URL_date;
-      sprintf(buf, "%04d-%02d-%02d", v[0],v[1],v[2]);
+      if ( v[0] < 0 )
+      { sign = "-";
+	v[0] = -v[0];
+      }
+      sprintf(buf, "%s%04d-%02d-%02d", sign, v[0],v[1],v[2]);
     } else if ( PL_is_functor(term, FUNCTOR_date_time6) )
     { int v[3];
       time t;
+      char *sign = "";
 
       if ( !get_int_args(term, 3, v) ||
 	   !get_time_args(term, 3, &t) ||
 	   !valid_date(v) || !valid_time(&t) )
 	return FALSE;
       at = URL_dateTime;
-      sprintf(buf, "%04d-%02d-%02dT%02d:%02d:%s",
-	      v[0], v[1], v[2], t.hour, t.minute, time_sec_chars(&t, b2));
+      if ( v[0] < 0 )
+      { sign = "-";
+	v[0] = -v[0];
+      }
+      sprintf(buf, "%s%04d-%02d-%02dT%02d:%02d:%s",
+	      sign, v[0], v[1], v[2], t.hour, t.minute, time_sec_chars(&t, b2));
     } else if ( PL_is_functor(term, FUNCTOR_date_time7) )
     { int v[3], tz;
       time t;
+      char *sign = "";
 
       if ( !get_int_args(term, 3, v) ||
 	   !get_time_args(term, 3, &t) ||
@@ -512,8 +523,12 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	   !valid_tzoffset(tz) )
 	return FALSE;
       at = URL_dateTime;
-      sprintf(buf, "%04d-%02d-%02dT%02d:%02d:%s",
-	      v[0], v[1], v[2], t.hour, t.minute, time_sec_chars(&t, b2));
+      if ( v[0] < 0 )
+      { sign = "-";
+	v[0] = -v[0];
+      }
+      sprintf(buf, "%s%04d-%02d-%02dT%02d:%02d:%s",
+	      sign, v[0], v[1], v[2], t.hour, t.minute, time_sec_chars(&t, b2));
       if ( tz == 0 )
       { strcat(buf, "Z");
       } else
@@ -540,12 +555,16 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	      v[0], v[1]);
     } else if ( PL_is_functor(term, FUNCTOR_year_month2) )
     { int v[2];
+      char *sign = "";
 
       if ( !get_int_args(term, 2, v) )
 	return FALSE;
+      if ( v[0] < 0 )
+      { sign = "-";
+	v[0] = -v[0];
+      }
       at = URL_gYearMonth;
-      sprintf(buf, "%04d-%02d",
-	      v[0], v[1]);
+      sprintf(buf, "%s%04d-%02d", sign, v[0], v[1]);
     } else if ( PL_get_integer(term, &v) )
     { atom_t url;
 
@@ -560,9 +579,14 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	  return FALSE;
 	sprintf(buf, "%02d", v);
       } else if ( url == URL_gYear )
-      { if ( !valid_year(v) )
+      { char *sign = "";
+	if ( !valid_year(v) )
 	  return FALSE;
-	sprintf(buf, "%04d", v);
+	if ( v < 0 )
+	{ sign = "-";
+	  v = -v;
+	}
+	sprintf(buf, "%s%04d", sign, v);
       } else
 	return PL_domain_error("xsd_time_url", type);
     } else

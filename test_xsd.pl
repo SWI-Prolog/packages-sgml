@@ -58,6 +58,9 @@ test(nan_inf, S == "-INF") :-
 test(time_string, S == "2016-01-30") :-
 	xsd_time_string(date(2016,01,30), Y, S),
 	assertion(Y == xsd:date).
+test(time_string, S == "-0400-01-30") :-
+	xsd_time_string(date(-400,01,30), Y, S),
+	assertion(Y == xsd:date).
 test(time_string, S == "2016-01-30T20:29:15") :-
 	xsd_time_string(date_time(2016,01,30,20,29,15), Y, S),
 	assertion(Y == xsd:dateTime).
@@ -90,6 +93,8 @@ test(time_string, S == "01-30") :-
 	assertion(Y == xsd:gMonthDay).
 test(time_string, S == "2016") :-
 	xsd_time_string(2016, xsd:gYear, S).
+test(time_string, S == "-0400") :-
+	xsd_time_string(-400, xsd:gYear, S).
 test(time_string, S == "01") :-
 	xsd_time_string(1, xsd:gMonth, S).
 test(time_string, S == "30") :-
