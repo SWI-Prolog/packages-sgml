@@ -55,7 +55,7 @@ xsd_number_string(term_t number, term_t string)
     if ( strlen(s) == len )			/* no 0-characters */
     { int isfloat = FALSE;
 
-      if ( !strcmp(s, "NaN") == 0 )
+      if ( strcmp(s, "NaN") != 0 )
       { int decl = 0, dect = 0;
 
 	if ( issign(*s) ) s++;			/* [+-]? */
