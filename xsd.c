@@ -476,6 +476,27 @@ time_sec_chars(time *t, char *buf)
     xsd_time_string(-Term, ?Type, +String) is det.
 */
 
+static int
+maybe_invalid_time_url(term_t type)
+{ atom_t url;
+
+  if ( PL_get_atom_ex(type, &url) )
+  { if ( url == URL_date ||
+	 url == URL_dateTime ||
+	 url == URL_gDay ||
+	 url == URL_gMonth ||
+	 url == URL_gMonthDay ||
+	 url == URL_gYear ||
+	 url == URL_gYearMonth ||
+	 url == URL_time )
+      return FALSE;
+    return PL_domain_error("xsd_time_url", type);
+  }
+
+  return FALSE;
+}
+
+
 static foreign_t
 xsd_time_string(term_t term, term_t type, term_t string)
 { if ( PL_is_variable(string) )			/* +, ?, - */
@@ -588,7 +609,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	}
 	sprintf(buf, "%s%04d", sign, v);
       } else
-	return PL_domain_error("xsd_time_url", type);
+	return maybe_invalid_time_url(type);
     } else
     { return PL_domain_error("xsd_time", term);
     }
@@ -724,7 +745,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	return valid_day(av[1]) && PL_unify_integer(term, av[1]);
       if ( url == URL_gMonth )
 	return valid_month(av[1]) && PL_unify_integer(term, av[1]);
-      return PL_domain_error("xsd_time_url", type);
+      return maybe_invalid_time_url(type);
     }
 
     return PL_syntax_error("xsd_time", NULL);
