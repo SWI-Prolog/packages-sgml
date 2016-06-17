@@ -690,13 +690,13 @@ sgml_write_attribute(Out, Values, State) :-
 	is_list(Values), !,
 	get_state(State, entity_map, EntityMap),
 	put_char(Out, '"'),
-	write_quoted_list(Values, Out, '"<&>\r\n\t', EntityMap),
+	write_quoted_list(Values, Out, '"<&\r\n\t', EntityMap),
 	put_char(Out, '"').
 sgml_write_attribute(Out, Value, State) :-
 	is_text(Value), !,
 	get_state(State, entity_map, EntityMap),
 	put_char(Out, '"'),
-	write_quoted(Out, Value, '"<&>\r\n\t', EntityMap),
+	write_quoted(Out, Value, '"<&\r\n\t', EntityMap),
 	put_char(Out, '"').
 sgml_write_attribute(Out, Value, _State) :-
 	number(Value), !,
