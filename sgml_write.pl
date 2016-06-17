@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker & Richard O'Keefe
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2004-2014, University of Amsterdam
+    Copyright (c)  2004-2016, University of Amsterdam
                               VU University Amsterdam
     All rights reserved.
 
