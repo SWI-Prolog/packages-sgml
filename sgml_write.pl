@@ -761,7 +761,7 @@ unicode_encoding(unicode_be).
 write_entity(Code, Out, EntityMap) :-
 	(   get_assoc(Code, EntityMap, EntityName)
 	->  format(Out, '&~w;', [EntityName])
-	;   format(Out, '&#~w;', [Code])
+	;   format(Out, '&#x~16R;', [Code])
 	).
 
 
