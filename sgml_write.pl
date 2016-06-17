@@ -887,14 +887,15 @@ set_state(State, Field, Value) :-
 	state(Field, Arg),
 	setarg(Arg, State, Value).
 
-xml_entities(Map) :-
-	list_to_assoc([ 60 - lt,
-			61 - amp,
-			62 - gt,
-			39 - apos,
-			34 - quot
+term_expansion(xml_entities(map),
+	       xml_entities(Map)) :-
+	list_to_assoc([ 0'< - lt,
+			0'& - amp,
+			0'> - gt,
+			0'\' - apos,
+			0'\" - quot
 		      ], Map).
-
+xml_entities(map).
 
 		 /*******************************
 		 *	      MESSAGES		*
