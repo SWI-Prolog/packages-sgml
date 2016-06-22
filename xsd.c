@@ -497,6 +497,17 @@ maybe_invalid_time_url(term_t type)
 }
 
 
+static int
+mkyear(int v, int sign)
+{ if ( sign == 1 )
+  { if ( v == 0 )
+      return -1;
+    return v;
+  }
+  return -(v+1);
+}
+
+
 static foreign_t
 xsd_time_string(term_t term, term_t type, term_t string)
 { if ( PL_is_variable(string) )			/* +, ?, - */
@@ -603,9 +614,11 @@ xsd_time_string(term_t term, term_t type, term_t string)
       { char *sign = "";
 	if ( !valid_year(v) )
 	  return FALSE;
-	if ( v < 0 )
+	if ( v == -1 )
+	{ v = 0;
+	} else if ( v < 0 )
 	{ sign = "-";
-	  v = -v;
+	  v = -v - 1;
 	}
 	sprintf(buf, "%s%04d", sign, v);
       } else
@@ -642,7 +655,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
     if ( av[0] == INT4 && av[2] == MINUS &&
 	 av[3] == INT2 && av[5] == MINUS &&
 	 av[6] == INT2 )			/* YYYY-MM-DD */
-    { int v[3] = {av[1]*yearsign,av[4],av[7]};
+    { int v[3] = {mkyear(av[1],yearsign),av[4],av[7]};
 
       if ( !valid_date(v) )
 	return FALSE;
@@ -650,7 +663,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
       if ( av[8] == END )
       { return (PL_unify_atom(type, URL_date) &&
 		PL_unify_term(term, PL_FUNCTOR, FUNCTOR_date3,
-			      PL_INT, av[1]*yearsign,
+			      PL_INT, mkyear(av[1],yearsign),
 			      PL_INT, av[4], PL_INT, av[7]) );
       } else if ( av[8] == TT &&
 		  (tlen=is_time_seq(av+9, &t)) ) /* THH:MM:SS[.DDD] */
@@ -667,13 +680,13 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	if ( av[at] == END )
 	  return (PL_unify_atom(type, URL_dateTime) &&
 		  PL_unify_term(term, PL_FUNCTOR, FUNCTOR_date_time6,
-				PL_INT, av[1]*yearsign,
+				PL_INT, mkyear(av[1],yearsign),
 				PL_INT, av[ 4], PL_INT, av[ 7],
 				PL_INT, t.hour, PL_INT, t.minute, PL_TERM, sec));
 	if ( av[at] == TZ && av[at+1] == END )
 	  return (PL_unify_atom(type, URL_dateTime) &&
 		  PL_unify_term(term, PL_FUNCTOR, FUNCTOR_date_time7,
-				PL_INT, av[1]*yearsign,
+				PL_INT, mkyear(av[1],yearsign),
 				PL_INT, av[ 4], PL_INT, av[ 7],
 				PL_INT, t.hour, PL_INT, t.minute, PL_TERM, sec,
 			        PL_INT, 0));
@@ -688,7 +701,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
 
 	  return (PL_unify_atom(type, URL_dateTime) &&
 		  PL_unify_term(term, PL_FUNCTOR, FUNCTOR_date_time7,
-				PL_INT, av[1]*yearsign,
+				PL_INT, mkyear(av[1],yearsign),
 				PL_INT, av[ 4], PL_INT, av[ 7],
 				PL_INT, t.hour, PL_INT, t.minute, PL_TERM, sec,
 			        PL_INT, tz));
@@ -723,15 +736,15 @@ xsd_time_string(term_t term, term_t type, term_t string)
 			    PL_INT, av[1], PL_INT, av[4]) );
     }
     if ( av[0] == INT4 && av[2] == MINUS && av[3] == INT2 && av[5] == END )
-    { return (valid_year(av[1]) && valid_month(av[4]) &&
+    { return (valid_year(mkyear(av[1],yearsign)) && valid_month(av[4]) &&
 	      PL_unify_atom(type, URL_gYearMonth) &&
 	      PL_unify_term(term, PL_FUNCTOR, FUNCTOR_year_month2,
-			    PL_INT, av[1]*yearsign, PL_INT, av[4]) );
+			    PL_INT, mkyear(av[1],yearsign), PL_INT, av[4]) );
     }
     if ( av[0] == INT4 && av[2] == END )
-    { return (valid_year(av[1]) &&
+    { return (valid_year(mkyear(av[1],yearsign)) &&
 	      PL_unify_atom(type, URL_gYear) &&
-	      PL_unify_integer(term, av[1]*yearsign));
+	      PL_unify_integer(term, mkyear(av[1],yearsign)));
     }
     if ( av[0] == INT2 && av[2] == END )
     { atom_t url;

@@ -93,7 +93,7 @@ test(time_string, S == "01-30") :-
 	assertion(Y == xsd:gMonthDay).
 test(time_string, S == "2016") :-
 	xsd_time_string(2016, xsd:gYear, S).
-test(time_string, S == "-0400") :-
+test(time_string, S == "-0399") :-
 	xsd_time_string(-400, xsd:gYear, S).
 test(time_string, S == "01") :-
 	xsd_time_string(1, xsd:gMonth, S).
@@ -105,7 +105,7 @@ test(time_string, S == "30") :-
 test(string_time, T = date(2016,01,30)) :-
 	xsd_time_string(T, Y, "2016-01-30"),
 	assertion(Y == xsd:date).
-test(string_time, T = date(-2016,01,30)) :-
+test(string_time, T = date(-2017,01,30)) :-
 	xsd_time_string(T, Y, "-2016-01-30"),
 	assertion(Y == xsd:date).
 test(string_time, T = date_time(2016,01,30,20,29,15)) :-
@@ -147,7 +147,7 @@ test(string_time, T = month_day(1,30)) :-
 test(string_time, T = 2016) :-
 	xsd_time_string(T, Y, "2016"),
 	assertion(Y == xsd:gYear).
-test(string_time, T = -2016) :-
+test(string_time, T = -2017) :-
 	xsd_time_string(T, Y, "-2016"),
 	assertion(Y == xsd:gYear).
 test(string_time, T = 1) :-
@@ -161,18 +161,12 @@ test(string_error, error(syntax_error(xsd_time))) :-
 	xsd_time_string(_, _, "").
 test(string_error, error(domain_error(day,35))) :-
 	xsd_time_string(_, _, "2016-01-35").
-test(string_error, error(domain_error(year,0))) :-
-	xsd_time_string(_, _, "0000-01-25").
 test(string_error, error(domain_error(second,65))) :-
 	xsd_time_string(_, _, "20:29:65").
 test(string_time, error(domain_error(day,35))) :-
 	xsd_time_string(_, xsd:gDay, "35").
 test(string_time, error(domain_error(month,13))) :-
 	xsd_time_string(_, xsd:gMonth, "13").
-test(string_error, error(domain_error(year,0))) :-
-	xsd_time_string(_, _, "0000").
-test(string_error, error(domain_error(year,0))) :-
-	xsd_time_string(_, _, "0000-04").
 test(string_time, error(instantiation_error)) :-
 	xsd_time_string(_, _, "13").
 
@@ -196,5 +190,7 @@ test(term_error, error(domain_error(day,35))) :-
 	xsd_time_string(35, xsd:gDay, _).
 test(term_error, error(domain_error(day,-1))) :-
 	xsd_time_string(-1, xsd:gDay, _).
+test(term_error, error(domain_error(year,0))) :-
+	xsd_time_string(0, xsd:gYear, _).
 
 :- end_tests(xsd_time_string).
