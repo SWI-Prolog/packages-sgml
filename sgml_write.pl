@@ -43,7 +43,6 @@
 	  ]).
 :- use_module(library(lists)).
 :- use_module(library(sgml)).
-:- use_module(library(debug)).
 :- use_module(library(assoc)).
 :- use_module(library(option)).
 :- use_module(library(error)).
@@ -58,7 +57,8 @@
 		       nsmap(list),
 		       indent(nonneg),
 		       layout(boolean),
-		       net(boolean)
+		       net(boolean),
+		       cleanns(boolean)
 		     ]).
 
 :- multifile
@@ -94,6 +94,9 @@ stage.
 %	Write a term as created by the SGML/XML parser to a stream in
 %	SGML or XML format.  Options:
 %
+%		* cleanns(Bool)
+%		If `true` (default), remove duplicate `xmlns`
+%		attributes.
 %		* dtd(DTD)
 %		The DTD.  This is needed for SGML documents that contain
 %		elements with content model EMPTY.  Characters which may
@@ -231,6 +234,9 @@ update_state(dtd(DTD), State) :- !,
 	set_state(State, entity_map, EntityMap).
 update_state(nsmap(Map), State) :- !,
 	set_state(State, nsmap, Map).
+update_state(cleanns(Bool), State) :- !,
+	must_be(boolean, Bool),
+	set_state(State, cleanns, Bool).
 update_state(indent(Indent), State) :- !,
 	must_be(integer, Indent),
 	set_state(State, indent, Indent).
@@ -340,7 +346,15 @@ emit_element(pi(PI), Out, State) :- !,
 emit_element(element(Name, Attributes, Content), Out, State) :- !,
 	must_be(list, Attributes),
 	must_be(list, Content),
-	att_length(Attributes, State, Alen),
+	(   get_state(State, dialect, xml)
+	->  update_nsmap(Attributes, CleanAttrs, State),
+	    (	get_state(State, cleanns, true)
+	    ->	WriteAttrs = CleanAttrs
+	    ;	WriteAttrs = Attributes
+	    )
+	;   WriteAttrs = Attributes
+	),
+	att_length(WriteAttrs, State, Alen),
 	(   Alen > 60,
 	    get_state(State, layout, true)
 	->  Sep = nl,
@@ -348,17 +362,13 @@ emit_element(element(Name, Attributes, Content), Out, State) :- !,
 	;   Sep = sp,
 	    AttIndent = 0
 	),
-	(   get_state(State, dialect, xml)
-	->  update_nsmap(Attributes, State)
-	;   true
-	),
 	put_char(Out, '<'),
 	emit_name(Name, Out, State),
 	(   AttIndent > 0
 	->  \+ \+ ( inc_indent(State, AttIndent),
-	            attributes(Attributes, Sep, Out, State)
+	            attributes(WriteAttrs, Sep, Out, State)
 		  )
-	;   attributes(Attributes, Sep, Out, State)
+	;   attributes(WriteAttrs, Sep, Out, State)
 	),
 	content(Content, Out, Name, State).
 emit_element(E, _, _) :-
@@ -430,25 +440,36 @@ emit_name(URI:Name, Out, State) :-
 emit_name(Term, Out, _) :-		% error?
 	write(Out, Term).
 
-%%	update_nsmap(+Attributes, !State)
+%%	update_nsmap(+Attributes, -Attributes1, !State)
 %
 %	Modify the nsmap of State to reflect modifications due to xmlns
 %	arguments.
+%
+%	@arg	Attributes1 is a copy of Attributes with all redundant
+%		namespace attributes deleted.
 
-update_nsmap(Attributes, State) :-
+update_nsmap(Attributes, Attributes1, State) :-
 	get_state(State, nsmap, Map0),
-	update_nsmap(Attributes, Map0, Map),
+	update_nsmap(Attributes, Attributes1, Map0, Map),
 	set_state(State, nsmap, Map).
 
-update_nsmap([], Map, Map).
-update_nsmap([xmlns:NS=URI|T], Map0, Map) :- !,
-	set_nsmap(NS, URI, Map0, Map1),
-	update_nsmap(T, Map1, Map).
-update_nsmap([xmlns=URI|T], Map0, Map) :- !,
-	set_nsmap([], URI, Map0, Map1),
-	update_nsmap(T, Map1, Map).
-update_nsmap([_|T], Map0, Map) :- !,
-	update_nsmap(T, Map0, Map).
+update_nsmap([], [], Map, Map).
+update_nsmap([xmlns:NS=URI|T], Attrs, Map0, Map) :- !,
+	(   memberchk(NS=URI, Map0)
+	->  update_nsmap(T, Attrs, Map0, Map)
+	;   set_nsmap(NS, URI, Map0, Map1),
+	    Attrs = [xmlns:NS=URI|Attrs1],
+	    update_nsmap(T, Attrs1, Map1, Map)
+	).
+update_nsmap([xmlns=URI|T], Attrs, Map0, Map) :- !,
+	(   memberchk([]=URI, Map0)
+	->  update_nsmap(T, Attrs, Map0, Map)
+	;   set_nsmap([], URI, Map0, Map1),
+	    Attrs = [xmlns=URI|Attrs1],
+	    update_nsmap(T, Attrs1, Map1, Map)
+	).
+update_nsmap([H|T0], [H|T], Map0, Map) :- !,
+	update_nsmap(T0, T, Map0, Map).
 
 set_nsmap(NS, URI, Map0, Map) :-
 	select(NS=_, Map0, Map1), !,
@@ -660,7 +681,7 @@ missing_namespaces([H|T], Def, L0, L) :- !,
 	missing_namespaces(H, Def, L0, L1),
 	missing_namespaces(T, Def, L1, L).
 missing_namespaces(element(Name, Atts, Content), Def, L0, L) :- !,
-	update_nsmap(Atts, Def, Def1),
+	update_nsmap(Atts, _, Def, Def1),
 	missing_ns(Name, Def1, L0, L1),
 	missing_att_ns(Atts, Def1, L1, L2),
 	missing_namespaces(Content, Def1, L2, L).
@@ -861,6 +882,7 @@ state(entity_map, 4).			% compiled entity-map
 state(dialect,	  5).			% xml/sgml
 state(nsmap,	  6).			% defined namespaces
 state(net,	  7).			% Should null end-tags be used?
+state(cleanns,	  8).			% Remove duplicate xmlns declarations
 
 new_state(Dialect,
     state(
@@ -870,7 +892,8 @@ new_state(Dialect,
 	EntityMap,	% entity_map
 	Dialect,	% dialect
 	[],		% NS=Full map
-	Net		% Null End-Tags?
+	Net,		% Null End-Tags?
+	true		% Remove duplicate xmlns declarations
     )) :-
 	(   Dialect == sgml
 	->  Net = false,
