@@ -144,7 +144,7 @@ xpath_chk(DOM, Spec, Content) :-
 %	      into an integer using the round/1 function.
 %	      - float
 %	      As `number`, but subsequently transform the value
-%	      into an integer using the float/1 function.
+%	      into a float using the float/1 function.
 %	      - string
 %	      Translate the value into a Prolog string.
 %	      - lower
