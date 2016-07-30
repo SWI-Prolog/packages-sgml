@@ -186,7 +186,7 @@ xpath_chk(DOM, Spec, Content) :-
 %	         xpath(Div, h3, Result)
 %	      ==
 %
-%	Examples:
+%	**Examples**:
 %
 %	Match each table-row in DOM:
 %
@@ -232,19 +232,25 @@ xpath_chk(DOM, Spec, Content) :-
 %		xpath(DOM, //book(@genre=thiller), Book).
 %	    ==
 %
-%	Match the elements `<table align="center">` _and_ `<table
-%	align="CENTER">`:
+%	Match the elements =|<table align="center">|= _and_ =|<table
+%	align="CENTER">|=:
 %
 %	    ```prolog
 %		//table(@align(lower) = center)
 %	    ```
 %
-%	Get the `width` and `height` of a `div` element as a number well
-%	as the `div` node itself.  Note that `div` is an infix operator
-%	and therefore it the expression needs to be embraced.
+%	Get the `width` and `height` of a `div` element as a number,
+%	and the `div` node itself:
 %
 %	    ==
-%		xpath(DOM, //(div(@width(number)=W, @height(number)=H)), Div)
+%		xpath(DOM, //div(@width(number)=W, @height(number)=H), Div)
+%	    ==
+%
+%	Note that `div` is an infix operator, so parentheses must be
+%	used in cases like the following:
+%
+%	    ==
+%		xpath(DOM, //(div), Div)
 %	    ==
 
 xpath(DOM, Spec, Content) :-
