@@ -127,6 +127,7 @@ typedef struct _parser_data
 		 *******************************/
 
 static functor_t FUNCTOR_and2;
+static functor_t FUNCTOR_attribute_value1;
 static functor_t FUNCTOR_bar2;
 static functor_t FUNCTOR_comma2;
 static functor_t FUNCTOR_default1;
@@ -158,6 +159,7 @@ static functor_t FUNCTOR_parse1;
 static functor_t FUNCTOR_source1;
 static functor_t FUNCTOR_content_length1;
 static functor_t FUNCTOR_call2;
+static functor_t FUNCTOR_cdata1;
 static functor_t FUNCTOR_charpos1;
 static functor_t FUNCTOR_charpos2;
 static functor_t FUNCTOR_ns2;		/* :/2 */
@@ -194,6 +196,8 @@ static atom_t ATOM_pcdata;
 static atom_t ATOM_empty;
 static atom_t ATOM_any;
 static atom_t ATOM_position;
+static atom_t ATOM_atom;
+static atom_t ATOM_string;
 
 #define mkfunctor(n, a) PL_new_functor(PL_new_atom(n), a)
 
@@ -229,6 +233,8 @@ initConstants()
   FUNCTOR_source1	 = mkfunctor("source", 1);
   FUNCTOR_content_length1= mkfunctor("content_length", 1);
   FUNCTOR_call2		 = mkfunctor("call", 2);
+  FUNCTOR_cdata1	 = mkfunctor("cdata", 1);
+  FUNCTOR_attribute_value1 = mkfunctor("attribute_value", 1);
   FUNCTOR_charpos1	 = mkfunctor("charpos", 1);
   FUNCTOR_charpos2	 = mkfunctor("charpos", 2);
   FUNCTOR_ns2		 = mkfunctor(":", 2);
@@ -267,6 +273,8 @@ initConstants()
   ATOM_pcdata = PL_new_atom("#pcdata");
   ATOM_empty = PL_new_atom("empty");
   ATOM_any = PL_new_atom("any");
+  ATOM_atom = PL_new_atom("atom");
+  ATOM_string = PL_new_atom("string");
   ATOM_position = PL_new_atom("#position");
 }
 
@@ -1026,10 +1034,10 @@ unify_listval(dtd_parser *p,
 
 
 static int
-put_att_text(term_t t, sgml_attribute *a)
+put_att_text(dtd_parser *p, term_t t, sgml_attribute *a)
 { if ( a->value.textW )
   { PL_put_variable(t);
-    return PL_unify_wchars(t, PL_ATOM, a->value.number, a->value.textW);
+    return PL_unify_wchars(t, p->att_rep, a->value.number, a->value.textW);
   } else
     return FALSE;
 }
@@ -1039,9 +1047,9 @@ static int
 put_attribute_value(dtd_parser *p, term_t t, sgml_attribute *a)
 { switch(a->definition->type)
   { case AT_CDATA:
-      return put_att_text(t, a);
+      return put_att_text(p, t, a);
     case AT_NUMBER:
-    { if ( !put_att_text(t, a) )
+    { if ( !put_att_text(p, t, a) )
 	return PL_put_integer(t, a->value.number);
       return TRUE;
     }
@@ -1069,7 +1077,7 @@ put_attribute_value(dtd_parser *p, term_t t, sgml_attribute *a)
 			       istrlen(val), val) &&
 		 PL_unify_nil(tail) );
       } else
-	return put_att_text(t, a);
+	return put_att_text(p, t, a);
     }
   }
 }
@@ -1378,7 +1386,7 @@ on_data(dtd_parser *p, data_type type, int len, const wchar_t *data)
       }
 
       if ( rval )
-	rval = PL_unify_wchars(a, PL_ATOM, len, data);
+	rval = PL_unify_wchars(a, p->cdata_rep, len, data);
 
       if ( rval )
       { PL_reset_term_refs(h);
@@ -1895,7 +1903,8 @@ pl_sgml_parse(term_t parser, term_t options)
     p->on_error	        = on_error;
     p->on_xmlns		= on_xmlns;
     p->on_decl		= on_decl;
-
+    p->cdata_rep        = PL_ATOM;
+    p->att_rep          = PL_ATOM;
     pd = new_parser_data(p);
   }
 
@@ -1989,7 +1998,31 @@ pl_sgml_parse(term_t parser, term_t options)
 	pd->positions = FALSE;
       else
 	return sgml2pl_error(ERR_DOMAIN, "positions", a);
-    } /* else ignored option */
+    } else if ( PL_is_functor(head, FUNCTOR_cdata1) )
+    { term_t arg = PL_new_term_ref();
+      atom_t a;
+      _PL_get_arg(1, head, arg);
+      if (!PL_get_atom_ex(arg, &a))
+	return FALSE;
+      if (a == ATOM_atom)
+	p->cdata_rep = PL_ATOM;
+      else if (a == ATOM_string)
+	p->cdata_rep = PL_STRING;
+      else
+	return sgml2pl_error(ERR_DOMAIN, "representation", a);
+    } else if ( PL_is_functor(head, FUNCTOR_attribute_value1) )
+    { term_t arg = PL_new_term_ref();
+      atom_t a;
+      _PL_get_arg(1, head, arg);
+      if (!PL_get_atom_ex(arg, &a))
+	return FALSE;
+      if (a == ATOM_atom)
+	p->att_rep = PL_ATOM;
+      else if (a == ATOM_string)
+	p->att_rep = PL_STRING;
+      else
+	return sgml2pl_error(ERR_DOMAIN, "representation", a);
+    }/* else ignored option */
   }
   if ( !PL_get_nil(tail) )
     return sgml2pl_error(ERR_TYPE, "list", tail);

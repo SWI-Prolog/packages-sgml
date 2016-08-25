@@ -297,6 +297,16 @@ Sets the starting line-number for reporting errors.
     \termitem{max_memory}{+Max}
 Sets the maximum buffer size in bytes available for input data and CDATA output. If this limit is reached a resource error is raised. Using \term{max_memory}{0} (the default) means no resource limit will be enforced.
 
+    \termitem{cdata}{+Representation}
+Specify the representation of cdata elements. Supported are \const{atom} (default),
+and \const{string}.
+
+    \termitem{attribute_value}{+Representation}
+Specify the representation of attribute values. Supported are \const{atom} (default),
+and \const{string}.
+
+
+
 \end{description}
 \end{description}
 

@@ -235,6 +235,8 @@ typedef struct _dtd_parser
   xmlns_f		on_xmlns;	/* handle new namespace */
 #endif
   unsigned		flags;		/* misc flags */
+  int                   cdata_rep;      /* representation for cdata */
+  int                   att_rep;        /* representation for attribute values */
 } dtd_parser;
 
 
