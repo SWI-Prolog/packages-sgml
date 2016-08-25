@@ -298,15 +298,21 @@ Sets the starting line-number for reporting errors.
 Sets the maximum buffer size in bytes available for input data and CDATA output. If this limit is reached a resource error is raised. Using \term{max_memory}{0} (the default) means no resource limit will be enforced.
 
     \termitem{cdata}{+Representation}
-Specify the representation of cdata elements. Supported are \const{atom} (default),
-and \const{string}.
+Specify the representation of \jargon{cdata} elements. Supported are
+\const{atom} (default), and \const{string}. The choice is not obvious.
+Strings are allocated on the Prolog stacks and subject to normal stack
+garbage collection. They are quicker to create and avoid memory
+fragmentation. But, multiple copies of the same string are stored
+multiple times, while the text is shared if atoms are used. Strings are
+also useful for security sensitive information as they are invisible to
+other threads and cannot be enumerated using, e.g., current_atom/1.
+Finally, using strings allows for resource usage limits using the global
+stack limit (see set_prolog_stack/2).
 
     \termitem{attribute_value}{+Representation}
-Specify the representation of attribute values. Supported are \const{atom} (default),
-and \const{string}.
-
-
-
+Specify the representation of attribute values. Supported are
+\const{atom} (default), and \const{string}.  See above for the
+advantages and disadvantages of using strings.
 \end{description}
 \end{description}
 
