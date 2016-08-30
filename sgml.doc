@@ -313,6 +313,11 @@ stack limit (see set_prolog_stack/2).
 Specify the representation of attribute values. Supported are
 \const{atom} (default), and \const{string}.  See above for the
 advantages and disadvantages of using strings.
+
+    \termitem{keep_prefix}{+Boolean}
+If \const{true}, xmlns namespaces with prefixes are returned as
+\term{ns}{Prefix, URI} terms. If \const{false} (default), the prefix is
+ignored and the xmlns namespace is returned as just the URI.
 \end{description}
 \end{description}
 

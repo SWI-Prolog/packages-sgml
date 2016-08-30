@@ -99,7 +99,8 @@
 		       doctype(atom),
 		       dtd(any),
 		       encoding(oneof(['iso-8859-1', 'utf-8', 'us-ascii'])),
-		       entity(atom,atom),
+                       entity(atom,atom),
+                       keep_prefix(boolean),
 		       file(atom),
 		       line(integer),
 		       offset(integer),
@@ -493,6 +494,7 @@ parser_option(defaults(_)).
 parser_option(doctype(_)).
 parser_option(qualify_attributes(_)).
 parser_option(encoding(_)).
+parser_option(keep_prefix(_)).
 
 
 def_entity(entity(Name, Value), Parser) :-

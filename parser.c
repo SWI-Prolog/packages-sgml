@@ -1297,6 +1297,9 @@ set_option_dtd(dtd *dtd, dtd_option option, int set)
     case OPT_SYSTEM_ENTITIES:
       dtd->system_entities = set;
       break;
+    case OPT_KEEP_PREFIX:
+      dtd->keep_prefix = set;
+      break;
   }
 
   return TRUE;

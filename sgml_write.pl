@@ -397,8 +397,13 @@ att_length([A0|T], State, Len0, Len) :-
 	Len1 is Len0 + 1 + AL,
 	att_length(T, State, Len1, Len).
 
-alen(URI:Name=Value, State, Len) :- !,
+alen(ns(NS, _URI):Name=Value, _State, Len) :- !,
 	atom_length(Value, AL),
+	vlen(Name, NL),
+	atom_length(NS, NsL),
+	Len is AL+NL+NsL+3.
+alen(URI:Name=Value, State, Len) :- !,
+        atom_length(Value, AL),
 	vlen(Name, NL),
 	get_state(State, nsmap, Nsmap),
 	(   memberchk(NS=URI, Nsmap)
@@ -430,6 +435,8 @@ vlen_list([H|T], L0, L) :-
 emit_name(Name, Out, _) :-
 	atom(Name), !,
 	write(Out, Name).
+emit_name(ns(NS,_URI):Name, Out, _State) :- !,
+        format(Out, '~w:~w', [NS, Name]).
 emit_name(URI:Name, Out, State) :-
 	get_state(State, nsmap, NSMap),
 	memberchk(NS=URI, NSMap), !,
@@ -692,6 +699,11 @@ missing_att_ns([Name=_|T], Def, M0, M) :-
 	missing_ns(Name, Def, M0, M1),
 	missing_att_ns(T, Def, M1, M).
 
+missing_ns(ns(NS, URI):_, Def, M0, M) :- !,
+        (  memberchk(NS=URI, Def)
+        -> M = M0
+        ;  M = [URI|M0]
+        ).
 missing_ns(URI:_, Def, M0, M) :- !,
 	(   (   memberchk(_=URI, Def)
 	    ;	memberchk(URI, M0)

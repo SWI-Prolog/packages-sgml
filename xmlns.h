@@ -49,6 +49,6 @@ void		update_xmlns(dtd_parser *p, dtd_element *e,
 int		xmlns_resolve_attribute(dtd_parser *p, dtd_symbol *id,
 					const ichar **local, const ichar **url);
 int		xmlns_resolve_element(dtd_parser *p,
-				      const ichar **local, const ichar **url);
+                                      const ichar **local, const ichar **url, const ichar **prefix);
 
 #endif /*XMLNS_H_INCLUDED*/

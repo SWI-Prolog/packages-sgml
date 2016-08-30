@@ -203,7 +203,7 @@ namespaces of the attributes (see above).
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 int
-xmlns_resolve_element(dtd_parser *p, const ichar **local, const ichar **url)
+xmlns_resolve_element(dtd_parser *p, const ichar **local, const ichar **url, const ichar **prefix)
 { sgml_environment *e;
 
   if ( (e=p->environments) )
@@ -222,7 +222,7 @@ xmlns_resolve_element(dtd_parser *p, const ichar **local, const ichar **url)
 	*o = '\0';
 	*local = s+1;
 	n = dtd_add_symbol(dtd, buf);
-
+        *prefix = n->name;
 	if ( (ns = xmlns_find(p, n)) )
 	{ if ( ns->url->name[0] )
 	    *url = ns->url->name;
@@ -243,7 +243,7 @@ xmlns_resolve_element(dtd_parser *p, const ichar **local, const ichar **url)
     }
 
     *local = id->name;
-
+    *prefix = NULL;
     if ( (ns = xmlns_find(p, NULL)) )
     { if ( ns->url->name[0] )
 	*url = ns->url->name;

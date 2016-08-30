@@ -132,6 +132,7 @@ static functor_t FUNCTOR_bar2;
 static functor_t FUNCTOR_comma2;
 static functor_t FUNCTOR_default1;
 static functor_t FUNCTOR_dialect1;
+static functor_t FUNCTOR_keep_prefix1;
 static functor_t FUNCTOR_document1;
 static functor_t FUNCTOR_dtd1;
 static functor_t FUNCTOR_dtd2;
@@ -163,6 +164,7 @@ static functor_t FUNCTOR_cdata1;
 static functor_t FUNCTOR_charpos1;
 static functor_t FUNCTOR_charpos2;
 static functor_t FUNCTOR_ns2;		/* :/2 */
+static functor_t FUNCTOR_prefix2;	/* ns/2. This is a bit confusing but ns2 was already taken */
 static functor_t FUNCTOR_space1;
 static functor_t FUNCTOR_pi1;
 static functor_t FUNCTOR_sdata1;
@@ -228,6 +230,7 @@ initConstants()
   FUNCTOR_line1		 = mkfunctor("line", 1);
   FUNCTOR_linepos1	 = mkfunctor("linepos", 1);
   FUNCTOR_dialect1	 = mkfunctor("dialect", 1);
+  FUNCTOR_keep_prefix1	 = mkfunctor("keep_prefix", 1);
   FUNCTOR_max_errors1	 = mkfunctor("max_errors", 1);
   FUNCTOR_parse1	 = mkfunctor("parse", 1);
   FUNCTOR_source1	 = mkfunctor("source", 1);
@@ -238,6 +241,7 @@ initConstants()
   FUNCTOR_charpos1	 = mkfunctor("charpos", 1);
   FUNCTOR_charpos2	 = mkfunctor("charpos", 2);
   FUNCTOR_ns2		 = mkfunctor(":", 2);
+  FUNCTOR_prefix2	 = mkfunctor("ns", 2);
   FUNCTOR_space1	 = mkfunctor("space", 1);
   FUNCTOR_pi1		 = mkfunctor("pi", 1);
   FUNCTOR_sdata1	 = mkfunctor("sdata", 1);
@@ -661,6 +665,14 @@ pl_set_sgml_parser(term_t parser, term_t option)
       return FALSE;
 
     xmlns_push(p, ns, uri);
+  } else if ( PL_is_functor(option, FUNCTOR_keep_prefix1) )
+  { term_t a = PL_new_term_ref();
+    int val;
+
+    _PL_get_arg(1, option, a);
+    if ( !PL_get_bool(a, &val) )
+      return sgml2pl_error(ERR_TYPE, "boolean", a);
+    set_option_dtd(p->dtd, OPT_KEEP_PREFIX, val);
   } else
     return sgml2pl_error(ERR_DOMAIN, "sgml_parser_option", option);
 
@@ -962,10 +974,8 @@ put_attribute_name(dtd_parser *p, term_t t, dtd_symbol *nm)
 
   if ( p->dtd->dialect == DL_XMLNS )
   { xmlns_resolve_attribute(p, nm, &local, &url);
-
     if ( url )
     { term_t av;
-
       return ( (av=PL_new_term_refs(2)) &&
 	       put_url(p, av+0, url) &&
 	       put_atom_wchars(av+1, local) &&
@@ -979,19 +989,27 @@ put_attribute_name(dtd_parser *p, term_t t, dtd_symbol *nm)
 
 WUNUSED static int
 put_element_name(dtd_parser *p, term_t t, dtd_element *e)
-{ const ichar *url, *local;
+{ const ichar *url, *local, *prefix;
 
   if ( p->dtd->dialect == DL_XMLNS )
   { assert(p->environments->element == e);
-    xmlns_resolve_element(p, &local, &url);
+    xmlns_resolve_element(p, &local, &url, &prefix);
 
     if ( url )
     { term_t av;
-
-      return ( (av=PL_new_term_refs(2)) &&
-	       put_url(p, av+0, url) &&
-	       put_atom_wchars(av+1, local) &&
-	       PL_cons_functor_v(t, FUNCTOR_ns2, av) );
+      if ( p->dtd->keep_prefix && prefix )
+      { /* creates ns(prefix,url):local */
+	return PL_unify_term(t, PL_FUNCTOR, FUNCTOR_ns2,
+			          PL_FUNCTOR, FUNCTOR_prefix2,
+			            PL_NWCHARS, ENDSNUL, prefix,
+				    PL_NWCHARS, ENDSNUL, url,
+				  PL_NWCHARS, ENDSNUL, local);
+      } else
+      { return ( (av=PL_new_term_refs(2)) &&
+                 put_url(p, av+0, url) &&
+                 put_atom_wchars(av+1, local) &&
+                 PL_cons_functor_v(t, FUNCTOR_ns2, av) );
+      }
     } else
       return put_atom_wchars(t, local);
   } else
