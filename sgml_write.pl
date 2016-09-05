@@ -436,7 +436,10 @@ emit_name(Name, Out, _) :-
 	atom(Name), !,
 	write(Out, Name).
 emit_name(ns(NS,_URI):Name, Out, _State) :- !,
-        format(Out, '~w:~w', [NS, Name]).
+	(  NS == ''
+	-> write(Out, Name)
+	;  format(Out, '~w:~w', [NS, Name])
+	).
 emit_name(URI:Name, Out, State) :-
 	get_state(State, nsmap, NSMap),
 	memberchk(NS=URI, NSMap), !,
@@ -701,7 +704,9 @@ missing_att_ns([Name=_|T], Def, M0, M) :-
 
 missing_ns(ns(NS, URI):_, Def, M0, M) :- !,
         (  memberchk(NS=URI, Def)
-        -> M = M0
+	-> M = M0
+	;  NS == ''
+	-> M = M0
         ;  M = [URI|M0]
         ).
 missing_ns(URI:_, Def, M0, M) :- !,

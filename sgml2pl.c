@@ -997,11 +997,11 @@ put_element_name(dtd_parser *p, term_t t, dtd_element *e)
 
     if ( url )
     { term_t av;
-      if ( p->dtd->keep_prefix && prefix )
+      if ( p->dtd->keep_prefix )
       { /* creates ns(prefix,url):local */
 	return PL_unify_term(t, PL_FUNCTOR, FUNCTOR_ns2,
 			          PL_FUNCTOR, FUNCTOR_prefix2,
-			            PL_NWCHARS, ENDSNUL, prefix,
+			            PL_NWCHARS, ENDSNUL, (prefix?prefix:L"",
 				    PL_NWCHARS, ENDSNUL, url,
 				  PL_NWCHARS, ENDSNUL, local);
       } else
