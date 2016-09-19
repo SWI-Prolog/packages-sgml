@@ -1431,10 +1431,16 @@ two digits before the floating point, e.g. \exam{05.3} to denote 5.3
 seconds.
 
 For most conversions, \arg{Type} may be specified unbound and is unified
-with the resulting type. For ambiguous conversins, \arg{Type} must be
+with the resulting type. For ambiguous conversions, \arg{Type} must be
 specified or an instantiation_error is raised. When converting from
-Prolog to XSD serialization, D, M and Y are ambiguous.  When convertion
-from XSD serialization to Prolog, only DD and MM are ambiguous.
+Prolog to XSD serialization, D, M and Y are ambiguous. When convertion
+from XSD serialization to Prolog, only DD and MM are ambiguous. If
+\arg{Type} and \arg{String} are both given and \arg{String} is a valid
+XSD date/time representation but not matching \arg{Type} a syntax error
+with the shape \term{syntax_error}{Type} is raised. If \arg{DateTime}
+and \arg{Type} are both given and \arg{DateTime} does not satisfy
+\arg{Type} a domain_error of the shape
+\term{domain_error}{xsd_time(Type), DateTime} is raised.
 
 The domain of numerical values is verified and a corresponding
 domain_error exception is raised if the domain is violated. There is no

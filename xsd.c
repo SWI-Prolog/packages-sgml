@@ -171,6 +171,10 @@ static functor_t FUNCTOR_date_time6;
 static functor_t FUNCTOR_date_time7;
 static functor_t FUNCTOR_month_day2;
 static functor_t FUNCTOR_year_month2;
+static functor_t FUNCTOR_error2;
+static functor_t FUNCTOR_syntax_error1;
+static functor_t FUNCTOR_domain_error2;
+static functor_t FUNCTOR_xsd_time1;
 
 static atom_t    URL_date;
 static atom_t    URL_dateTime;
@@ -477,18 +481,23 @@ time_sec_chars(time *t, char *buf)
 */
 
 static int
+is_time_url(atom_t url)
+{ return ( url == URL_date ||
+	   url == URL_dateTime ||
+	   url == URL_gDay ||
+	   url == URL_gMonth ||
+	   url == URL_gMonthDay ||
+	   url == URL_gYear ||
+	   url == URL_gYearMonth ||
+	   url == URL_time );
+}
+
+static int
 maybe_invalid_time_url(term_t type)
 { atom_t url;
 
   if ( PL_get_atom_ex(type, &url) )
-  { if ( url == URL_date ||
-	 url == URL_dateTime ||
-	 url == URL_gDay ||
-	 url == URL_gMonth ||
-	 url == URL_gMonthDay ||
-	 url == URL_gYear ||
-	 url == URL_gYearMonth ||
-	 url == URL_time )
+  { if ( is_time_url(url) )
       return FALSE;
     return PL_domain_error("xsd_time_url", type);
   }
@@ -506,6 +515,58 @@ mkyear(int v, int sign)
   }
   return -(v+1);
 }
+
+
+static int
+unify_parsed_type(term_t t, atom_t type)
+{ if ( PL_unify_atom(t, type) )
+  { return TRUE;
+  } else
+  { if ( PL_is_atom(t) )
+    { term_t ex;
+
+      return ( (ex=PL_new_term_ref()) &&
+	       PL_unify_term(ex, PL_FUNCTOR, FUNCTOR_error2,
+				   PL_FUNCTOR, FUNCTOR_syntax_error1,
+			             PL_FUNCTOR, FUNCTOR_xsd_time1,
+			               PL_ATOM, type,
+				   PL_VARIABLE) &&
+	       PL_raise_exception(ex)
+	     );
+    }
+
+    return FALSE;
+  }
+}
+
+
+static int
+incompatible_time_term(term_t term, atom_t type_atom)
+{ term_t ex;
+
+  return ( (ex=PL_new_term_ref()) &&
+	   PL_unify_term(ex, PL_FUNCTOR, FUNCTOR_error2,
+			       PL_FUNCTOR, FUNCTOR_domain_error2,
+				 PL_FUNCTOR, FUNCTOR_xsd_time1,
+				   PL_ATOM, type_atom,
+				 PL_TERM, term,
+			       PL_VARIABLE) &&
+	   PL_raise_exception(ex)
+	 );
+}
+
+static int
+unify_prolog_type(term_t term, term_t type_term, atom_t type_atom)
+{ if ( PL_unify_atom(type_term, type_atom) )
+  { return TRUE;
+  } else
+  { if ( PL_is_atom(type_term) )
+      incompatible_time_term(term, type_atom);
+
+    return FALSE;
+  }
+}
+
 
 
 static foreign_t
@@ -621,13 +682,15 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	  v = -v - 1;
 	}
 	sprintf(buf, "%s%04d", sign, v);
+      } else if ( is_time_url(url) )
+      { return incompatible_time_term(term, url);
       } else
-	return maybe_invalid_time_url(type);
+	return PL_domain_error("xsd_time_url", type);
     } else
     { return PL_domain_error("xsd_time", term);
     }
 
-    if ( at && !PL_unify_atom(type, at) )
+    if ( at && !unify_prolog_type(term, type, at) )
       return FALSE;
 
     return PL_unify_chars(string, PL_STRING, (size_t)-1, buf);
@@ -661,7 +724,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	return FALSE;
 
       if ( av[8] == END )
-      { return (PL_unify_atom(type, URL_date) &&
+      { return (unify_parsed_type(type, URL_date) &&
 		PL_unify_term(term, PL_FUNCTOR, FUNCTOR_date3,
 			      PL_INT, mkyear(av[1],yearsign),
 			      PL_INT, av[4], PL_INT, av[7]) );
@@ -678,13 +741,13 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	  return FALSE;
 
 	if ( av[at] == END )
-	  return (PL_unify_atom(type, URL_dateTime) &&
+	  return (unify_parsed_type(type, URL_dateTime) &&
 		  PL_unify_term(term, PL_FUNCTOR, FUNCTOR_date_time6,
 				PL_INT, mkyear(av[1],yearsign),
 				PL_INT, av[ 4], PL_INT, av[ 7],
 				PL_INT, t.hour, PL_INT, t.minute, PL_TERM, sec));
 	if ( av[at] == TZ && av[at+1] == END )
-	  return (PL_unify_atom(type, URL_dateTime) &&
+	  return (unify_parsed_type(type, URL_dateTime) &&
 		  PL_unify_term(term, PL_FUNCTOR, FUNCTOR_date_time7,
 				PL_INT, mkyear(av[1],yearsign),
 				PL_INT, av[ 4], PL_INT, av[ 7],
@@ -699,7 +762,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	  if ( !valid_tz(av[at+2], av[at+5]) )
 	    return FALSE;
 
-	  return (PL_unify_atom(type, URL_dateTime) &&
+	  return (unify_parsed_type(type, URL_dateTime) &&
 		  PL_unify_term(term, PL_FUNCTOR, FUNCTOR_date_time7,
 				PL_INT, mkyear(av[1],yearsign),
 				PL_INT, av[ 4], PL_INT, av[ 7],
@@ -722,7 +785,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	return FALSE;
 
       return (valid_time(&t) &&
-	      PL_unify_atom(type, URL_time) &&
+	      unify_parsed_type(type, URL_time) &&
 	      PL_unify_term(term, PL_FUNCTOR, FUNCTOR_time3,
 			    PL_INT, t.hour, PL_INT, t.minute, PL_TERM, sec) );
     }
@@ -731,19 +794,19 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	return PL_syntax_error("xsd_time", NULL);
 
       return (valid_month(av[1]) && valid_day(av[4]) &&
-	      PL_unify_atom(type, URL_gMonthDay) &&
+	      unify_parsed_type(type, URL_gMonthDay) &&
 	      PL_unify_term(term, PL_FUNCTOR, FUNCTOR_month_day2,
 			    PL_INT, av[1], PL_INT, av[4]) );
     }
     if ( av[0] == INT4 && av[2] == MINUS && av[3] == INT2 && av[5] == END )
     { return (valid_year(mkyear(av[1],yearsign)) && valid_month(av[4]) &&
-	      PL_unify_atom(type, URL_gYearMonth) &&
+	      unify_parsed_type(type, URL_gYearMonth) &&
 	      PL_unify_term(term, PL_FUNCTOR, FUNCTOR_year_month2,
 			    PL_INT, mkyear(av[1],yearsign), PL_INT, av[4]) );
     }
     if ( av[0] == INT4 && av[2] == END )
     { return (valid_year(mkyear(av[1],yearsign)) &&
-	      PL_unify_atom(type, URL_gYear) &&
+	      unify_parsed_type(type, URL_gYear) &&
 	      PL_unify_integer(term, mkyear(av[1],yearsign)));
     }
     if ( av[0] == INT2 && av[2] == END )
@@ -778,6 +841,10 @@ install_xsd(void)
   MKFUNCTOR(time, 3);
   MKFUNCTOR(month_day, 2);
   MKFUNCTOR(year_month, 2);
+  MKFUNCTOR(error, 2);
+  MKFUNCTOR(syntax_error, 1);
+  MKFUNCTOR(domain_error, 2);
+  MKFUNCTOR(xsd_time, 1);
 
   MKURL(date);
   MKURL(dateTime);
