@@ -1448,6 +1448,7 @@ test for the existence of a date and thus \exam{"2016-02-31"}, although
 non-existing is accepted as valid.
 \end{description}
 
+\input{c14n2.tex}
 
 \section{Unsupported SGML features}
 \label{sec:sgml-unsupported}

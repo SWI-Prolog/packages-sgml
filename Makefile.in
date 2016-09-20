@@ -25,7 +25,7 @@ ALLCSRC=	$(LIBOBJ:.o=.c) \
 		$(HDRS)
 
 LIBPL=		sgml.pl xsdp_types.pl iso_639.pl sgml_write.pl xpath.pl \
-		pwp.pl
+		pwp.pl c14n2.pl
 TARGETS=	sgml2pl.@SO@
 PROGRAMS=	dtd2pl$(EXEEXT) sgml$(EXEEXT)
 DTDFILES=	HTML4.dcl HTML4.dtd HTML4.soc HTML5.dtd \
@@ -88,12 +88,13 @@ TAGS:		$(ALLCSRC)
 # Documentation
 ################################################################
 
-TEXEXTRA=	xpath.tex pwp.tex
+TEXEXTRA=	xpath.tex pwp.tex c14n2.tex
 $(TEX):		$(TEXEXTRA)
 
 xpath.tex:	xpath.pl
 		$(PLTOTEX) --out=$@ --section 'library(xpath)'
-
+c14n2.tex:	c14n2.pl
+		$(PLTOTEX) --out=$@ --subsection 'library(c14n2)'
 pwp.tex:	pwp.pl
 		$(PLTOTEX) --out=$@ --section 'library(pwp)'
 
