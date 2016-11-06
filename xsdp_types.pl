@@ -41,7 +41,7 @@
 	  ]).
 
 
-/** <module> XML-Schema primitie types
+/** <module> XML-Schema primitive types
 
 This  modules  provides  support  for  the  primitive  XML-Schema  (XSD)
 datatypes. It defines the type hierarchy which allows for reasoning over
