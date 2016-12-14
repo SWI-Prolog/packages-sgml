@@ -1028,7 +1028,7 @@ istrblank(const ichar *s)
 }
 
 
-static int
+WUNUSED static int
 unify_listval(dtd_parser *p,
 	      term_t t, attrtype type, size_t len, const ichar *text)
 { if ( type == AT_NUMBERS && p->dtd->number_mode == NU_INTEGER )
@@ -1051,7 +1051,7 @@ unify_listval(dtd_parser *p,
 }
 
 
-static int
+WUNUSED static int
 put_att_text(dtd_parser *p, term_t t, sgml_attribute *a)
 { if ( a->value.textW )
   { PL_put_variable(t);
@@ -1061,7 +1061,7 @@ put_att_text(dtd_parser *p, term_t t, sgml_attribute *a)
 }
 
 
-static int
+WUNUSED static int
 put_attribute_value(dtd_parser *p, term_t t, sgml_attribute *a)
 { switch(a->definition->type)
   { case AT_CDATA:
@@ -1107,7 +1107,7 @@ Produce a tag-location in the format
 	start_location=file:char-char
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-static int
+WUNUSED static int
 put_tag_position(dtd_parser *p, term_t pos)
 { dtd_srcloc *l = &p->startloc;
 
@@ -1126,7 +1126,7 @@ put_tag_position(dtd_parser *p, term_t pos)
 
 
 
-static int
+WUNUSED static int
 unify_attribute_list(dtd_parser *p, term_t alist,
 		     int argc, sgml_attribute *argv)
 { int i;
