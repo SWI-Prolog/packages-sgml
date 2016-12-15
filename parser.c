@@ -71,6 +71,15 @@ typedef struct locbuf
   dtd_srcloc here;			/* p->location */
 } locbuf;
 
+#define FASTATTRIBUTES	64
+
+typedef struct sgml_attribute_list
+{ sgml_attribute *attributes;		/* The attributes */
+  size_t	  count;		/* Number of attributes */
+  size_t	  allocated;		/* #Allocated attributes */
+  sgml_attribute  local[FASTATTRIBUTES];/* Handle fast up to here */
+} sgml_attribute_list;
+
 
 		 /*******************************
 		 *	      PROTOYPES		*
@@ -106,9 +115,11 @@ void			free_dtd_parser(dtd_parser *p);
 static const ichar *	isee_character_entity(dtd *dtd, const ichar *in,
 					      int *chr);
 static int		add_default_attributes(dtd_parser *p, dtd_element *e,
-					       int natts,
-					       sgml_attribute *atts);
+					       sgml_attribute_list *atts);
 static int		prepare_cdata(dtd_parser *p);
+static void		init_attribute_list(sgml_attribute_list *atts);
+static void		clear_attribute_list(sgml_attribute_list *atts);
+static sgml_attribute * new_attribute(sgml_attribute_list *atts);
 
 
 		 /*******************************
@@ -2754,13 +2765,14 @@ push_element(dtd_parser *p, dtd_element *e, int callback)
 
     p->first = TRUE;
     if ( callback && p->on_begin_element )
-    { sgml_attribute atts[MAXATTRIBUTES];
-      int natts = 0;
+    { sgml_attribute_list atts;
 
+      init_attribute_list(&atts);
       if ( !(p->flags & SGML_PARSER_NODEFS) )
-	natts = add_default_attributes(p, e, natts, atts);
+	add_default_attributes(p, e, &atts);
 
-      (*p->on_begin_element)(p, e, natts, atts);
+      (*p->on_begin_element)(p, e, atts.count, atts.attributes);
+      clear_attribute_list(&atts);
     }
 
     if ( e->structure )
@@ -2886,13 +2898,14 @@ open_element(dtd_parser *p, dtd_element *e, int warn)
       WITH_CLASS(p, EV_OMITTED,
 		 { open_element(p, f, TRUE);
 		   if ( p->on_begin_element )
-		   { sgml_attribute atts[MAXATTRIBUTES];
-		     int natts = 0;
+		   { sgml_attribute_list atts;
 
+		     init_attribute_list(&atts);
 		     if ( !(p->flags & SGML_PARSER_NODEFS) )
-		       natts = add_default_attributes(p, f, natts, atts);
+		       add_default_attributes(p, f, &atts);
 
-		     (*p->on_begin_element)(p, f, natts, atts);
+		     (*p->on_begin_element)(p, f, atts.count, atts.attributes);
+		     clear_attribute_list(&atts);
 		   }
 		 });
     }
@@ -3268,9 +3281,8 @@ passed:
 
 static const ichar *
 process_attributes(dtd_parser *p, dtd_element *e, const ichar *decl,
-		   sgml_attribute *atts, int *argc)
-{ int attn = 0;
-  dtd *dtd = p->dtd;
+		   sgml_attribute_list *atts)
+{ dtd *dtd = p->dtd;
 
   decl = iskip_layout(dtd, decl);
   while(decl && *decl)
@@ -3282,6 +3294,7 @@ process_attributes(dtd_parser *p, dtd_element *e, const ichar *decl,
 
       if ( (s=isee_func(dtd, decl, CF_VI)) ) /* name= */
       { dtd_attr *a;
+	sgml_attribute *ap;
 
 	if ( !HasClass(dtd, nm->name[0], CH_NMSTART) )
 	  gripe(p, ERC_SYNTAX_WARNING,
@@ -3304,11 +3317,12 @@ process_attributes(dtd_parser *p, dtd_element *e, const ichar *decl,
 		 istrprefix(L"data-", nm->name)) )
 	    gripe(p, ERC_NO_ATTRIBUTE, e->name->name, nm->name);
 	}
-	atts[attn].definition = a;
-	if ( (decl=get_attribute_value(p, decl, atts+attn)) )
-	{ attn++;
+	ap = new_attribute(atts);
+	ap->definition = a;
+	if ( (decl=get_attribute_value(p, decl, ap)) )
 	  continue;
-	}
+	else
+	  atts->count--;
       } else if ( e->structure )
       { dtd_attr_list *al;		/* value shorthand */
 
@@ -3320,14 +3334,16 @@ process_attributes(dtd_parser *p, dtd_element *e, const ichar *decl,
 
 	    for(nl=a->typeex.nameof; nl; nl = nl->next)
 	    { if ( nl->value == nm )
-	      { if ( IS_XML_DIALECT(dtd->dialect) )
+	      { sgml_attribute *ap;
+
+		if ( IS_XML_DIALECT(dtd->dialect) )
 		  gripe(p, ERC_SYNTAX_WARNING,
 			"Value short-hand in XML mode", decl);
-		atts[attn].flags	= 0;
-		atts[attn].definition   = a;
-		atts[attn].value.textW  = istrdup(nm->name);
-		atts[attn].value.number = (long)istrlen(nm->name);
-		attn++;
+		ap = new_attribute(atts);
+		ap->flags	 = 0;
+		ap->definition   = a;
+		ap->value.textW  = istrdup(nm->name);
+		ap->value.number = (long)istrlen(nm->name);
 		goto next;
 	      }
 	    }
@@ -3340,15 +3356,13 @@ process_attributes(dtd_parser *p, dtd_element *e, const ichar *decl,
 	decl = s;
       }
     } else
-    { *argc = attn;
-      return decl;
+    { return decl;
     }
 
   next:
     ;
   }
 
-  *argc = attn;
   return decl;
 }
 
@@ -3357,19 +3371,16 @@ process_attributes(dtd_parser *p, dtd_element *e, const ichar *decl,
 sgml_add_default_attributes()
 
 This function adds attributes for omitted  default and fixed attributes.
-These attributes are added to  the  end   of  the  attribute  list. This
-function returns the new  number  of   attributes.  The  `atts' array is
-assumed   to   be   MAXATTRIBUTES    long,     normally    passed   from
-process_begin_element.
+These attributes are added to  the  end   of  the  attribute  list.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static int
 add_default_attributes(dtd_parser *p, dtd_element *e,
-		       int natts, sgml_attribute *atts)
+		       sgml_attribute_list *atts)
 { dtd_attr_list *al;
 
   if ( e == CDATA_ELEMENT )
-    return natts;
+    return TRUE;
 
   for(al=e->attributes; al; al=al->next)
   { dtd_attr *a = al->attribute;
@@ -3385,11 +3396,12 @@ add_default_attributes(dtd_parser *p, dtd_element *e,
       { int i;
 	sgml_attribute *ap;
 
-	for(i=0, ap=atts; i<natts; i++, ap++)
+	for(i=0, ap=atts->attributes; i<atts->count; i++, ap++)
 	{ if ( ap->definition == a )
 	    goto next;
 	}
 
+	ap = new_attribute(atts);
         ap->definition   = a;
 	ap->value.textW  = NULL;
 	ap->value.number = 0;
@@ -3416,14 +3428,12 @@ add_default_attributes(dtd_parser *p, dtd_element *e,
 	    }
 	    ap->value.number = (long)istrlen(ap->value.textW);
 	}
-
-	natts++;
       }
     }
   next:;
   }
 
-  return natts;
+  return TRUE;
 }
 
 
@@ -3441,6 +3451,42 @@ free_attribute_values(int argc, sgml_attribute *argv)
 }
 
 
+static void
+clear_attribute_list(sgml_attribute_list *atts)
+{ free_attribute_values(atts->count, atts->attributes);
+
+  if ( atts->attributes != atts->local )
+    sgml_free(atts->attributes);
+}
+
+
+static void
+init_attribute_list(sgml_attribute_list *atts)
+{ atts->attributes = atts->local;
+  atts->count = 0;
+  atts->allocated = FASTATTRIBUTES;
+}
+
+static sgml_attribute *
+new_attribute(sgml_attribute_list *atts)
+{ for(;;)
+  { if ( atts->count < atts->allocated )
+      return &atts->attributes[atts->count++];
+
+    if ( atts->attributes == atts->local )
+    { size_t bytes = sizeof(*atts->attributes)*atts->allocated;
+      atts->attributes = sgml_malloc(bytes*2);
+      memcpy(atts->attributes, atts->local, bytes);
+      atts->allocated *= 2;
+    } else
+    { size_t bytes = sizeof(*atts->attributes)*atts->allocated;
+      atts->attributes = sgml_realloc(atts->attributes, bytes*2);
+      atts->allocated *= 2;
+    }
+  }
+}
+
+
 static int
 process_begin_element(dtd_parser *p, const ichar *decl)
 { dtd *dtd = p->dtd;
@@ -3448,8 +3494,7 @@ process_begin_element(dtd_parser *p, const ichar *decl)
   const ichar *s;
 
   if ( (s=itake_name(p, decl, &id)) )
-  { sgml_attribute atts[MAXATTRIBUTES];
-    int natts;
+  { sgml_attribute_list atts;
     dtd_element *e = find_element(dtd, id);
     int empty = FALSE;
     int conref = FALSE;
@@ -3467,7 +3512,8 @@ process_begin_element(dtd_parser *p, const ichar *decl)
     open_element(p, e, TRUE);
 
     decl=s;
-    if ( (s=process_attributes(p, e, decl, atts, &natts)) )
+    init_attribute_list(&atts);
+    if ( (s=process_attributes(p, e, decl, &atts)) )
       decl=s;
 
     if ( IS_XML_DIALECT(dtd->dialect) )
@@ -3477,9 +3523,9 @@ process_begin_element(dtd_parser *p, const ichar *decl)
       }
 #ifdef XMLNS
       if ( dtd->dialect == DL_XMLNS )
-	update_xmlns(p, e, natts, atts);
+	update_xmlns(p, e, atts.count, atts.attributes);
 #endif
-      update_space_mode(p, e, natts, atts);
+      update_space_mode(p, e, atts.count, atts.attributes);
     } else				/* SGML, HTML */
     { int i;
 
@@ -3491,8 +3537,8 @@ process_begin_element(dtd_parser *p, const ichar *decl)
 	decl = s;
       }
 
-      for(i=0; i<natts; i++)
-      { if ( atts[i].definition->def == AT_CONREF )
+      for(i=0; i<atts.count; i++)
+      { if ( atts.attributes[i].definition->def == AT_CONREF )
 	{ empty = TRUE;
 	  conref = TRUE;
 	}
@@ -3502,7 +3548,7 @@ process_begin_element(dtd_parser *p, const ichar *decl)
       gripe(p, ERC_SYNTAX_ERROR, L"Bad attribute list", decl);
 
     if ( !(p->flags & SGML_PARSER_NODEFS) )
-      natts = add_default_attributes(p, e, natts, atts);
+      add_default_attributes(p, e, &atts);
 
     if ( empty ||
 	 (IS_SGML_DIALECT(dtd->dialect) &&
@@ -3514,9 +3560,9 @@ process_begin_element(dtd_parser *p, const ichar *decl)
       p->empty_element = NULL;
 
     if ( p->on_begin_element )
-      rc = (*p->on_begin_element)(p, e, natts, atts);
+      rc = (*p->on_begin_element)(p, e, atts.count, atts.attributes);
 
-    free_attribute_values(natts, atts);
+    clear_attribute_list(&atts);
 
     if ( p->empty_element )
     { p->empty_element = NULL;
