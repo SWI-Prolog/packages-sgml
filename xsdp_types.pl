@@ -33,12 +33,12 @@
 */
 
 :- module(xsdp_type,
-	  [ xsdp_type/1,		% ?Type
-	    xsdp_uri_type/2,		% ?URI, ?Type
-	    xsdp_numeric_uri/2,		% ?URI, ?Primary
-	    xsdp_subtype_of/2,		% ?Type, ?Super
-	    xsdp_convert/3		% +Type, +Content, -Value
-	  ]).
+          [ xsdp_type/1,                % ?Type
+            xsdp_uri_type/2,            % ?URI, ?Type
+            xsdp_numeric_uri/2,         % ?URI, ?Primary
+            xsdp_subtype_of/2,          % ?Type, ?Super
+            xsdp_convert/3              % +Type, +Content, -Value
+          ]).
 
 
 /** <module> XML-Schema primitive types
@@ -50,7 +50,7 @@ Prolog representation of the XSD type.
 
 Based on the W3C definitions at
 
-	* http://www.w3.org/TR/xmlschema-2/#built-in-datatypes
+        * http://www.w3.org/TR/xmlschema-2/#built-in-datatypes
 
 The current implementation is incomplete and only  there to test the API
 and its integration with rdf:dataType=Type handling in the RDF parser.
@@ -63,152 +63,155 @@ module.
 ns('http://www.w3.org/2001/XMLSchema#').
 
 
-		 /*******************************
-		 *    PRIMITIVE TYPE HIERARCHY	*
-		 *******************************/
+                 /*******************************
+                 *    PRIMITIVE TYPE HIERARCHY  *
+                 *******************************/
 
-%%	xsdp_type(?Type)
+%!  xsdp_type(?Type)
 %
-%	Test/generate the names for the XML schema primitive types
+%   Test/generate the names for the XML schema primitive types
 
 xsdp_type(Type) :-
-	subtype_of(Type, _).
+    subtype_of(Type, _).
 
-%%	xsdp_uri_type(?URI, ?Type)
+%!  xsdp_uri_type(?URI, ?Type)
 %
-%	True if URI is the URI for the the XML-Schema primitive Type.
+%   True if URI is the URI for the the XML-Schema primitive Type.
 
 xsdp_uri_type(URI, Type) :-
-	xsd_local_id(URI, Type),
-	subtype_of(Type, _).
+    xsd_local_id(URI, Type),
+    subtype_of(Type, _).
 
-%%	xsdp_subtype_of(?Type, ?Super)
+%!  xsdp_subtype_of(?Type, ?Super)
 %
-%	True if Type is a (transitive) subtype of Super.
+%   True if Type is a (transitive) subtype of Super.
 
 xsdp_subtype_of(Type, Type).
 xsdp_subtype_of(Type, Super) :-
-	(   nonvar(Type)
-	->  subtype_of(Type, Super0),
-	    Super0 \== (-),
-	    xsdp_subtype_of(Super0, Super)
-	;   subtype_of(Sub0, Super),
-	    xsdp_subtype_of(Type, Sub0)
-	).
+    (   nonvar(Type)
+    ->  subtype_of(Type, Super0),
+        Super0 \== (-),
+        xsdp_subtype_of(Super0, Super)
+    ;   subtype_of(Sub0, Super),
+        xsdp_subtype_of(Type, Sub0)
+    ).
 
-subtype_of(anyType,	       -).
+subtype_of(anyType,            -).
 subtype_of(anySimpleType,      anyType).
-					% string hierarchy
-subtype_of(string,	       anySimpleType).
+                                        % string hierarchy
+subtype_of(string,             anySimpleType).
 subtype_of(normalizedString,   string).
-subtype_of(token,	       normalizedString).
-subtype_of(language,	       token).
-subtype_of('Name',	       token).
-subtype_of('NCName',	       'Name').
-subtype_of('NMTOKEN',	       token).
-subtype_of('NMTOKENS',	       'NMTOKEN').
-subtype_of('ID',	       'NCName').
-subtype_of('IDREF',	       'NCName').
-subtype_of('IDREFS',	       'IDREF').
-subtype_of('ENTITY',	       'NCName').
-subtype_of('ENTITIES',	       'ENTITY').
-					% numeric hierarchy
-subtype_of(decimal,	       anySimpleType).
-subtype_of(integer,	       decimal).
+subtype_of(token,              normalizedString).
+subtype_of(language,           token).
+subtype_of('Name',             token).
+subtype_of('NCName',           'Name').
+subtype_of('NMTOKEN',          token).
+subtype_of('NMTOKENS',         'NMTOKEN').
+subtype_of('ID',               'NCName').
+subtype_of('IDREF',            'NCName').
+subtype_of('IDREFS',           'IDREF').
+subtype_of('ENTITY',           'NCName').
+subtype_of('ENTITIES',         'ENTITY').
+                                        % numeric hierarchy
+subtype_of(decimal,            anySimpleType).
+subtype_of(integer,            decimal).
 subtype_of(nonPositiveInteger, integer).
 subtype_of(negativeInteger,    nonPositiveInteger).
-subtype_of(long,	       integer).
-subtype_of(int,		       long).
-subtype_of(short,	       int).
-subtype_of(byte,	       short).
+subtype_of(long,               integer).
+subtype_of(int,                long).
+subtype_of(short,              int).
+subtype_of(byte,               short).
 subtype_of(nonNegativeInteger, integer).
 subtype_of(unsignedLong,       nonNegativeInteger).
 subtype_of(positiveInteger,    nonNegativeInteger).
-subtype_of(unsignedInt,	       unsignedLong).
+subtype_of(unsignedInt,        unsignedLong).
 subtype_of(unsignedShort,      unsignedInt).
 subtype_of(unsignedByte,       unsignedShort).
-					% other simple types
-subtype_of(duration,	       anySimpleType).
-subtype_of(dateTime,	       anySimpleType).
-subtype_of(time,	       anySimpleType).
-subtype_of(date,	       anySimpleType).
-subtype_of(gYearMonth,	       anySimpleType).
-subtype_of(gYear,	       anySimpleType).
-subtype_of(gMonthDay,	       anySimpleType).
-subtype_of(gDay,	       anySimpleType).
-subtype_of(gMonth,	       anySimpleType).
-subtype_of(boolean,	       anySimpleType).
+                                        % other simple types
+subtype_of(duration,           anySimpleType).
+subtype_of(dateTime,           anySimpleType).
+subtype_of(time,               anySimpleType).
+subtype_of(date,               anySimpleType).
+subtype_of(gYearMonth,         anySimpleType).
+subtype_of(gYear,              anySimpleType).
+subtype_of(gMonthDay,          anySimpleType).
+subtype_of(gDay,               anySimpleType).
+subtype_of(gMonth,             anySimpleType).
+subtype_of(boolean,            anySimpleType).
 subtype_of(base64Binary,       anySimpleType).
-subtype_of(hexBinary,	       anySimpleType).
-subtype_of(float,	       anySimpleType).
-subtype_of(double,	       anySimpleType).
-subtype_of(anyURI,	       anySimpleType).
-subtype_of('QName',	       anySimpleType).
-subtype_of('NOTATION',	       anySimpleType).
+subtype_of(hexBinary,          anySimpleType).
+subtype_of(float,              anySimpleType).
+subtype_of(double,             anySimpleType).
+subtype_of(anyURI,             anySimpleType).
+subtype_of('QName',            anySimpleType).
+subtype_of('NOTATION',         anySimpleType).
 
-%%	xsdp_numeric_uri(?URI, -PromoteURI) is nondet.
+%!  xsdp_numeric_uri(?URI, -PromoteURI) is nondet.
 %
-%	Table mapping all XML-Schema numeric  URIs   into  the type they
-%	promote to. Types are promoted   to =integer=, =float=, =double=
-%	and =decimal=.
+%   Table mapping all XML-Schema numeric  URIs   into  the type they
+%   promote to. Types are promoted   to =integer=, =float=, =double=
+%   and =decimal=.
 
 term_expansion(integer_types, Clauses) :-
-	findall(integer_type(Type), xsdp_subtype_of(Type, integer), Clauses).
+    findall(integer_type(Type), xsdp_subtype_of(Type, integer), Clauses).
 term_expansion(xsd_local_ids, Clauses) :-
-	ns(NS),
-	findall(xsd_local_id(URI, Type),
-		(   xsdp_type(Type),
-		    atom_concat(NS, Type, URI)
-		),
-		Clauses).
+    ns(NS),
+    findall(xsd_local_id(URI, Type),
+            (   xsdp_type(Type),
+                atom_concat(NS, Type, URI)
+            ),
+            Clauses).
 term_expansion(numeric_uirs, Clauses) :-
-	findall(xsdp_numeric_uri(URI, PrimaryURI),
-		(   (   integer_type(Type),	Primary = integer
-		    ;	Type = float,		Primary = float
-		    ;	Type = double,		Primary = double
-		    ;	Type = decimal,		Primary = decimal
-		    ),
-		    xsd_local_id(URI, Type),
-		    xsd_local_id(PrimaryURI, Primary)
-		),
-		Clauses).
+    findall(xsdp_numeric_uri(URI, PrimaryURI),
+            (   (   integer_type(Type),     Primary = integer
+                ;   Type = float,           Primary = float
+                ;   Type = double,          Primary = double
+                ;   Type = decimal,         Primary = decimal
+                ),
+                xsd_local_id(URI, Type),
+                xsd_local_id(PrimaryURI, Primary)
+            ),
+            Clauses).
 
 integer_types.
 xsd_local_ids.
 
 numeric_uirs.
 
-%%	xsdp_convert(+Type, +Content, -Value)
+%!  xsdp_convert(+Type, +Content, -Value)
 %
-%	Convert the content model Content to an  object of the given XSD
-%	type and return the Prolog value in Value.
+%   Convert the content model Content to an  object of the given XSD
+%   type and return the Prolog value in Value.
 
 xsdp_convert(URI, Content, Value) :-
-	(   xsd_local_id(URI, Type)
-	->  convert(Type, Content, Value)
-	;   convert(URI, Content, Value)
-	).
+    (   xsd_local_id(URI, Type)
+    ->  convert(Type, Content, Value)
+    ;   convert(URI, Content, Value)
+    ).
 
 convert(anyType, Term, Term) :- !.
 convert(anySimpleType, [Simple], Simple) :- !.
-					% strings
+                                        % strings
 convert(string, [String], String) :- !.
-					% numbers
+                                        % numbers
 convert(IntType, [Text], Integer) :-
-	integer_type(IntType), !,
-	atom_number(Text, Integer),
-	(   integer(Integer),
-	    validate_int_domain(IntType, Integer)
-	->  true
-	;   throw(error(domain_error(Text, IntType), _))
-	).
-convert(float, [Text], Float) :- !,
-	atom_number(Text, Number),
-	Float is float(Number).
-convert(double, [Text], Float) :- !,
-	atom_number(Text, Number),
-	Float is float(Number).
-convert(_Any, [X], X) :- !.		% TBD: provide for more types
+    integer_type(IntType),
+    !,
+    atom_number(Text, Integer),
+    (   integer(Integer),
+        validate_int_domain(IntType, Integer)
+    ->  true
+    ;   throw(error(domain_error(Text, IntType), _))
+    ).
+convert(float, [Text], Float) :-
+    !,
+    atom_number(Text, Number),
+    Float is float(Number).
+convert(double, [Text], Float) :-
+    !,
+    atom_number(Text, Number),
+    Float is float(Number).
+convert(_Any, [X], X) :- !.             % TBD: provide for more types
 convert(_Any, X, X).
 
 validate_int_domain(integer, _).
@@ -216,11 +219,11 @@ validate_int_domain(int, _).
 validate_int_domain(long, _).
 validate_int_domain(nonPositiveInteger, I) :- \+ I > 0.
 validate_int_domain(negativeInteger, I) :-    I < 0.
-validate_int_domain(short, I) :-	      between(-32768, 32767, I).
-validate_int_domain(byte,  I) :-	      between(-128, 127, I).
+validate_int_domain(short, I) :-              between(-32768, 32767, I).
+validate_int_domain(byte,  I) :-              between(-128, 127, I).
 validate_int_domain(nonNegativeInteger, I) :- \+ I < 0.
 validate_int_domain(unsignedLong,       I) :- I >= 0.
-validate_int_domain(positiveInteger,	I) :- I > 0.
-validate_int_domain(unsignedInt,	I) :- I >= 0.
-validate_int_domain(unsignedShort,	I) :- between(0, 65535, I).
-validate_int_domain(unsignedByte,	I) :- between(0, 255, I).
+validate_int_domain(positiveInteger,    I) :- I > 0.
+validate_int_domain(unsignedInt,        I) :- I >= 0.
+validate_int_domain(unsignedShort,      I) :- between(0, 65535, I).
+validate_int_domain(unsignedByte,       I) :- between(0, 255, I).

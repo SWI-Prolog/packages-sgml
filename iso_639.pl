@@ -33,33 +33,33 @@
 */
 
 :- module(iso_639,
-	  [ iso_639_2/2,		% Code, Language
-	    iso_639_3/2,		% Code, Language
-	    iso_639/2			% Code, Language
-	  ]).
+          [ iso_639_2/2,                % Code, Language
+            iso_639_3/2,                % Code, Language
+            iso_639/2                   % Code, Language
+          ]).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ISO 639 language codes.  This material is based on
 
-	http://www.wwp.brown.edu/encoding/training/ISO/iso639.html
+        http://www.wwp.brown.edu/encoding/training/ISO/iso639.html
 
 It would be nice to know a bit   more about these languages, such as the
 applicable character sets.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 iso_639_2(Code, Lang) :-
-	l2(Code, Lang).
+    l2(Code, Lang).
 iso_639_3(Code, Lang) :-
-	l3(Code, Lang).
+    l3(Code, Lang).
 iso_639(Code, Lang) :-
-	(   l2(Code, Lang)
-	;   l3(Code, Lang)
-	).
+    (   l2(Code, Lang)
+    ;   l3(Code, Lang)
+    ).
 
 
-%	l3(?Code, ?Lang)
+%       l3(?Code, ?Lang)
 %
-%	ISO-639 3-letter codes
+%       ISO-639 3-letter codes
 
 l3(abk, 'Abkhazian').
 l3(ace, 'Achinese').
@@ -468,7 +468,7 @@ l3(uzb, 'Uzbek').
 l3(vai, 'Vai').
 l3(ven, 'Venda').
 l3(vie, 'Vietnamese').
-l3(vol, 'Volap\u00fck').	% Use \uxxxx for portability.  (= \"u)
+l3(vol, 'Volap\u00fck').        % Use \uxxxx for portability.  (= \"u)
 l3(vot, 'Votic').
 l3(wak, 'Wakashan languages').
 l3(wal, 'Walamo').
@@ -489,9 +489,9 @@ l3(zha, 'Zhuang').
 l3(zul, 'Zulu').
 l3(zun, 'Zuni').
 
-%	l2(?Code, ?Lang)
+%       l2(?Code, ?Lang)
 %
-%	ISO-639 2 letter codes
+%       ISO-639 2 letter codes
 
 l2(aa, 'Afar').
 l2(ab, 'Abkhazian').
