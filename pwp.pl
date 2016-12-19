@@ -526,7 +526,7 @@ pwp_element(Tag, Atts, [Value], Use, How, Magic, M, Context,
         !,
         %% Apply substition of c(..)c variables also to content of
         %% <script> and <style> tags:
-        pwp_substitute([cdata=Value|Atts], Magic, Context, 
+        pwp_substitute([cdata=Value|Atts], Magic, Context,
                        [cdata=Value1|Atts1]),
 	pwp_use(Use, How, [Value1], M, Context, Kids1).
 pwp_element(Tag, Atts, Kids, Use, How, Magic, M, Context,
