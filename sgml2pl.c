@@ -1885,6 +1885,7 @@ pl_sgml_parse(term_t parser, term_t options)
   term_t head = PL_new_term_ref();
   term_t tail = PL_copy_term_ref(options);
   IOSTREAM *in = NULL;
+  IOSTREAM *release = NULL;
   int recursive;
   int has_content_length = FALSE;
   int64_t content_length = 0;		/* content_length(Len) */
@@ -1932,12 +1933,6 @@ pl_sgml_parse(term_t parser, term_t options)
       _PL_get_arg(1, head, pd->list);
       pd->tail  = PL_copy_term_ref(pd->list);
       pd->stack = NULL;
-    } else if ( PL_is_functor(head, FUNCTOR_source1) )
-    { term_t a = PL_new_term_ref();
-
-      _PL_get_arg(1, head, a);
-      if ( !PL_get_stream_handle(a, &in) )
-	return FALSE;
     } else if ( PL_is_functor(head, FUNCTOR_content_length1) )
     { term_t a = PL_new_term_ref();
 
@@ -2040,10 +2035,20 @@ pl_sgml_parse(term_t parser, term_t options)
 	p->att_rep = PL_STRING;
       else
 	return sgml2pl_error(ERR_DOMAIN, "representation", a);
+    } else if ( PL_is_functor(head, FUNCTOR_source1) )
+    { term_t a = PL_new_term_ref();
+
+      _PL_get_arg(1, head, a);
+      if ( !PL_get_stream_handle(a, &in) )
+	return FALSE;
+      release = in;
     }/* else ignored option */
   }
-  if ( !PL_get_nil(tail) )
-    return sgml2pl_error(ERR_TYPE, "list", tail);
+  if ( !PL_get_nil_ex(tail) )
+  { if ( release )
+      PL_release_stream(release);
+    return FALSE;
+  }
 
 					/* Parsing input from a stream */
 #define CHECKERROR \
@@ -2135,6 +2140,9 @@ pl_sgml_parse(term_t parser, term_t options)
     CHECKERROR;
 
   out:
+    if ( release )
+      PL_release_stream(release);
+
     reset_url_cache();
     if ( pd->tail )
     { if ( !PL_unify_nil(pd->tail) )
