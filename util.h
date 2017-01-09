@@ -45,17 +45,17 @@
 #endif
 
 typedef struct
-{ int allocated;
-  int size;
-  int limit;
-  int limit_reached;
+{ size_t allocated;
+  size_t size;
+  size_t limit;
+  int    limit_reached;
   ichar *data;
 } icharbuf;
 
 typedef struct
-{ int allocated;
-  int size;
-  int limit;
+{ size_t allocated;
+  size_t size;
+  size_t limit;
   int limit_reached;
   union
   { wchar_t *w;				/* UCS */
@@ -117,7 +117,7 @@ void		stop_ring(void);
 const wchar_t *	str_summary(const wchar_t *s, int len);
 wchar_t *	str2ring(const wchar_t *in);
 void *		ringallo(size_t);
-wchar_t * 	utf8towcs(const char *in);
+wchar_t *	utf8towcs(const char *in);
 char *		wcstoutf8(const wchar_t *in);
 ichar *		load_sgml_file_to_charp(const ichar *file, int normalise_rsre,
 					size_t *len);
