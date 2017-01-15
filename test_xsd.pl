@@ -50,6 +50,8 @@ test(nan_inf, S == "INF") :-
 test(nan_inf, S == "-INF") :-
     Inf is -inf,
     xsd_number_string(Inf, S).
+test(float, F == 110.0) :-
+    xsd_number_string(F, "1.1e2").
 
 :- end_tests(xsd_number_string).
 

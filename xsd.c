@@ -44,6 +44,27 @@
 #define isexp(c)   (c == 'e' || c == 'E')
 #define isdot(c)   (c == '.')
 
+/* BUG: goes wrong if locale is switched at runtime.  But, doing
+   this dynamically is a more than 100% overhead on xsd_number_string/2
+   and changing locale after process initialization is uncommon and
+   a bad idea anyway.
+*/
+
+static int
+decimal_dot(void)
+{ static int ddot = '\0';
+
+  if ( ddot )
+    return ddot;
+
+  char buf[10];
+  sprintf(buf, "%f", 1.0);
+  ddot = buf[1];
+
+  return ddot;
+}
+
+
 static foreign_t
 xsd_number_string(term_t number, term_t string)
 { char *in;
@@ -54,6 +75,7 @@ xsd_number_string(term_t number, term_t string)
 
     if ( strlen(s) == len )			/* no 0-characters */
     { int isfloat = FALSE;
+      int hasdot=FALSE;
 
       if ( strcmp(s, "NaN") != 0 )
       { int decl = 0, dect = 0;
@@ -68,6 +90,7 @@ xsd_number_string(term_t number, term_t string)
 	if ( isdot(*s) )			/* [.]? */
 	{ s++;
 	  isfloat = TRUE;
+	  hasdot = TRUE;
 	  while(isdigit(*s)) dect++, s++;	/* [0-9]* */
 	}
 	if ( decl+dect == 0 )
@@ -90,7 +113,31 @@ xsd_number_string(term_t number, term_t string)
 
     ok:
       if ( isfloat )
-      { return PL_unify_float(number, strtod(in, NULL));
+      { int dot;
+	int rc;
+	char *end;
+
+	if ( hasdot && (dot=decimal_dot()) != '.' )
+	{ char fast[64];
+	  char *fs = len < sizeof(fast) ? fast : malloc(len+1);
+	  char *o;
+
+	  if ( !fs )
+	    return PL_resource_error("memory");
+	  for(s=in,o=fs; *s; s++,o++)
+	  { if ( (*o=*s) == '.' )
+	      *o = dot;
+	  }
+	  *o = '\0';
+	  rc = PL_unify_float(number, strtod(fs, &end));
+	  if ( fs != fast )
+	    free(fs);
+	} else
+	{ rc = PL_unify_float(number, strtod(in, &end));
+	}
+	assert(*end == '\0');
+
+	return rc;
       } else
       { term_t n = PL_new_term_ref();
 	return ( PL_chars_to_term(in, n) &&
