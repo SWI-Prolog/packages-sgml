@@ -1402,7 +1402,7 @@ process_entity_declaration(dtd_parser *p, const ichar *decl)
   if ( !(s = itake_entity_name(p, decl, &id)) )
   { if ( !(s = isee_identifier(dtd, decl, "#default")) )
       return gripe(p, ERC_SYNTAX_ERROR, L"Name expected", decl);
-    id = dtd_add_symbol(dtd, (ichar*)"#DEFAULT");
+    id = dtd_add_symbol(dtd, L"#DEFAULT");
     isdef = TRUE;
   }
 
@@ -1800,7 +1800,7 @@ find_map(dtd *dtd, dtd_symbol *name)
 
     if ( !empty )
     { empty = sgml_calloc(1, sizeof(*empty));
-      empty->name = dtd_add_symbol(dtd, (ichar*)"#EMPTY");
+      empty->name = dtd_add_symbol(dtd, L"#EMPTY");
       empty->defined = TRUE;
     }
 
