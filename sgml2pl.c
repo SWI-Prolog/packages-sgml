@@ -2039,7 +2039,7 @@ pl_sgml_parse(term_t parser, term_t options)
     { term_t a = PL_new_term_ref();
 
       _PL_get_arg(1, head, a);
-      if ( !PL_get_stream_handle(a, &in) )
+      if ( !PL_get_stream(a, &in, SIO_INPUT) )
 	return FALSE;
       release = in;
     }/* else ignored option */
