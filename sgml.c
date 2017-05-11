@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2000-2013, University of Amsterdam
+    Copyright (c)  2000-2017, University of Amsterdam
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -426,7 +426,7 @@ main(int argc, char **argv)
     } else if (xml || strcaseeq(ext, ".xml"))
     { dtd *dtd = new_dtd(no_dtd);
 
-      set_dialect_dtd(dtd, DL_XML);
+      set_dialect_dtd(dtd, NULL, DL_XML);
       p = new_dtd_parser(dtd);
     } else
     { p = new_dtd_parser(new_dtd(no_dtd));

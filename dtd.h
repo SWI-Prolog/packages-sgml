@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2000-2015, University of Amsterdam
+    Copyright (c)  2000-2017, University of Amsterdam
                               Vu University Amsterdam
     All rights reserved.
 
@@ -492,7 +492,7 @@ void		free_dtd_parser(dtd_parser *p);
 void		free_dtd(dtd *dtd);
 int		load_dtd_from_file(dtd_parser *p, const ichar *file);
 dtd *		new_dtd(const ichar *doctype);
-int		set_dialect_dtd(dtd *dtd, dtd_dialect dialect);
+int		set_dialect_dtd(dtd *dtd, dtd_parser *p, dtd_dialect dialect);
 int		set_option_dtd(dtd *dtd, dtd_option option, int set);
 
 int		putchar_dtd_parser(dtd_parser *p, int chr);

@@ -500,19 +500,19 @@ pl_set_sgml_parser(term_t parser, term_t option)
       return sgml2pl_error(ERR_TYPE, "atom", a);
 
     if ( streq(s, "xml") )
-      set_dialect_dtd(p->dtd, DL_XML);
+      set_dialect_dtd(p->dtd, p, DL_XML);
     else if ( streq(s, "xmlns") )
-      set_dialect_dtd(p->dtd, DL_XMLNS);
+      set_dialect_dtd(p->dtd, p, DL_XMLNS);
     else if ( streq(s, "sgml") )
-      set_dialect_dtd(p->dtd, DL_SGML);
+      set_dialect_dtd(p->dtd, p, DL_SGML);
     else if ( streq(s, "html") || streq(s, "html4") )
-      set_dialect_dtd(p->dtd, DL_HTML);
+      set_dialect_dtd(p->dtd, p, DL_HTML);
     else if ( streq(s, "html5") )
-      set_dialect_dtd(p->dtd, DL_HTML5);
+      set_dialect_dtd(p->dtd, p, DL_HTML5);
     else if ( streq(s, "xhtml") )
-      set_dialect_dtd(p->dtd, DL_XHTML);
+      set_dialect_dtd(p->dtd, p, DL_XHTML);
     else if ( streq(s, "xhtml5") )
-      set_dialect_dtd(p->dtd, DL_XHTML5);
+      set_dialect_dtd(p->dtd, p, DL_XHTML5);
     else
       return sgml2pl_error(ERR_DOMAIN, "sgml_dialect", a);
   } else if ( PL_is_functor(option, FUNCTOR_space1) )
@@ -1803,11 +1803,11 @@ pl_open_dtd(term_t ref, term_t options, term_t stream)
 	return sgml2pl_error(ERR_TYPE, "atom", a);
 
       if ( streq(s, "xml") )
-	set_dialect_dtd(dtd, DL_XML);
+	set_dialect_dtd(dtd, p, DL_XML);
       else if ( streq(s, "xmlns") )
-	set_dialect_dtd(dtd, DL_XMLNS);
+	set_dialect_dtd(dtd, p, DL_XMLNS);
       else if ( streq(s, "sgml") )
-	set_dialect_dtd(dtd, DL_SGML);
+	set_dialect_dtd(dtd, p, DL_SGML);
       else
 	return sgml2pl_error(ERR_DOMAIN, "sgml_dialect", a);
     }

@@ -1251,7 +1251,7 @@ static const wchar_t *xml_entities[] =
 
 
 int
-set_dialect_dtd(dtd *dtd, dtd_dialect dialect)
+set_dialect_dtd(dtd *dtd, dtd_parser *p0, dtd_dialect dialect)
 { if ( dtd->dialect != dialect )
   { dtd->dialect = dialect;
 
@@ -1280,6 +1280,11 @@ set_dialect_dtd(dtd *dtd, dtd_dialect dialect)
 
 	memset(&p, 0, sizeof(p));
 	p.dtd = dtd;
+	if ( p0 )
+	{ p.closure  = p0->closure;
+	  p.on_error = p0->on_error;
+	}
+
 	for(el = xml_entities; *el; el++)
 	  process_entity_declaration(&p, *el);
 
@@ -3857,13 +3862,13 @@ process_pi(dtd_parser *p, const ichar *decl)
 
     switch(dtd->dialect)
     { case DL_SGML:
-	set_dialect_dtd(dtd, DL_XML);
+	set_dialect_dtd(dtd, p, DL_XML);
         break;
       case DL_HTML:
-	set_dialect_dtd(dtd, DL_XHTML);
+	set_dialect_dtd(dtd, p, DL_XHTML);
         break;
       case DL_HTML5:
-	set_dialect_dtd(dtd, DL_XHTML5);
+	set_dialect_dtd(dtd, p, DL_XHTML5);
         break;
       case DL_XHTML:
       case DL_XHTML5:
@@ -5340,7 +5345,7 @@ dtd *
 file_to_dtd(const ichar *file, const ichar *doctype, dtd_dialect dialect)
 { dtd_parser *p = new_dtd_parser(new_dtd(doctype));
 
-  set_dialect_dtd(p->dtd, dialect);
+  set_dialect_dtd(p->dtd, NULL, dialect);
 
   if ( load_dtd_from_file(p, file) )
   { dtd *dtd = p->dtd;
