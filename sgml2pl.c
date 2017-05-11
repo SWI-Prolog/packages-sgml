@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2000-2016, University of Amsterdam
+    Copyright (c)  2000-2017, University of Amsterdam
                               VU University Amsterdam
     All rights reserved.
 
@@ -2116,6 +2116,9 @@ pl_sgml_parse(term_t parser, term_t options)
 	    goto stopped;
 	  c = CR;
 	}
+      } else if ( Sferror(in) )
+      { rc = FALSE;
+	goto out;
       }
 
       if ( has_content_length && in->position )
@@ -2141,13 +2144,11 @@ pl_sgml_parse(term_t parser, term_t options)
 
   out:
     if ( release )
-      PL_release_stream(release);
+      rc = PL_release_stream(release) && rc;
 
     reset_url_cache();
-    if ( pd->tail )
-    { if ( !PL_unify_nil(pd->tail) )
-	return FALSE;
-    }
+    if ( pd->tail && rc )
+      rc = PL_unify_nil(pd->tail);
 
     if ( recursive )
     { p->closure = oldpd;
