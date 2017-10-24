@@ -593,7 +593,7 @@ load_html_file(File, DOM) :-
 %     - syntax_errors(quiet)
 %     Most HTML encountered in the wild contains errors. Even in the
 %     context of errors, the resulting DOM term is often a
-%     reasonable guess at the intend of the author.
+%     reasonable guess at the intent of the author.
 %
 %   You may also want to use  the library(http/http_open) to support
 %   loading from HTTP and HTTPS URLs. For example:
