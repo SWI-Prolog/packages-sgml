@@ -291,7 +291,7 @@ get_time_args(term_t t, int offset, time *tm)
 typedef enum
 { END,
   INT2,
-  INT4,
+  INTYEAR,
   DECIMAL,
   MINUS,
   PLUS,
@@ -313,9 +313,16 @@ parse_date_parts(const char *in, int *av, size_t avlen)
 	 isdigit(in[1]) )
     { if ( isdigit(in[2]) &&
 	   isdigit(in[3]) )
-      { ADDINT(INT4);
-	ADDINT(DV(0)*1000+DV(1)*100+DV(2)*10+DV(3));
-	in += 4;
+      { int v = DV(0)*1000+DV(1)*100+DV(2)*10+DV(3);
+	int n = 4;
+
+	for(n=4; isdigit(in[n]); n++)
+	{ v = v*10+DV(n);
+	}
+
+	ADDINT(INTYEAR);
+	ADDINT(v);
+	in += n;
       } else
       { ADDINT(INT2);
 	ADDINT(DV(0)*10+DV(1));
@@ -371,7 +378,7 @@ float_domain(const char *domain, double f)
 
 static int
 valid_year(int i)
-{ if ( i != 0 && i >= -9999 && i <= 9999 )
+{ if ( i != 0 )
     return TRUE;
   return int_domain("year", i);
 }
@@ -762,7 +769,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
       yearsign = -1;
     }
 
-    if ( av[0] == INT4 && av[2] == MINUS &&
+    if ( av[0] == INTYEAR && av[2] == MINUS &&
 	 av[3] == INT2 && av[5] == MINUS &&
 	 av[6] == INT2 )			/* YYYY-MM-DD */
     { int v[3] = {mkyear(av[1],yearsign),av[4],av[7]};
@@ -845,13 +852,13 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	      PL_unify_term(term, PL_FUNCTOR, FUNCTOR_month_day2,
 			    PL_INT, av[1], PL_INT, av[4]) );
     }
-    if ( av[0] == INT4 && av[2] == MINUS && av[3] == INT2 && av[5] == END )
+    if ( av[0] == INTYEAR && av[2] == MINUS && av[3] == INT2 && av[5] == END )
     { return (valid_year(mkyear(av[1],yearsign)) && valid_month(av[4]) &&
 	      unify_parsed_type(type, URL_gYearMonth) &&
 	      PL_unify_term(term, PL_FUNCTOR, FUNCTOR_year_month2,
 			    PL_INT, mkyear(av[1],yearsign), PL_INT, av[4]) );
     }
-    if ( av[0] == INT4 && av[2] == END )
+    if ( av[0] == INTYEAR && av[2] == END )
     { return (valid_year(mkyear(av[1],yearsign)) &&
 	      unify_parsed_type(type, URL_gYear) &&
 	      PL_unify_integer(term, mkyear(av[1],yearsign)));

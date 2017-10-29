@@ -186,8 +186,6 @@ test(term_error, error(domain_error(hour,25))) :-
     xsd_time_string(date_time(2016,01,30,25,29,15,0), _, _).
 test(term_error, error(domain_error(tz_offset,100000))) :-
     xsd_time_string(date_time(2016,01,30,20,29,15,100000), _, _).
-test(term_error, error(domain_error(year,10000))) :-
-    xsd_time_string(10000, xsd:gYear, _).
 test(term_error, error(domain_error(month,20))) :-
     xsd_time_string(20, xsd:gMonth, _).
 test(term_error, error(domain_error(day,35))) :-
