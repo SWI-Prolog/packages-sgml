@@ -5437,6 +5437,7 @@ sgml_process_file(dtd_parser *p, const ichar *file, unsigned flags)
 static wchar_t *
 format_location(wchar_t *s, size_t len, dtd_srcloc *l)
 { int first = TRUE;
+  wchar_t *e = &s[len];
 
   if ( !l || l->type == IN_NONE )
     return s;
@@ -5444,7 +5445,7 @@ format_location(wchar_t *s, size_t len, dtd_srcloc *l)
   for( ; l && l->type != IN_NONE;
          l = l->parent, first = FALSE )
   { if ( !first )
-    { swprintf(s, len, L" (from ");
+    { swprintf(s, e-s, L" (from ");
       s += wcslen(s);
     }
 
@@ -5452,21 +5453,22 @@ format_location(wchar_t *s, size_t len, dtd_srcloc *l)
     { case IN_NONE:
 	assert(0);
       case IN_FILE:
-	swprintf(s, len, L"%ls:%d:%d", l->name.file, l->line, l->linepos);
+	swprintf(s, e-s, L"%ls:%d:%d", l->name.file, l->line, l->linepos);
         break;
       case IN_ENTITY:
-        swprintf(s, len, L"&%ls;%d:%d", l->name.entity, l->line, l->linepos);
+        swprintf(s, e-s, L"&%ls;%d:%d", l->name.entity, l->line, l->linepos);
         break;
     }
 
     s += wcslen(s);
-    if ( !first )
+    if ( !first && s<e-1 )
     { *s++ = L')';
     }
   }
 
-  *s++ = L':';
-  *s++ = L' ';
+  if ( s < e-1 ) *s++ = L':';
+  if ( s < e-1 ) *s++ = L' ';
+  *s = '\0';
 
   return s;
 }
