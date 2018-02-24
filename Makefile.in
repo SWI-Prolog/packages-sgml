@@ -56,12 +56,12 @@ install-dtd::
 		done
 
 pdf-install::
-		mkdir -p $(DESTDIR)$(PKGDOC)
-		$(INSTALL_DATA) sgml.pdf $(DESTDIR)$(PKGDOC)
+		mkdir -p $(DESTDIR)$(PKGDOCDIR)
+		$(INSTALL_DATA) sgml.pdf $(DESTDIR)$(PKGDOCDIR)
 
 html-install::
-		mkdir -p $(DESTDIR)$(PKGDOC)
-		$(INSTALL_DATA) sgml.html $(DESTDIR)$(PKGDOC)
+		mkdir -p $(DESTDIR)$(PKGDOCDIR)
+		$(INSTALL_DATA) sgml.html $(DESTDIR)$(PKGDOCDIR)
 
 check::
 		$(PL) -f Test/test.pl -q -g test -t halt
