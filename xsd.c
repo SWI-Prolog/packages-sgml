@@ -336,13 +336,20 @@ parse_date_parts(const char *in, int *av, size_t avlen)
 	case 'T': ADDINT(TT);    in++; break;
 	case 'Z': ADDINT(TZ);    in++; break;
 	case '.': ADDINT(DECIMAL); in++;
-        { int v = 0;
+        { int v  = 0;
+	  int dl = 0;
 	  if ( !isdigit(in[0]) )
 	    return 2;
-	  while(isdigit(in[0]))
-	  { v = v*10+DV(0);
+	  while(in[0] == '0')
+	  { dl++;
 	    in++;
 	  }
+	  while(isdigit(in[0]))
+	  { v = v*10+DV(0);
+	    dl++;
+	    in++;
+	  }
+	  ADDINT(dl);
 	  ADDINT(v);
 	  break;
 	}
@@ -483,13 +490,13 @@ is_time_seq(const int av[], time *t)
   { t->hour   = av[1];
     t->minute = av[4];
     if ( av[8] == DECIMAL )
-    { int v, div = 1;
+    { int dl, div = 1;
 
       t->sec_is_float = TRUE;
-      for(v=av[9]; v; v /= 10)
+      for(dl=av[9]; dl > 0; dl--)
 	div *= 10;
-      t->second.f = (double)av[7] + (double)av[9]/(double)div;
-      return 10;
+      t->second.f = (double)av[7] + (double)av[10]/(double)div;
+      return 11;
     } else
     { t->sec_is_float = FALSE;
       t->second.i = av[7];
