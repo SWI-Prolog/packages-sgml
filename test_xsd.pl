@@ -62,7 +62,7 @@ test(float, F == 110.0) :-
 test(time_string, S == "2016-01-30") :-
     xsd_time_string(date(2016,01,30), Y, S),
     assertion(Y == xsd:date).
-test(time_string, S == "-0400-01-30") :-
+test(time_string, S == "-0399-01-30") :-
     xsd_time_string(date(-400,01,30), Y, S),
     assertion(Y == xsd:date).
 test(time_string, S == "2016-01-30T20:29:15") :-
