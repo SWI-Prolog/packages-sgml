@@ -5133,6 +5133,7 @@ reprocess:
       return TRUE;
     }
     case S_DECL:			/* <...> */
+    s_decl:
     { if ( f[CF_MDC] == chr )		/* > */
       { prepare_cdata(p);
 	p->state = S_PCDATA;
@@ -5158,15 +5159,29 @@ reprocess:
 
       add_icharbuf(p->buffer, chr);
 
-      if ( f[CF_LIT] == chr )		/* " */
-      { p->state = S_STRING;
-	p->saved = chr;
-	p->lit_saved_state = S_DECL;
+      if ( f[CF_VI] == chr && p->buffer->data[0] != f[CF_MDO2]) /* = */
+      { p->state = S_VAL0;
+      } else if ( f[CF_LIT] == chr )		/* " */
+      { if ( p->buffer->data[0] != f[CF_MDO2] )
+	{ terminate_icharbuf(p->buffer);
+	  gripe(p, ERC_SYNTAX_WARNING,
+		L"Quote inside value", p->buffer->data);
+	} else
+	{ p->state = S_STRING;
+	  p->saved = chr;
+	  p->lit_saved_state = S_DECL;
+	}
       } else if ( f[CF_LITA] == chr )	/* ' */
-      { p->state = S_STRING;
-	p->saved = chr;
-	p->lit_saved_state = S_DECL;
-	return TRUE;
+      { if ( p->buffer->data[0] != f[CF_MDO2] )
+	{ terminate_icharbuf(p->buffer);
+	  gripe(p, ERC_SYNTAX_WARNING,
+		L"Quote inside value", p->buffer->data);
+	} else
+	{ p->state = S_STRING;
+	  p->saved = chr;
+	  p->lit_saved_state = S_DECL;
+	  return TRUE;
+	}
       } else if ( f[CF_CMT] == chr &&	/* - */
 		  p->buffer->data[0] == f[CF_MDO2] ) /* Started <! */
       { p->state = S_DECLCMT0;
@@ -5174,6 +5189,35 @@ reprocess:
       { terminate_icharbuf(p->buffer);
 
 	process_marked_section(p);
+      }
+
+      return TRUE;
+    }
+    case S_VAL0:
+    { if ( f[CF_LIT] == chr )		/* " */
+      { add_icharbuf(p->buffer, chr);
+	p->state = S_STRING;
+	p->saved = chr;
+	p->lit_saved_state = S_DECL;
+      } else if ( f[CF_LITA] == chr )	/* ' */
+      { add_icharbuf(p->buffer, chr);
+	p->state = S_STRING;
+	p->saved = chr;
+	p->lit_saved_state = S_DECL;
+	return TRUE;
+      } else
+      { if ( HasClass(dtd, chr, CH_BLANK) )
+	{ add_icharbuf(p->buffer, chr);
+	} else
+	{ if ( IS_XML_DIALECT(dtd->dialect) )
+	  { terminate_icharbuf(p->buffer);
+	    gripe(p, ERC_SYNTAX_WARNING,
+		  L"Unquoted attribute in XML is not allowed", p->buffer->data);
+	  }
+	  p->state = S_DECL;
+
+	  goto s_decl;
+	}
       }
 
       return TRUE;

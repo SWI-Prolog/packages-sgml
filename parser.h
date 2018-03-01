@@ -104,6 +104,7 @@ typedef enum
   S_DECL,				/* inside a declaration */
   S_MDECL0,				/* Seen <! */
   S_STRING,				/* inside a "string" or 'string' */
+  S_VAL0,				/* Seen = in decl */
   S_DECLCMT0,				/* Seen <...- */
   S_DECLCMT,				/* Seen <...-- */
   S_DECLCMTE0,				/* Seen <...--..- */
