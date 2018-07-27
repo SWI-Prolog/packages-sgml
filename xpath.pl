@@ -320,7 +320,8 @@ star(Name, Name).
 %                   Name.
 
 sub_dom(1, 1, Name, DOM, DOM) :-
-    element_name(DOM, Name).
+    element_name(DOM, Name0),
+    \+ Name \= Name0.
 sub_dom(N, Len, Name, E, element(_,_,Content)) :-
     !,
     sub_dom_2(N, Len, Name, E, Content).
@@ -361,7 +362,8 @@ nth_element(N, Name, Element, Content) :-
     nth_element_(1, N, Name, Element, Content).
 
 nth_element_(I, N, Name, E, [H|T]) :-
-    element_name(H, Name),
+    element_name(H, Name0),
+    \+ Name \= Name0,
     !,
     (   N = I,
         E = H
