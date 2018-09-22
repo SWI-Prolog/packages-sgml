@@ -3,8 +3,9 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2000-2014, University of Amsterdam
+    Copyright (c)  2000-2018, University of Amsterdam
                               VU University Amsterdam
+                              CWI, Amsterdam
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -34,26 +35,23 @@
 */
 
 :- module(sgml_test,
-          [ test/1,                     % +File
+          [ test_sgml/1,                % +File
             testdir/1,                  % +Dir
             pass/1,                     % +File
             show/1,                     % +File
-            test/0
+            test_sgml/0
           ]).
 
-:- prolog_load_context(directory, CWD),
-   working_directory(_, CWD).
-
-:- asserta(user:file_search_path(library, '..')).
-:- asserta(user:file_search_path(library, '../../RDF')).
-:- asserta(user:file_search_path(foreign, '..')).
+:- asserta(user:file_search_path(library, '.')).
+:- asserta(user:file_search_path(library, '../RDF')).
+:- asserta(user:file_search_path(foreign, '.')).
 :- use_module(library(sgml)).
 :- use_module(library(pprint)).
 
 :- dynamic failed/1.
 
-test :-
-    testdir(.),
+test_sgml :-
+    testdir('Test'),
     test_callback.
 
 testdir(Dir) :-
@@ -67,10 +65,10 @@ dotest(File) :-
     file_name_extension(_, Ext, File),
     memberchk(Ext, [sgml, xml, html]),
     !,
-    test(File).
+    test_sgml(File).
 dotest(_).
 
-test(File) :-
+test_sgml(File) :-
     debug(sgml(test), 'Test ~w ... ', [File]),
     flush_output,
     load_file(File, Term),
@@ -171,9 +169,11 @@ load_pred(xml,  load_xml_file).
 load_pred(html, load_html_file).
 
 okfile(File, OkFile) :-
-    file_name_extension(Base, _, File),
-    file_directory_name(Base, Dir),
-    atomic_list_concat([Dir, '/ok/', Base, '.ok'], OkFile).
+    file_name_extension(Plain, _, File),
+    file_base_name(Plain, Base),
+    file_directory_name(Plain, Dir),
+    atomic_list_concat([Dir, '/ok/', Base, '.ok'], OkFile),
+    writeln(File-OkFile).
 
 load_prolog_file(File, Term, Errors) :-
     open(File, read, Fd,
@@ -214,7 +214,7 @@ pretty_print(Term) :-
 
 test_callback :-
     retractall(content(_)),
-    File = 'utf8.xml',
+    File = 'Test/utf8.xml',
     open(File, read, In),
     new_sgml_parser(Parser, []),
     set_sgml_parser(Parser, file(File)),

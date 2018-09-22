@@ -64,8 +64,8 @@ html-install::
 		$(INSTALL_DATA) sgml.html $(DESTDIR)$(PKGDOCDIR)
 
 check::
-		$(PL) -f Test/test.pl -q -g test -t halt
-		$(PL) -f Test/wrtest.pl -q -g test -t halt
+		$(PL) -f test_sgml.pl -q -g test_sgml -t halt
+		$(PL) -f test_sgml_write.pl -q -g test_sgml_write -t halt
 		$(PL) -f test_xsd.pl -g test_xsd -t halt
 
 uninstall::

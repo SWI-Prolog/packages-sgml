@@ -35,19 +35,16 @@
 
 #define _ISOC99_SOURCE 1		/* fwprintf(), etc prototypes */
 
-#ifdef __WINDOWS__
-#include <windows.h>
-#endif
-
 #define DTD_MINOR_ERRORS 1		/* get detailed errors */
+
+#include <SWI-Stream.h>
+#include <SWI-Prolog.h>
 
 #include <stdio.h>
 #include "dtd.h"
 #include "catalog.h"
 #include "model.h"
 #include "util.h"
-#include <SWI-Stream.h>
-#include <SWI-Prolog.h>
 #include <errno.h>
 #include "error.h"
 #include <stdlib.h>

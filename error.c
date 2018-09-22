@@ -164,6 +164,7 @@ sgml2pl_error(plerrorid id, ...)
       break;
     }
     default:
+      rc = 0;
       assert(0);
   }
   va_end(args);

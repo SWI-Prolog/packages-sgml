@@ -35,6 +35,7 @@
 
 #define _ISOC99_SOURCE 1		/* fwprintf(), etc prototypes */
 
+#include <config.h>
 #define UTIL_H_IMPLEMENTATION
 #include "util.h"
 #include <ctype.h>

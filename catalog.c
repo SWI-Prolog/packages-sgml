@@ -40,7 +40,7 @@
 #include <string.h>
 #include <stdlib.h>
 #define DTD_MINOR_ERRORS 1
-#include <dtd.h>			/* error codes */
+#include "dtd.h"			/* error codes */
 
 #ifdef __WINDOWS__
 #define swprintf _snwprintf

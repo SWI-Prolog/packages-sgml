@@ -33,12 +33,13 @@
     POSSIBILITY OF SUCH DAMAGE.
 */
 
-:- prolog_load_context(directory, CWD),
-   working_directory(_, CWD).
+:- module(test_sgml_write,
+          [ test_sgml_write/0
+          ]).
 
-:- asserta(file_search_path(foreign, '..')).
-:- asserta(file_search_path(library, '..')).
-:- asserta(file_search_path(library, '../../RDF')).
+:- asserta(user:file_search_path(foreign, '.')).
+:- asserta(user:file_search_path(library, '.')).
+:- asserta(user:file_search_path(library, '../RDF')).
 
 :- use_module(library(sgml)).
 :- use_module(library(sgml_write)).
@@ -46,8 +47,8 @@
 
 :- dynamic failed/2.
 
-test :-                                 % default test
-    fp('.').
+test_sgml_write :-                              % default test
+    fp('Test').
 
 test(File) :-
     file_name_extension(_, xml, File),
