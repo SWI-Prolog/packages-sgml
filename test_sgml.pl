@@ -51,8 +51,14 @@
 :- dynamic failed/1.
 
 test_sgml :-
-    testdir('Test'),
+    test_input('Test', Path),
+    testdir(Path),
     test_callback.
+
+test_input(Name, Path) :-
+    source_file(test_sgml, MyFile),
+    file_directory_name(MyFile, MyDir),
+    atomic_list_concat([MyDir, Name], /, Path).
 
 testdir(Dir) :-
     retractall(failed(_)),
@@ -206,6 +212,7 @@ compare_attributes(A1, A2) :-
 pretty_print(Term) :-
     print_term(Term, [output(current_output)]).
 
+
                  /*******************************
                  *          OTHER TESTS         *
                  *******************************/
@@ -214,7 +221,7 @@ pretty_print(Term) :-
 
 test_callback :-
     retractall(content(_)),
-    File = 'Test/utf8.xml',
+    test_input('Test/utf8.xml', File),
     open(File, read, In),
     new_sgml_parser(Parser, []),
     set_sgml_parser(Parser, file(File)),
