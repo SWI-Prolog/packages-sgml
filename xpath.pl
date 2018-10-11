@@ -473,10 +473,10 @@ translate_attr(number, Value0, Value) :-
     xsd_number_string(Value, Value0).
 translate_attr(integer, Value0, Value) :-
     xsd_number_string(Value1, Value0),
-    Value = round(Value1).
+    Value is round(Value1).
 translate_attr(float, Value0, Value) :-
     xsd_number_string(Value1, Value0),
-    Value = float(Value1).
+    Value is float(Value1).
 translate_attr(string, Value0, Value) :-
     atom_string(Value0, Value).
 translate_attr(lower, Value0, Value) :-
