@@ -1115,7 +1115,7 @@ on_begin(Tag, Attr, Parser) :-
 \begin{description}
     \predicate{xml_is_dom}{1}{@{Term}}
 True if \arg{Term} is an SGML/XML term as produced by one of the above
-predciates and acceptable by xml_write/3 and friends.
+predicates and acceptable by xml_write/3 and friends.
 \end{description}
 
 \section{Stream encoding issues}
