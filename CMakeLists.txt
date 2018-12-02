@@ -25,7 +25,8 @@ swipl_plugin(
     PL_LIB_SUBDIR DTD
 	PL_LIBS ${DTD_FILES})
 
-test_libs(sgml sgml_write xsd)
+test_libs(sgml sgml_write xsd
+	  TEST_DIRS Test)
 
 pkg_doc(sgml
 	SECTION
