@@ -23,7 +23,8 @@ swipl_plugin(
     PL_LIBS sgml.pl xsdp_types.pl iso_639.pl sgml_write.pl xpath.pl
 	    pwp.pl c14n2.pl
     PL_LIB_SUBDIR DTD
-	PL_LIBS ${DTD_FILES})
+	PL_LIBS ${DTD_FILES}
+    THREADED)
 
 test_libs(sgml sgml_write xsd
 	  TEST_DIRS Test)
