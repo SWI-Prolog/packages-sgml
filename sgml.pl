@@ -422,7 +422,6 @@ sgml_encoding_l('iso_latin_1').
 sgml_encoding_l('ascii').
 
 load_structure_from_stream(In, Term, M:Options) :-
-    !,
     (   select_option(dtd(DTD), Options, Options1)
     ->  ExplicitDTD = true
     ;   ExplicitDTD = false,
