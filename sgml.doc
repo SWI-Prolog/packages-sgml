@@ -944,7 +944,11 @@ An input stream that is read.  This option \emph{must} be given.
     \termitem{content_length}{+Characters}
 Stop parsing after \arg{Characters}.  This option is useful to parse
 input embedded in \jargon{envelopes}, such as the HTTP protocol.
-    \termitem{parse}{Unit}
+    \termitem{cdata}{+Representation}
+Specify the representation of \jargon{cdata} elements. Supported are
+\const{atom} (default), and \const{string}.  See load_structure/3 for
+details.
+    \termitem{parse}{+Unit}
 Defines how much of the input is parsed.  This option is used to parse
 only parts of a file.
     \begin{description}
