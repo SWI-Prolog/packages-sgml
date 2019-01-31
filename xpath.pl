@@ -466,6 +466,7 @@ xpath_function(quote(Value), _, Value).                         % quote(Value)
 xpath_function(self).
 xpath_function(content).
 xpath_function(text).
+xpath_function(text(_)).
 xpath_function(normalize_space).
 xpath_function(number).
 xpath_function(@_).
