@@ -3,8 +3,9 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2009-2016, University of Amsterdam
+    Copyright (c)  2009-2019, University of Amsterdam
                               VU University Amsterdam
+                              CWI, Amsterdam
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -125,6 +126,9 @@ xpath_chk(DOM, Spec, Content) :-
 %       Evaluate to the content of the element (a list)
 %       $ =text= :
 %       Evaluates to all text from the sub-tree as an atom
+%       $ `text(As)` :
+%       Evaluates to all text from the sub-tree according to
+%       `As`, which is either `atom` or `string`.
 %       $ =normalize_space= :
 %       As =text=, but uses normalize_space/2 to normalise
 %       white-space in the output
@@ -434,14 +438,17 @@ xpath_function(content, Element, Value) :-                     % content
     element_content(Element, Value).
 xpath_function(text, DOM, Text) :-                             % text
     !,
-    text_of_dom(DOM, Text).
+    text_of_dom(DOM, atom, Text).
+xpath_function(text(As), DOM, Text) :-                         % text(As)
+    !,
+    text_of_dom(DOM, As, Text).
 xpath_function(normalize_space, DOM, Text) :-                  % normalize_space
     !,
-    text_of_dom(DOM, Text0),
+    text_of_dom(DOM, string, Text0),
     normalize_space(atom(Text), Text0).
 xpath_function(number, DOM, Number) :-                         % number
     !,
-    text_of_dom(DOM, Text0),
+    text_of_dom(DOM, string, Text0),
     normalize_space(string(Text), Text0),
     catch(xsd_number_string(Number, Text), _, fail).
 xpath_function(@Name, element(_, Attrs, _), Value) :-          % @Name
@@ -554,13 +561,18 @@ val_or_function(Func, Value0, Value) :-                         % TBD
 val_or_function(Value, _, Value).
 
 
-%!  text_of_dom(+DOM, -Text:atom) is det.
+%!  text_of_dom(+DOM, +As, -Text:atom) is det.
 %
 %   Text is the joined textual content of DOM.
 
-text_of_dom(DOM, Text) :-
+text_of_dom(DOM, As, Text) :-
     phrase(text_of(DOM), Tokens),
-    atomic_list_concat(Tokens, Text).
+    (   As == atom
+    ->  atomic_list_concat(Tokens, Text)
+    ;   As == string
+    ->  atomics_to_string(Tokens, Text)
+    ;   must_be(oneof([atom,string]), As)
+    ).
 
 text_of(element(_,_,Content)) -->
     text_of_list(Content).
