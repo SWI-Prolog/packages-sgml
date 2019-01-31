@@ -582,5 +582,11 @@ text_of_1(element(_,_,Content)) -->
     !,
     text_of_list(Content).
 text_of_1(Data) -->
-    { assertion(atom(Data)) },
+    { assertion(atom_or_string(Data)) },
     [Data].
+
+atom_or_string(Data) :-
+    (   atom(Data)
+    ->  true
+    ;   string(Data)
+    ).
