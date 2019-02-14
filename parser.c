@@ -4600,7 +4600,6 @@ end_document_dtd_parser(dtd_parser *p)
       rval = TRUE;
       break;
     case S_CMT:
-    case S_CMT1:
     case S_CMTE0:
     case S_CMTE1:
     case S_DECLCMT0:
@@ -5277,7 +5276,7 @@ reprocess:
     }
     case S_CMTO:			/* Seen <!- */
     { if ( f[CF_CMT] == chr )		/* - */
-      { p->state = S_CMT1;
+      { p->state = S_CMT;
 	return TRUE;
       } else
       { add_cdata(p, f[CF_MDO1]);
@@ -5287,10 +5286,6 @@ reprocess:
 	p->state = S_PCDATA;
 	return TRUE;
       }
-    }
-    case S_CMT1:			/* <!-- */
-    { p->state = S_CMT;
-      return TRUE;
     }
     case S_CMT:
     { if ( f[CF_CMT] == chr )

@@ -109,7 +109,6 @@ typedef enum
   S_DECLCMT,				/* Seen <...-- */
   S_DECLCMTE0,				/* Seen <...--..- */
   S_CMTO,				/* Seen <!- */
-  S_CMT1,				/* Seen <!-- */
   S_CMT,				/* Seen <!--X... */
   S_CMTE0,				/* Seem <!--...- */
   S_CMTE1,				/* Seem <!--...-- */
