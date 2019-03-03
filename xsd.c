@@ -383,11 +383,55 @@ float_domain(const char *domain, double f)
 }
 
 
+/*
+In XSD 1.0 the year property was not permitted to have the value 0.
+The year before the year 1 in the proleptic Gregorian calendar,
+traditionally referred to as 1 BC(E), was represented by a year value
+of -1, 2 BCE by -2, etc.  Many, perhaps most, references to 1 BC(E)
+actually refer not to a year in the proleptic Gregorian calendar but
+to a year in the Julian or “old style” calendar; the two correspond
+approximately but not exactly to each other.
+
+Use the following preprocessor directive in order to make use of XSD
+1.0 behavior:
+
+#define XSD_VERSION_1_0
+
+In XSD 1.1, two changes are made in order to agree with existing
+usage.  First, year is permitted to have the value 0.  Second, the
+interpretation of year values is changed accordingly: a year value of
+0 represents 1 BCE, -1 represents 2 BCE, etc.  This representation
+simplifies interval arithmetic and leap-year calculation for dates
+before the common era (which may be why astronomers and others
+interested in such calculations with the proleptic Gregorian calendar
+have adopted it), and is consistent with the current edition of ISO
+8601.
+*/
 static int
 valid_year(int i)
-{ if ( i != 0 )
+{
+#if XSD_VERSION_1_0
+  if ( i != 0 )
     return TRUE;
   return int_domain("year", i);
+#else
+  return TRUE;
+#endif
+}
+
+static int
+mkyear(int v, int sign)
+{
+#if XSD_VERSION_1_0
+  if ( sign == 1 )
+  { if ( v == 0 )
+      return -1;
+    return v;
+  }
+  return -(v+1);
+#else
+  return v*sign;
+#endif
 }
 
 
@@ -568,17 +612,6 @@ maybe_invalid_time_url(term_t type)
 
 
 static int
-mkyear(int v, int sign)
-{ if ( sign == 1 )
-  { if ( v == 0 )
-      return -1;
-    return v;
-  }
-  return -(v+1);
-}
-
-
-static int
 unify_parsed_type(term_t t, atom_t type)
 { if ( PL_unify_atom(t, type) )
   { return TRUE;
@@ -646,7 +679,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
       at = URL_date;
       if ( v[0] < 0 )
       { sign = "-";
-	v[0] = -v[0]-1;
+	v[0] = mkyear(v[0], -1);
       }
       sprintf(buf, "%s%04d-%02d-%02d", sign, v[0],v[1],v[2]);
     } else if ( PL_is_functor(term, FUNCTOR_date_time6) )
@@ -661,7 +694,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
       at = URL_dateTime;
       if ( v[0] < 0 )
       { sign = "-";
-	v[0] = -v[0]-1;
+	v[0] = mkyear(v[0], -1);
       }
       sprintf(buf, "%s%04d-%02d-%02dT%02d:%02d:%s",
 	      sign, v[0], v[1], v[2], t.hour, t.minute, time_sec_chars(&t, b2));
@@ -679,7 +712,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
       at = URL_dateTime;
       if ( v[0] < 0 )
       { sign = "-";
-	v[0] = -v[0]-1;
+	v[0] = mkyear(v[0], -1);
       }
       sprintf(buf, "%s%04d-%02d-%02dT%02d:%02d:%s",
 	      sign, v[0], v[1], v[2], t.hour, t.minute, time_sec_chars(&t, b2));
@@ -715,7 +748,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	return FALSE;
       if ( v[0] < 0 )
       { sign = "-";
-	v[0] = -v[0]-1;
+	v[0] = mkyear(v[0], -1);
       }
       at = URL_gYearMonth;
       sprintf(buf, "%s%04d-%02d", sign, v[0], v[1]);
@@ -736,11 +769,9 @@ xsd_time_string(term_t term, term_t type, term_t string)
       { char *sign = "";
 	if ( !valid_year(v) )
 	  return FALSE;
-	if ( v == -1 )
-	{ v = 0;
-	} else if ( v < 0 )
+	if ( v < 0 )
 	{ sign = "-";
-	  v = -v - 1;
+	  v = mkyear(v, -1);
 	}
 	sprintf(buf, "%s%04d", sign, v);
       } else if ( is_time_url(url) )
@@ -825,7 +856,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
 
 	  return (unify_parsed_type(type, URL_dateTime) &&
 		  PL_unify_term(term, PL_FUNCTOR, FUNCTOR_date_time7,
-				PL_INT, mkyear(av[1],yearsign),
+				PL_INT, av[1]*yearsign,
 				PL_INT, av[ 4], PL_INT, av[ 7],
 				PL_INT, t.hour, PL_INT, t.minute, PL_TERM, sec,
 			        PL_INT, tz));
