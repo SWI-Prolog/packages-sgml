@@ -5473,16 +5473,18 @@ sgml_process_file(dtd_parser *p, const ichar *file, unsigned flags)
 		 *	       ERRORS		*
 		 *******************************/
 
-#define MAX_MESSAGE_LEN 1023
+#define MAX_MESSAGE_LEN  1023
+#define MAX_LOCATION_LEN  500
 
 static wchar_t *
 format_location(wchar_t *s, size_t len, dtd_srcloc *l)
 { int first = TRUE;
   wchar_t *e = &s[len];
 
-  if ( !l || l->type == IN_NONE )
+  if ( !l || l->type == IN_NONE || len == 0 )
     return s;
 
+  e[-1] = L'\0';
   for( ; l && l->type != IN_NONE;
          l = l->parent, first = FALSE )
   { if ( !first )
@@ -5502,6 +5504,7 @@ format_location(wchar_t *s, size_t len, dtd_srcloc *l)
     }
 
     s += wcslen(s);
+
     if ( !first && s<e-1 )
     { *s++ = L')';
     }
@@ -5534,7 +5537,8 @@ format_message(dtd_error *e)
   }
   s += wcslen(s);
 
-  s = format_location(s, end-s, e->location);
+  *end = L'\0';
+  s = format_location(s, MAX_LOCATION_LEN, e->location);
   prefix_len = s-buf;
 
   switch(e->id)
