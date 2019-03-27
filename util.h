@@ -101,6 +101,7 @@ void		empty_icharbuf(icharbuf *buf);
 
 ocharbuf *	init_ocharbuf(ocharbuf *buf, size_t limit);
 ocharbuf *	new_ocharbuf(size_t limit);
+void		discard_ocharbuf(ocharbuf *buf);
 void		free_ocharbuf(ocharbuf *buf);
 ocharbuf *	malloc_ocharbuf(ocharbuf *buf);
 void		add_ocharbuf(ocharbuf *buf, int chr);
