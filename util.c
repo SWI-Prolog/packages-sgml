@@ -375,9 +375,15 @@ new_ocharbuf(size_t limit)
 
 
 void
-free_ocharbuf(ocharbuf *buf)
+discard_ocharbuf(ocharbuf *buf)
 { if ( buf->data.w && buf->data.w != buf->localbuf )
     sgml_free(buf->data.w);
+}
+
+
+void
+free_ocharbuf(ocharbuf *buf)
+{ discard_ocharbuf(buf);
 
   sgml_free(buf);
 }

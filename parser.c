@@ -3116,6 +3116,7 @@ get_attribute_value(dtd_parser *p, ichar const *decl, sgml_attribute *att)
   dtd *dtd = p->dtd;
   ichar const *end;
   ichar *start; int len;
+  ocharbuf out;
 
   enum
   { DIG_FIRST = 8,		/* any token start with digit? */
@@ -3129,13 +3130,12 @@ get_attribute_value(dtd_parser *p, ichar const *decl, sgml_attribute *att)
   att->value.textW = NULL;		/* UCS text */
   att->value.number = 0;
   att->flags = 0;
+  out.data.w = NULL;			/* safe discard_ocharbuf() */
 
   end = itake_string(dtd, decl, &start, &len);
 
   if ( end != NULL )
-  { ocharbuf out;
-
-    init_ocharbuf(&out, p->max_memory);
+  { init_ocharbuf(&out, p->max_memory);
     expand_entities(p, start, len, &out);
 
     if ( att->definition->type == AT_CDATA )
@@ -3280,6 +3280,8 @@ get_attribute_value(dtd_parser *p, ichar const *decl, sgml_attribute *att)
 passed:
   att->value.textW  = istrdup(buf);	/* TBD: more validation */
   att->value.number = (long)istrlen(buf);
+  discard_ocharbuf(&out);
+
   return end;
 }
 
