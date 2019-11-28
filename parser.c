@@ -4373,6 +4373,7 @@ emit_cdata(dtd_parser *p, int last)
 	break;
       }
       case SP_PRESERVE:
+      case SP_STRICT:
 	break;
       case SP_INHERIT:
 	assert(0);
@@ -4405,7 +4406,8 @@ emit_cdata(dtd_parser *p, int last)
     { env->state = new;
       cb_cdata(p, cdata, offset, size);
     } else if ( env->element->undefined &&
-		p->environments->space_mode == SP_PRESERVE )
+                ( p->environments->space_mode == SP_PRESERVE ||
+                  p->environments->space_mode == SP_STRICT ) )
     { cb_cdata(p, cdata, offset, size);
     }
   }
@@ -4764,8 +4766,9 @@ add_cdata(dtd_parser *p, int chr)
       p->blank_cdata = FALSE;
     }
 
-    if ( chr == '\n' )			/* insert missing CR */
-    { int sz;
+    if ( chr == '\n' &&
+	 p->environments && p->environments->space_mode != SP_STRICT )
+    { int sz;				/* insert missing CR */
 
       if ( (sz=buf->size) == 0 ||
 	   fetch_ocharbuf(buf, sz-1) != CR )
@@ -4779,8 +4782,10 @@ add_cdata(dtd_parser *p, int chr)
 	 match_shortref(p) )
       return;
 
-    if ( chr == '\n' )			/* dubious.  Whould we do that */
-    { int sz;				/* here or in space-handling? */
+    /* dubious.  Should we do that here or in space-handling? */
+    if ( chr == '\n' &&
+	 p->environments && p->environments->space_mode != SP_STRICT )
+    { int sz;
 
       if ( (sz=buf->size) > 1 &&
 	   fetch_ocharbuf(buf, sz-1) == LF &&
