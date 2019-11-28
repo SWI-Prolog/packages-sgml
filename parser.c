@@ -4778,14 +4778,15 @@ add_cdata(dtd_parser *p, int chr)
 	 match_shortref(p) )
       return;
 
-    if ( chr == '\n' )			/* dubious.  Whould we do that */
-    { int sz;				/* here or in space-handling? */
-
-      if ( (sz=buf->size) > 1 &&
-	   fetch_ocharbuf(buf, sz-1) == LF &&
-	   fetch_ocharbuf(buf, sz-2) == CR )
-      { poke_ocharbuf(buf, sz-2, LF);
-	buf->size--;
+    if ( p->environments && p->environments->space_mode != SP_PRESERVE)
+    { if ( chr == '\n' )		/* dubious.  Whould we do that */
+      { int sz;				/* here or in space-handling? */
+	if ( (sz=buf->size) > 1 &&
+	     fetch_ocharbuf(buf, sz-1) == LF &&
+	     fetch_ocharbuf(buf, sz-2) == CR )
+	  { poke_ocharbuf(buf, sz-2, LF);
+	    buf->size--;
+	  }
       }
     }
   }
