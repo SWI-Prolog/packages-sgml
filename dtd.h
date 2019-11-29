@@ -196,7 +196,8 @@ typedef enum
   SP_DEFAULT,				/* Default space handling */
   SP_REMOVE,				/* Remove all blank CDATA elements */
   SP_SGML,				/* Compliant SGML mode */
-  SP_INHERIT				/* DTD: inherit from environment */
+  SP_INHERIT,				/* DTD: inherit from environment */
+  SP_STRICT				/* Strict reading of spaces for signature verification */
 } dtd_space_mode;
 
 

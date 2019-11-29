@@ -4372,6 +4372,7 @@ emit_cdata(dtd_parser *p, int last)
 	break;
       }
       case SP_PRESERVE:
+      case SP_STRICT:
 	break;
       case SP_INHERIT:
 	assert(0);
@@ -4404,7 +4405,8 @@ emit_cdata(dtd_parser *p, int last)
     { env->state = new;
       cb_cdata(p, cdata, offset, size);
     } else if ( env->element->undefined &&
-		p->environments->space_mode == SP_PRESERVE )
+                ( p->environments->space_mode == SP_PRESERVE ||
+                  p->environments->space_mode == SP_STRICT ) )
     { cb_cdata(p, cdata, offset, size);
     }
   }
@@ -4778,7 +4780,7 @@ add_cdata(dtd_parser *p, int chr)
 	 match_shortref(p) )
       return;
 
-    if ( p->environments && p->environments->space_mode != SP_PRESERVE)
+    if ( p->environments && p->environments->space_mode != SP_STRICT)
     { if ( chr == '\n' )		/* dubious.  Whould we do that */
       { int sz;				/* here or in space-handling? */
 	if ( (sz=buf->size) > 1 &&

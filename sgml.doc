@@ -338,9 +338,15 @@ containing only markup should be deleted. This is not yet
 implemented.} This is the default mode for the SGML dialect.
 
     \termitem{space}{preserve}
-White space is passed literally to the application. This mode leaves all
+White space is passed literally to the application. This mode leaves most
 white space handling to the application. This is the default mode for
-the XML dialect.
+the XML dialect. Note that \r\n is still translated to \n. To preserve
+whitespace *exactly*, use space(strict) (see below)
+
+    \termitem{space}{strict}
+White space is passed strictly to the application. This mode leaves all
+white space handling to the application. This is useful for producing
+and verifying XML signatures.
 
     \termitem{space}{default}
 In addition to \const{sgml} space-mode, all consequtive white-space is
