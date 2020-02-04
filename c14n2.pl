@@ -85,7 +85,10 @@ xml_canonical_dom(element( Name,  Attrs,  Content),
     InNS0  = Options.in_ns,
     OutNS0 = Options.out_ns,
     Method = Options.method,
-    take_ns(Attrs, Method, Name, Attrs1, InNS0, InNS),
+    % We must include namespaces which appear in attributes in this element, too, if using xml-exc-c14n
+    % This means we need to know what they are
+    findall(NS, (member(Attr, Attrs), Attr = (NS:_=_), NS \== xmlns), NamespacesInAttrs),
+    take_ns(Attrs, Method, NamespacesInAttrs, Name, Attrs1, InNS0, InNS),
     partition(has_ns, Attrs1, AttrsWithNS0, AttrsSans0),
     sort(1, @<, AttrsWithNS0, AttrsWithNS1),
     sort(1, @<, AttrsSans0, AttrsSans),
@@ -119,19 +122,21 @@ xml_canonical_list([H0|T0], [H|T], Options) :-
     xml_canonical_dom(H0, H, Options),
     xml_canonical_list(T0, T, Options).
 
-take_ns([], _, _, [], NSList, NSList).
-take_ns([H|T0], Method, Name, T, NSList0, NSList) :-
+take_ns([], _, _, _, [], NSList, NSList).
+take_ns([H|T0], Method, NamespacesInAttrs, Name, T, NSList0, NSList) :-
     xml_ns(H, NS, URL),
     !,
-    (  include_ns(Name, Method, NS, URL)
-    -> take_ns(T0, Method, Name, T, NSList0.put(NS, URL), NSList)
-    ;  take_ns(T0, Method, Name, T, NSList0, NSList)
+    (  include_ns(Name, Method, NamespacesInAttrs, NS, URL)
+    -> take_ns(T0, Method, NamespacesInAttrs, Name, T, NSList0.put(NS, URL), NSList)
+    ;  take_ns(T0, Method, NamespacesInAttrs, Name, T, NSList0, NSList)
     ).
-take_ns([H|T0], Method, Name, [H|T], NSList0, NSList) :-
-    take_ns(T0, Method, Name, T, NSList0, NSList).
+take_ns([H|T0], Method, NamespacesInAttrs, Name, [H|T], NSList0, NSList) :-
+    take_ns(T0, Method, NamespacesInAttrs, Name, T, NSList0, NSList).
 
-include_ns(ns(Prefix, URI):_, 'http://www.w3.org/2001/10/xml-exc-c14n#', Prefix, URI):- !.
-include_ns(_, 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315', _, _):- !.
+include_ns(ns(Prefix, URI):_, 'http://www.w3.org/2001/10/xml-exc-c14n#', _, Prefix, URI):- !.
+include_ns(_, 'http://www.w3.org/2001/10/xml-exc-c14n#', NamespacesInAttrs, _Prefix, URI):-
+        memberchk(URI, NamespacesInAttrs).
+include_ns(_, 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315', _, _, _):- !.
 
 
 put_ns_attrs([], [], _, OutNS, OutNS).
