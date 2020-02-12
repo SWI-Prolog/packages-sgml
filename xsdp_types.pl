@@ -40,7 +40,6 @@
             xsdp_convert/3              % +Type, +Content, -Value
           ]).
 
-
 /** <module> XML-Schema primitive types
 
 This  modules  provides  support  for  the  primitive  XML-Schema  (XSD)

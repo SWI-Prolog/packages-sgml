@@ -35,6 +35,7 @@
 :- module(xml_unicode,
           [ mkclassify/0
           ]).
+:- autoload(library(lists),[last/2,append/3]).
 
 %!  mkclassify
 %

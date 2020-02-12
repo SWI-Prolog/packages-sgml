@@ -3,6 +3,10 @@
             pwp_stream/3,               % +StreamIn, +StreamOut, +Context
             pwp_xml/3                   % +DomIn, -DOMOut, +Context
           ]).
+:- autoload(library(lists),[append/3]).
+:- autoload(library(readutil),[read_file_to_codes/3]).
+:- autoload(library(sgml),[load_xml_file/2]).
+:- autoload(library(sgml_write),[xml_write/3]).
 
 /** <module> Prolog Well-formed Pages
 
@@ -312,10 +316,6 @@ Examples:
 @author Richard O'Keefe
 @tbd    Support compilation of PWP input files
 */
-
-:- use_module(library(sgml),       [load_xml_file/2]).
-:- use_module(library(sgml_write), [xml_write/3]).
-:- use_module(library(lists),      [append/3]).
 
 :- meta_predicate
     pwp_files(:, +),

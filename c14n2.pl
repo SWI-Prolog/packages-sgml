@@ -35,13 +35,13 @@
 :- module(c14n2,
           [ xml_write_canonical/3       % +Stream, +Term, +Options
           ]).
-:- use_module(library(error)).
-:- use_module(library(option)).
-:- use_module(library(sgml_write)).
-:- use_module(library(dicts)).
-:- use_module(library(ordsets)).
-:- use_module(library(apply)).
-:- use_module(library(lists)).
+:- autoload(library(apply),[partition/4,maplist/3]).
+:- autoload(library(dicts),[dict_keys/2]).
+:- autoload(library(error),[instantiation_error/1,must_be/2]).
+:- autoload(library(lists),[member/2,append/2,select/3]).
+:- autoload(library(option),[option/3]).
+:- autoload(library(ordsets),[ord_subtract/3]).
+:- autoload(library(sgml_write),[xml_write/3]).
 
 /** <module> C14n2 canonical XML documents
 

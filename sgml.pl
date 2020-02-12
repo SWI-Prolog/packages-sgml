@@ -3,8 +3,9 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2000-2018, University of Amsterdam
+    Copyright (c)  2000-2020, University of Amsterdam
                               VU University Amsterdam
+                              CWI, Amsterdam
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -81,10 +82,10 @@
             iri_xml_namespace/3,        % +IRI, -Namespace, -LocalName
             xml_is_dom/1                % +Term
           ]).
-:- use_module(library(lists)).
-:- use_module(library(option)).
-:- use_module(library(error)).
-:- use_module(library(iostream)).
+:- autoload(library(error),[instantiation_error/1]).
+:- autoload(library(iostream),[open_any/5,close_any/1]).
+:- autoload(library(lists),[member/2,selectchk/3]).
+:- autoload(library(option),[select_option/3,merge_options/3]).
 
 :- meta_predicate
     load_structure(+, -, :),
@@ -313,7 +314,10 @@ register_cleanup :-
     registered_cleanup,
     !.
 register_cleanup :-
-    catch(thread_at_exit(destroy_dtds), _, true),
+    (   current_prolog_flag(threads, true)
+    ->  prolog_listen(this_thread_exit, destroy_dtds)
+    ;   true
+    ),
     assert(registered_cleanup).
 
 

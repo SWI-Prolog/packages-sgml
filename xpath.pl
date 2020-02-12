@@ -42,11 +42,12 @@
             op(400, fx, /),
             op(200, fy, @)
           ]).
-:- use_module(library(record)).
-:- use_module(library(lists)).
-:- use_module(library(debug)).
-:- use_module(library(error)).
-:- use_module(library(sgml)).
+:- use_module(library(record),[record/1, op(_,_,record)]).
+
+:- autoload(library(debug),[assertion/1]).
+:- autoload(library(error),[instantiation_error/1,must_be/2]).
+:- autoload(library(lists),[member/2]).
+:- autoload(library(sgml),[xsd_number_string/2]).
 
 /** <module> Select nodes in an XML DOM
 

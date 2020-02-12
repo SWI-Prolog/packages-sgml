@@ -41,11 +41,18 @@
             xml_write/2,                %          +Data, +Options
             xml_write/3                 % +Stream, +Data, +Options
           ]).
-:- use_module(library(lists)).
-:- use_module(library(sgml)).
-:- use_module(library(assoc)).
-:- use_module(library(option)).
-:- use_module(library(error)).
+:- autoload(library(assoc),
+	    [get_assoc/3,empty_assoc/1,put_assoc/4,list_to_assoc/2]).
+:- autoload(library(error),
+	    [ must_be/2,
+	      domain_error/2,
+	      instantiation_error/1,
+	      type_error/2
+	    ]).
+:- autoload(library(gensym),[gensym/2]).
+:- autoload(library(lists),[select/3]).
+:- autoload(library(option),[option/3]).
+:- autoload(library(sgml),[dtd/2,dtd_property/2]).
 
 :- predicate_options(xml_write/2, 2, [pass_to(xml_write/3, 3)]).
 :- predicate_options(xml_write/3, 3,
