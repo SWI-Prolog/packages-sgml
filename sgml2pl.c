@@ -967,16 +967,25 @@ put_url(dtd_parser *p, term_t t, const ichar *url)
 
 WUNUSED static int
 put_attribute_name(dtd_parser *p, term_t t, dtd_symbol *nm)
-{ const ichar *url, *local;
-
+{ const ichar *url, *local, *prefix;
   if ( p->dtd->dialect == DL_XMLNS )
-  { xmlns_resolve_attribute(p, nm, &local, &url);
+  { xmlns_resolve_attribute(p, nm, &local, &url, &prefix);
     if ( url )
     { term_t av;
-      return ( (av=PL_new_term_refs(2)) &&
-	       put_url(p, av+0, url) &&
-	       put_atom_wchars(av+1, local) &&
-	       PL_cons_functor_v(t, FUNCTOR_ns2, av) );
+      if ( p->dtd->keep_prefix)
+      { /* creates ns(prefix,url):local */
+        PL_put_variable(t);
+        return PL_unify_term(t, PL_FUNCTOR, FUNCTOR_ns2,
+                             PL_FUNCTOR, FUNCTOR_prefix2,
+                             PL_NWCHARS, ENDSNUL, prefix ? prefix : L"",
+                             PL_NWCHARS, ENDSNUL, url,
+                             PL_NWCHARS, ENDSNUL, local);
+      } else
+      { return ( (av=PL_new_term_refs(2)) &&
+                 put_url(p, av+0, url) &&
+                 put_atom_wchars(av+1, local) &&
+                 PL_cons_functor_v(t, FUNCTOR_ns2, av) );
+      }
     } else
       return put_atom_wchars(t, local);
   } else

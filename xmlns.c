@@ -148,7 +148,7 @@ xmlns_resolve()
 
 int
 xmlns_resolve_attribute(dtd_parser *p, dtd_symbol *id,
-			const ichar **local, const ichar **url)
+                        const ichar **local, const ichar **url, const ichar **prefix)
 { dtd *dtd = p->dtd;
   int nschr = dtd->charfunc->func[CF_NS]; /* : */
   ichar buf[MAXNMLEN];
@@ -166,15 +166,18 @@ xmlns_resolve_attribute(dtd_parser *p, dtd_symbol *id,
 
       if ( istrprefix(L"xml", buf) )	/* XML reserved namespaces */
       { *url = n->name;
+      *prefix = NULL;
         return TRUE;
       } else if ( (ns = xmlns_find(p, n)) )
       { if ( ns->url->name[0] )
 	  *url = ns->url->name;
 	else
-	  *url = NULL;
+          *url = NULL;
+        *prefix = n->name;
 	return TRUE;
       } else
       { *url = n->name;			/* undefined namespace */
+        *prefix = NULL;
 	if ( p->xml_no_ns == NONS_QUIET )
 	  return TRUE;
 	gripe(p, ERC_EXISTENCE, L"namespace", n->name);
@@ -185,6 +188,7 @@ xmlns_resolve_attribute(dtd_parser *p, dtd_symbol *id,
   }
 
   *local = id->name;
+  *prefix = NULL;
 
   if ( (p->flags & SGML_PARSER_QUALIFY_ATTS) &&
        (ns = p->environments->thisns) && ns->url->name[0] )
