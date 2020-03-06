@@ -171,19 +171,20 @@ put_ns(Name, Name, _, OutNS, OutNS).
 ns_attrs(OutNS, OutNS, []) :- !.
 ns_attrs(OutNS0, OutNS, NSAttrs) :-
     !,
-    dict_keys(OutNS, URLs),
-    dict_keys(OutNS0, URLs0),
-    ord_subtract(URLs, URLs0, NewURLs),
-    maplist(ns_attr(OutNS), NewURLs, NSAttrs0),
+    dict_pairs(OutNS, _, Pairs),
+    dict_pairs(OutNS0, _, Pairs0),
+    ord_subtract(Pairs, Pairs0, NewPairs),
+    maplist(ns_attr(OutNS), NewPairs, NSAttrs0),
     sort(NSAttrs0, NSAttrs).
 
-ns_attr(Dict, URL, NSAttr) :-
+ns_attr(Dict, URL-_, NSAttr) :-
     ns_simplify(xmlns:Dict.URL=URL, NSAttr).
 
 ns_simplify(xmlns:''=URL, xmlns=URL) :- !.
 ns_simplify(xmlns:NS=URL, XMLNS=URL) :-
     make_cname(xmlns:NS, XMLNS).
 
+xml_ns(ns('', xmlns):NS=URL, NS, URL) :- !.
 xml_ns(xmlns=URL, '', URL) :- !.
 xml_ns(xmlns:NS=URL, NS, URL) :- !.
 xml_ns(Name=URL, NS, URL) :-
