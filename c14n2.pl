@@ -104,7 +104,7 @@ xml_canonical_dom(element( Name,  Attrs,  Content),
            ;  Method == 'http://www.w3.org/2001/10/xml-exc-c14n#'
            -> RootNSAttrs1 = NSAttrs
            ;  findall(xmlns:NS=URI, member(xmlns:NS=URI, Attrs), RootNSAttrs, NSAttrs),
-              sort(2, @<, RootNSAttrs, RootNSAttrs1)
+              sort(1, @<, RootNSAttrs, RootNSAttrs1)
            ),
            append([KillDefault, RootNSAttrs1, AttrsSans, AttrsWithNS], CAttrs)
     ;  append([KillDefault, NSAttrs, AttrsSans, AttrsWithNS], CAttrs)
