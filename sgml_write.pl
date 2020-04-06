@@ -746,7 +746,8 @@ missing_att_ns([Name=_|T], Def, M0, M) :-
 
 missing_ns(ns(NS, URI):_, Def, M0, M) :-
     !,
-    (  memberchk(NS=URI, Def)
+    ( ( memberchk(NS=URI, Def)
+      ; memberchk(URI, M0) )
     -> M = M0
     ;  NS == ''
     -> M = M0
