@@ -672,20 +672,22 @@ add_missing_namespaces(DOM, _, DOM).    % CDATA, etc.
 
 add_missing_ns([], Atts, Atts).
 add_missing_ns([H|T], Atts0, Atts) :-
-    generate_ns(H, NS),
-    add_missing_ns(T, [xmlns:NS=H|Atts0], Atts).
+    generate_ns(H, NS, URL),
+    add_missing_ns(T, [xmlns:NS=URL|Atts0], Atts).
 
-%!  generate_ns(+URI, -NS) is det.
+%!  generate_ns(+URI, -NS, -URL) is det.
 %
 %   Generate a namespace (NS) identifier for URI.
 
-generate_ns(URI, NS) :-
+generate_ns(URI, NS, URI) :-
     xmlns(NS, URI),
     !.
-generate_ns(URI, NS) :-
+generate_ns(ns(NS, URI), NS, URI) :-
+    !.
+generate_ns(URI, NS, URI) :-
     default_ns(URI, NS),
     !.
-generate_ns(_, NS) :-
+generate_ns(URI, NS, URI) :-
     gensym(xns, NS).
 
 %!  xmlns(?NS, ?URI) is nondet.
@@ -746,11 +748,13 @@ missing_att_ns([Name=_|T], Def, M0, M) :-
 
 missing_ns(ns(NS, URI):_, Def, M0, M) :-
     !,
-    (  memberchk(NS=URI, Def)
+    (   (   memberchk(NS=URI, Def)
+        ;   memberchk(NS=URI, M0)
+        )
     -> M = M0
     ;  NS == ''
     -> M = M0
-    ;  M = [URI|M0]
+    ;  M = [ns(NS, URI)|M0]
     ).
 missing_ns(URI:_, Def, M0, M) :-
     !,
