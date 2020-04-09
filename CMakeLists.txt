@@ -26,7 +26,7 @@ swipl_plugin(
 	PL_LIBS ${DTD_FILES}
     THREADED)
 
-test_libs(sgml sgml_write xsd
+test_libs(sgml sgml_write xsd c14n
 	  TEST_DIRS Test)
 
 pkg_doc(sgml
