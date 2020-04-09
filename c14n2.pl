@@ -153,6 +153,8 @@ put_elemns(Name, Name, _InNS, OutNS0, OutNS1, [xmlns='']) :-
 put_elemns(Name, CName, InNS, OutNS0, OutNS, []) :-
     put_ns(Name, CName, InNS, OutNS0, OutNS).
 
+put_ns(ns('', xml):Name, xml:Name, _InNS, OutNS, OutNS) :-
+    !.
 put_ns(ns(NS, URL):Name, CName, _InNS, OutNS, OutNS) :-
     get_dict(URL, OutNS, NS),
     !,

@@ -1,0 +1,1 @@
+<XPath xmlns:ietf="http://www.ietf.org">(//. | //@* | //namespace::*) [ancestor-or-self::ietf:e11 or ancestor-or-self::ietf:e12]</XPath>

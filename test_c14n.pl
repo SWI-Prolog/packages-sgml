@@ -51,17 +51,19 @@ test_c14n :-
 %   Find an absolute path to the xml sample data in the `testdata` directory.
 
 xml_file(File, Abs) :-
-    source_file(test_c14n, MyFile),
+    source_file(xml_file(_,_), MyFile),
     file_directory_name(MyFile, MyDir),
     atomic_list_concat([MyDir, File], /, Abs).
 
 %!  c14n_test(+InputFile, +XPath, +TargetFile).
 %
-%   Canonicalize the document obtained by applying the XPath expression to
+%   Canonicalize the document obtained by applying the XPath specification to
 %   the document specified by InputFile and confirm it matches exactly the
 %   bytes in TargetFile.
+%   The XPath specification is a shorthand for logic that a built-in XPath
+%   expression cannot directly express
 
-c14n_test(InputFile, XPath, TargetFile):-
+c14n_test(InputFile, XPathSpec, TargetFile):-
         xml_file(InputFile, InputFilename),
         xml_file(TargetFile, TargetFilename),
         setup_call_cleanup(open(InputFilename, read, InputStream),
@@ -71,12 +73,53 @@ c14n_test(InputFile, XPath, TargetFile):-
                            read_string(TargetStream, _, TargetDocument),
                            close(TargetStream)),
         findall(SubDocument,
-                xpath(InputDocument, XPath, SubDocument),
+                extract_subdocument(InputDocument, XPathSpec, SubDocument),
                 SubDocuments),
         with_output_to(string(GeneratedDocument),
                        forall(member(SubDocument, SubDocuments),
                               xml_write_canonical(current_output, SubDocument, [method('http://www.w3.org/2001/10/xml-exc-c14n#')]))),
+        %format(user_error, '~w~n~n', [GeneratedDocument]),
         TargetDocument == GeneratedDocument.
+
+extract_subdocument(InputDocument, (A ; B), SubDocument):-
+        !,
+        ( extract_subdocument(InputDocument, A, SubDocument)
+        ; extract_subdocument(InputDocument, B, SubDocument)
+        ).
+
+extract_subdocument(InputDocument, (A, \+B), SubDocument):-
+        !,
+        extract_subdocument(InputDocument, A, Intermediate),
+        delete_subdocument([Intermediate], B, [SubDocument]).
+
+extract_subdocument(InputDocument, ElementName, SubDocument):-
+        xpath(InputDocument, //(_:ElementName), SubDocument).
+
+delete_subdocument(Document, (A ; B), SubDocument):-
+        !,
+        delete_subdocument(Document, A, S1),
+        delete_subdocument(S1, B, SubDocument).
+
+delete_subdocument([], _, []):- !.
+
+delete_subdocument(Document, Element, Document):-
+        % Nothing to do - fail quickly
+        \+xpath_chk(Document, //(_:Element), _),
+        !.
+
+delete_subdocument([element(_:Element, _, _)|Siblings], Element, NewSiblings):-
+        !,
+        delete_subdocument(Siblings, Element, NewSiblings).
+
+delete_subdocument([element(NS:OtherElement, Attributes, Children)|Siblings], Element, [element(NS:OtherElement, Attributes, NewChildren)|NewSiblings]):-
+        !,
+        delete_subdocument(Children, Element, NewChildren),
+        delete_subdocument(Siblings, Element, NewSiblings).
+
+delete_subdocument([Atom|Siblings], Element, [Atom|NewSiblings]):-
+        delete_subdocument(Siblings, Element, NewSiblings).
+
+
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 These tests are derived from the w3c tests available at
@@ -85,75 +128,72 @@ The input/target documents are stored in testdata/
 The xpath expressions are encoded inline in the tests. This is because the
 SWI-Prolog implementation of xpath is not syntax-compatible with the w3c one
 The test names include the section of the source document they pertain to
+Note that the tests originally are for xml-c14n and not xml-c14n-exc
+I have extracted the equivalent *-exc.output documents using xmlstarlet and
+the appropriate xpath files
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 test('3.2.1.1 Test case c14n11/xmllang-1'):-
-        c14n_test('testdata/xmllang-input.xml', //(ns(ietf, 'http://www.ietf.org'):e1), 'xmllang-1.output').
+        c14n_test('testdata/xmllang-input.xml', e1, 'testdata/xmllang-1-exc.output').
 
 test('3.2.1.2 Test case c14n11/xmllang-2'):-
-        c14n_test('testdata/xmllang-input.xml', //(ns(ietf, 'http://www.ietf.org'):e2), 'xmllang-2.output').
+        c14n_test('testdata/xmllang-input.xml', e2, 'testdata/xmllang-2-exc.output').
 
 test('3.2.1.3 Test case c14n11/xmllang-3'):-
-        c14n_test('testdata/xmllang-input.xml', //(ns(ietf, 'http://www.ietf.org'):e11), 'xmllang-3.output').
+        c14n_test('testdata/xmllang-input.xml', e11, 'testdata/xmllang-3-exc.output').
 
 test('3.2.1.4 Test case c14n11/xmllang-4'):-
-        % FIXME: How to encode (//. | //@* | //namespace::*) [ancestor-or-self::ietf:e11 or ancestor-or-self::ietf:e12]
-        c14n_test('testdata/xmllang-input.xml', //(ns(ietf, 'http://www.ietf.org'):e1), 'xmllang-4.output').
+        c14n_test('testdata/xmllang-input.xml', (e11 ; e12), 'testdata/xmllang-4-exc.output').
 
+% These 4 tests all produce an SGML warning that xml:space="true" is invalid
+% It is indeed invalid, but that is what is in the official input document
 test('3.2.2.1 Test case c14n11/xmlspace-1'):-
-        c14n_test('testdata/xmlspace-input.xml', //(ns(ietf, 'http://www.ietf.org'):e1), 'xmlspace-1.output').
+        c14n_test('testdata/xmlspace-input.xml', e1, 'testdata/xmlspace-1-exc.output').
 
 test('3.2.2.2 Test case c14n11/xmlspace-2'):-
-        c14n_test('testdata/xmlspace-input.xml', //(ns(ietf, 'http://www.ietf.org'):e2), 'xmlspace-2.output').
+        c14n_test('testdata/xmlspace-input.xml', e2, 'testdata/xmlspace-2-exc.output').
 
 test('3.2.2.3 Test case c14n11/xmlspace-3'):-
-        c14n_test('testdata/xmlspace-input.xml', //(ns(ietf, 'http://www.ietf.org'):e11), 'xmlspace-3.output').
+        c14n_test('testdata/xmlspace-input.xml', e11, 'testdata/xmlspace-3-exc.output').
 
 test('3.2.2.4 Test case c14n11/xmlspace-4'):-
-        % FIXME: How to encode (//. | //@* | //namespace::*) [ancestor-or-self::ietf:e11 or ancestor-or-self::ietf:e12]
-        c14n_test('testdata/xmlspace-input.xml', //(ns(ietf, 'http://www.ietf.org'):e1), 'xmlspace-4.output').
+        c14n_test('testdata/xmlspace-input.xml', (e11 ; e12), 'testdata/xmlspace-4-exc.output').
 
 test('3.2.3.1 Test case c14n11/xmlid-1'):-
-        c14n_test('testdata/xmlid-input.xml', //(ns(ietf, 'http://www.ietf.org'):e1), 'xmlid-1.output').
+        c14n_test('testdata/xmlid-input.xml', e1, 'testdata/xmlid-1-exc.output').
 
 test('3.2.3.2 Test case c14n11/xmlid-2'):-
-        % FIXME: How to encode (//. | //@* | //namespace::*) [ancestor-or-self::ietf:e11 or ancestor-or-self::ietf:e12]
-        c14n_test('testdata/xmlid-input.xml', //(ns(ietf, 'http://www.ietf.org'):e1), 'xmlid-2.output').
+        c14n_test('testdata/xmlid-input.xml', (e11 ; e12), 'testdata/xmlid-2-exc.output').
 
 test('3.2.4.1,1 Test case c14n11/xmlbase-prop-1'):-
-        % FIXME: How to encode (//. | //@* | //namespace::*) [ancestor-or-self::ietf:c14n11XmlBaseDoc1 and not(ancestor-or-self::ietf:e2)]
-        c14n_test('testdata/xmlbase-prop-input.xml', //(ns(ietf, 'http://www.ietf.org'):e1), 'xmlbase-prop-1.output').
+        c14n_test('testdata/xmlbase-prop-input.xml', (c14n11XmlBaseDoc1, \+e2), 'testdata/xmlbase-prop-1-exc.output').
 
 test('3.2.4.1.2 Test case c14n11/xmlbase-prop-2'):-
-        c14n_test('testdata/xmlbase-prop-input.xml', //(ns(ietf, 'http://www.ietf.org'):e1), 'xmlbase-prop-2.output').
+        c14n_test('testdata/xmlbase-prop-input.xml', e1, 'testdata/xmlbase-prop-2-exc.output').
 
 test('3.2.4.1.3 Test case c14n11/xmlbase-prop-3'):-
-        c14n_test('testdata/xmlbase-prop-input.xml', //(ns(ietf, 'http://www.ietf.org'):e11), 'xmlbase-prop-3.output').
+        c14n_test('testdata/xmlbase-prop-input.xml', e11, 'testdata/xmlbase-prop-3-exc.output').
 
 test('3.2.4.1.4 Test case c14n11/xmlbase-prop-4'):-
-        c14n_test('testdata/xmlbase-prop-input.xml', //(ns(ietf, 'http://www.ietf.org'):e111), 'xmlbase-prop-4.output').
+        c14n_test('testdata/xmlbase-prop-input.xml', e111, 'testdata/xmlbase-prop-4-exc.output').
 
 test('3.2.4.1.5 Test case c14n11/xmlbase-prop-5'):-
-        c14n_test('testdata/xmlbase-prop-input.xml', //(ns(ietf, 'http://www.ietf.org'):e21), 'xmlbase-prop-5.output').
+        c14n_test('testdata/xmlbase-prop-input.xml', e21, 'testdata/xmlbase-prop-5-exc.output').
 
 test('3.2.4.1.6 Test case c14n11/xmlbase-prop-6'):-
-        c14n_test('testdata/xmlbase-prop-input.xml', //(ns(ietf, 'http://www.ietf.org'):e3), 'xmlbase-prop-6.output').
+        c14n_test('testdata/xmlbase-prop-input.xml', e3, 'testdata/xmlbase-prop-6-exc.output').
 
 test('3.2.4.1.7 Test case c14n11/xmlbase-prop-7'):-
-        % FIXME: How to encode (//. | //@* | //namespace::*) [ancestor-or-self::ietf:c14n11XmlBaseDoc1 and not(ancestor-or-self::ietf:e1 or ancestor-or-self::ietf:e2)]
-        c14n_test('testdata/xmlbase-prop-input.xml', //(ns(ietf, 'http://www.ietf.org'):e3), 'xmlbase-prop-7.output').
+        c14n_test('testdata/xmlbase-prop-input.xml', (c14n11XmlBaseDoc1, \+(e1 ; e2)), 'testdata/xmlbase-prop-7-exc.output').
 
-test('3.2.4.2.1 Test case c14n11/xmlbase-c14n11spec-102'):-
-        % FIXME: (//. | //@* | //namespace::*)[self::ietf:e1 or (parent::ietf:e1 and not(self::text() or self::e2)) or count(id("E3")|ancestor-or-self::node()) = count(ancestor-or-self::node())]
-        c14n_test('testdata/xmlbase-c14n11spec-input.xml', //(ns(ietf, 'http://www.ietf.org'):e3), 'xmlbase-c14n11spec-102.output').
+test('3.2.4.2.1 Test case c14n11/xmlbase-c14n11spec-102', [blocked('Cannot express [self::ietf:e1 or (parent::ietf:e1 and not(self::text() or self::e2)) or count(id("E3")|ancestor-or-self::node()) = count(ancestor-or-self::node())] using builtin xpath')]):-
+        c14n_test('testdata/xmlbase-c14n11spec-input.xml', unknown, 'xmlbase-c14n11spec-102.output').
 
-test('3.2.4.2.2 Test case c14n11/xmlbase-c14n11spec-102'):-
-        % FIXME: (//. | //@* | //namespace::*)[self::ietf:e1 or (parent::ietf:e1 and not(self::text() or self::e2)) or count(id("E3")|ancestor-or-self::node()) = count(ancestor-or-self::node())]
-        c14n_test('testdata/xmlbase-c14n11spec2-input.xml', //(ns(ietf, 'http://www.ietf.org'):e3), 'xmlbase-c14n11spec2-102.output').
+test('3.2.4.2.2 Test case c14n11/xmlbase-c14n11spec-102', [blocked('Cannot express [self::ietf:e1 or (parent::ietf:e1 and not(self::text() or self::e2)) or count(id("E3")|ancestor-or-self::node()) = count(ancestor-or-self::node())] using builtin xpath')]):-
+        c14n_test('testdata/xmlbase-c14n11spec2-input.xml', unknown, 'xmlbase-c14n11spec2-102.output').
 
-test('3.2.4.2.3 Test case c14n11/xmlbase-c14n11spec-102'):-
-        % FIXME: (//. | //@* | //namespace::*) [self::a or ancestor-or-self::d]
-        c14n_test('testdata/xmlbase-c14n11spec3-input.xml', //(ns(ietf, 'http://www.ietf.org'):e3), 'xmlbase-c14n11spec3-102.output').
+test('3.2.4.2.3 Test case c14n11/xmlbase-c14n11spec-102', [blocked('Cannot express [self::a or ancestor-or-self::d] using builtin xpath')]):-
+        c14n_test('testdata/xmlbase-c14n11spec3-input.xml', unknown 'xmlbase-c14n11spec3-102.output').
 
 
 :-end_tests(c14n).
