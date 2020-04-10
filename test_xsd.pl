@@ -5,6 +5,7 @@ user:file_search_path(library, '.').
 user:file_search_path(library, '../plunit').
 
 :- use_module(library(sgml)).
+:- use_module(library(apply)).
 :- use_module(library(debug)).
 :- use_module(library(plunit)).
 
