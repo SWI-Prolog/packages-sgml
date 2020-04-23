@@ -5482,12 +5482,13 @@ sgml_process_file(dtd_parser *p, const ichar *file, unsigned flags)
 static wchar_t *
 format_location(wchar_t *s, size_t len, dtd_srcloc *l)
 { int first = TRUE;
-  wchar_t *e = &s[len];
+  wchar_t *e = &s[len-1];
 
+  assert(len > 0);
   if ( !l || l->type == IN_NONE || len == 0 )
     return s;
 
-  e[-1] = L'\0';
+  *e = L'\0';
   for( ; l && l->type != IN_NONE;
          l = l->parent, first = FALSE )
   { if ( !first )
