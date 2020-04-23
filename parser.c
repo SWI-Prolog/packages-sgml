@@ -3,8 +3,9 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2000-2015, University of Amsterdam
+    Copyright (c)  2000-2020, University of Amsterdam
                               VU University Amsterdam
+			      CWI, Amsterdam
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -2727,8 +2728,8 @@ static void
 validate_completeness(dtd_parser *p, sgml_environment *env)
 { if ( !complete(env) )
   { wchar_t buf[MAXNMLEN+50];
-
-    swprintf(buf, MAXNMLEN+50, L"Incomplete element: <%s>",
+    buf[MAXNMLEN+49] = 0;
+    swprintf(buf, MAXNMLEN+49, L"Incomplete element: <%s>",
 	     env->element->name->name);
 
     gripe(p, ERC_VALIDATE, buf);		/* TBD: expected */
@@ -5587,6 +5588,7 @@ gripe(dtd_parser *p, dtd_error_id e, ...)
   int dtdmode = FALSE;
   void *freeme = NULL;
 
+  buf[MAX_MESSAGE_LEN] = 0;
   va_start(args, e);
 
   memset(&error, 0, sizeof(error));
