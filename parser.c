@@ -2728,10 +2728,9 @@ static void
 validate_completeness(dtd_parser *p, sgml_environment *env)
 { if ( !complete(env) )
   { wchar_t buf[MAXNMLEN+50];
-    buf[MAXNMLEN+49] = 0;
     swprintf(buf, MAXNMLEN+49, L"Incomplete element: <%s>",
 	     env->element->name->name);
-
+    buf[MAXNMLEN+49] = 0;
     gripe(p, ERC_VALIDATE, buf);		/* TBD: expected */
   }
 }
@@ -5487,11 +5486,11 @@ format_location(wchar_t *s, size_t len, dtd_srcloc *l)
   if ( !l || l->type == IN_NONE || len == 0 )
     return s;
 
-  e[-1] = L'\0';
   for( ; l && l->type != IN_NONE;
          l = l->parent, first = FALSE )
   { if ( !first )
     { swprintf(s, e-s, L" (from ");
+      e[-1] = L'\0';
       s += wcslen(s);
     }
 
@@ -5505,7 +5504,7 @@ format_location(wchar_t *s, size_t len, dtd_srcloc *l)
         swprintf(s, e-s, L"&%ls;%d:%d", l->name.entity, l->line, l->linepos);
         break;
     }
-
+    e[-1] = L'\0';
     s += wcslen(s);
 
     if ( !first && s<e-1 )
@@ -5574,7 +5573,7 @@ format_message(dtd_error *e)
       *s = 0;
       ;
   }
-
+  *end = L'\0';
   e->message = str2ring(buf);
   e->plain_message = e->message + prefix_len;
 }
@@ -5626,7 +5625,7 @@ gripe(dtd_parser *p, dtd_error_id e, ...)
 	error.argv[0] = buf;
       } else
 	error.argv[0] = m;
-
+      buf[MAX_MESSAGE_LEN] = 0;
       error.severity = (e == ERC_SYNTAX_WARNING ? ERS_WARNING : ERS_ERROR);
       e = ERC_SYNTAX_ERROR;
       break;
@@ -5636,6 +5635,7 @@ gripe(dtd_parser *p, dtd_error_id e, ...)
       const wchar_t *found    = str_summary(va_arg(args, const wchar_t *), 25);
 
       swprintf(buf, MAX_MESSAGE_LEN, L"Expected type %ls, found \"%ls\"", expected, found);
+      buf[MAX_MESSAGE_LEN] = 0;
       error.argv[0] = buf;
       error.severity = ERS_ERROR;
       e = (dtdmode ? ERC_SYNTAX_ERROR : ERC_VALIDATE);
@@ -5664,6 +5664,7 @@ gripe(dtd_parser *p, dtd_error_id e, ...)
     { const wchar_t *element = va_arg(args, const wchar_t *);
 
       swprintf(buf, MAX_MESSAGE_LEN, L"Inserted omitted end-tag for \"%ls\"", element);
+      buf[MAX_MESSAGE_LEN] = 0;
       error.argv[0] = buf;
       error.severity = ERS_WARNING;
       e = ERC_VALIDATE;
@@ -5673,6 +5674,7 @@ gripe(dtd_parser *p, dtd_error_id e, ...)
     { const wchar_t *element = va_arg(args, const wchar_t *);
 
       swprintf(buf, MAX_MESSAGE_LEN, L"Inserted omitted start-tag for \"%ls\"", element);
+      buf[MAX_MESSAGE_LEN] = 0;
       error.argv[0] = buf;
       error.severity = ERS_WARNING;
       e = ERC_VALIDATE;
@@ -5682,7 +5684,8 @@ gripe(dtd_parser *p, dtd_error_id e, ...)
     { const wchar_t *element = va_arg(args, const wchar_t *);
 
       swprintf(buf, MAX_MESSAGE_LEN, L"Ignored end-tag for \"%ls\" which is not open",
-	       element);
+               element);
+      buf[MAX_MESSAGE_LEN] = 0;
       error.argv[0] = buf;
       error.severity = ERS_WARNING;
       e = ERC_VALIDATE;
@@ -5692,6 +5695,7 @@ gripe(dtd_parser *p, dtd_error_id e, ...)
     { const wchar_t *element = va_arg(args, const wchar_t *);
 
       swprintf(buf, MAX_MESSAGE_LEN, L"Element \"%ls\" not allowed here", element);
+      buf[MAX_MESSAGE_LEN] = 0;
       error.argv[0] = buf;
       error.severity = ERS_WARNING;
       e = ERC_VALIDATE;
@@ -5701,7 +5705,8 @@ gripe(dtd_parser *p, dtd_error_id e, ...)
     { const ocharbuf *cdata = va_arg(args, const ocharbuf *);
 
       swprintf(buf, MAX_MESSAGE_LEN, L"#PCDATA (\"%ls\") not allowed here",
-	       str_summary(cdata->data.w, 25));
+               str_summary(cdata->data.w, 25));
+      buf[MAX_MESSAGE_LEN] = 0;
       error.argv[0] = buf;
       error.severity = ERS_WARNING;
       e = ERC_VALIDATE;
@@ -5712,7 +5717,8 @@ gripe(dtd_parser *p, dtd_error_id e, ...)
       const wchar_t *attr = va_arg(args, wchar_t *); /* attribute */
 
       swprintf(buf, MAX_MESSAGE_LEN, L"Element \"%ls\" has no attribute \"%ls\"",
-	       elem, attr);
+               elem, attr);
+      buf[MAX_MESSAGE_LEN] = 0;
       error.argv[0] = buf;
       error.severity = ERS_WARNING;
 
@@ -5724,7 +5730,8 @@ gripe(dtd_parser *p, dtd_error_id e, ...)
       const wchar_t *value = va_arg(args, wchar_t *); /* attribute value */
 
       swprintf(buf, MAX_MESSAGE_LEN, L"Element \"%ls\" has no attribute with value \"%ls\"",
-	       elem, value);
+               elem, value);
+      buf[MAX_MESSAGE_LEN] = 0;
       error.argv[0] = buf;
       error.severity = ERS_WARNING;
 
@@ -5744,7 +5751,8 @@ gripe(dtd_parser *p, dtd_error_id e, ...)
       const wchar_t *file    = va_arg(args, wchar_t *); /* DTD file */
 
       swprintf(buf, MAX_MESSAGE_LEN, L"No <!DOCTYPE ...>, assuming \"%ls\" from DTD file \"%s\"",
-	      doctype, file);
+              doctype, file);
+      buf[MAX_MESSAGE_LEN] = 0;
       error.argv[0] = buf;
       error.severity = ERS_WARNING;
 
