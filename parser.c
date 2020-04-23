@@ -2727,7 +2727,7 @@ static void
 validate_completeness(dtd_parser *p, sgml_environment *env)
 { if ( !complete(env) )
   { wchar_t buf[MAXNMLEN+50];
-
+    memset(buf, 0, sizeof(buf));
     swprintf(buf, MAXNMLEN+50, L"Incomplete element: <%s>",
 	     env->element->name->name);
 
@@ -5527,6 +5527,7 @@ format_message(dtd_error *e)
   wchar_t *end = &s[MAX_MESSAGE_LEN];
   size_t prefix_len;
 
+  memset(buf, 0, sizeof(buf));
   switch(e->severity)
   { case ERS_ERROR:
       wcscpy(s, L"Error: ");
@@ -5587,6 +5588,7 @@ gripe(dtd_parser *p, dtd_error_id e, ...)
   int dtdmode = FALSE;
   void *freeme = NULL;
 
+  memset(buf, 0, sizeof(buf));
   va_start(args, e);
 
   memset(&error, 0, sizeof(error));
