@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2000-2017, University of Amsterdam
+    Copyright (c)  2000-2020, University of Amsterdam
                               VU University Amsterdam
     All rights reserved.
 
@@ -278,6 +278,9 @@ initConstants()
   ATOM_string = PL_new_atom("string");
   ATOM_position = PL_new_atom("#position");
 }
+
+static int on_data(dtd_parser *p, data_type type, int len, const wchar_t *data);
+
 
 		 /*******************************
 		 *	       ACCESS		*
@@ -1171,7 +1174,7 @@ unify_attribute_list(dtd_parser *p, term_t alist,
 
 
 static int
-on_begin(dtd_parser *p, dtd_element *e, int argc, sgml_attribute *argv)
+on_begin_(dtd_parser *p, dtd_element *e, int argc, sgml_attribute *argv)
 { parser_data *pd = p->closure;
 
   if ( pd->stopped )
@@ -1253,10 +1256,12 @@ on_end(dtd_parser *p, dtd_element *e)
     { int rc;
       term_t av = PL_new_term_refs(2);
 
+      PL_STRINGS_MARK();
       rc = ( put_element_name(p, av+0, e) &&
 	     unify_parser(av+1, p) &&
 	     call_prolog(pd, pd->on_end, av)
 	   );
+      PL_STRINGS_RELEASE();
 
       PL_discard_foreign_frame(fid);
       if ( rc )
@@ -1293,7 +1298,7 @@ ok:
 
 
 static int
-on_entity(dtd_parser *p, dtd_entity *e, int chr)
+on_entity_(dtd_parser *p, dtd_entity *e, int chr)
 { parser_data *pd = p->closure;
 
   if ( pd->stopped )
@@ -1356,7 +1361,7 @@ on_entity(dtd_parser *p, dtd_entity *e, int chr)
 
 
 static int
-on_data(dtd_parser *p, data_type type, int len, const wchar_t *data)
+on_data_(dtd_parser *p, data_type type, int len, const wchar_t *data)
 { parser_data *pd = p->closure;
 
   if ( pd->on_cdata )
@@ -1447,7 +1452,7 @@ can_end_omitted(dtd_parser *p)
 
 
 static int
-on_error(dtd_parser *p, dtd_error *error)
+on_error_(dtd_parser *p, dtd_error *error)
 { parser_data *pd = p->closure;
   const char *severity;
 
@@ -1574,7 +1579,7 @@ on_error(dtd_parser *p, dtd_error *error)
 
 
 static int
-on_xmlns(dtd_parser *p, dtd_symbol *ns, dtd_symbol *url)
+on_xmlns_(dtd_parser *p, dtd_symbol *ns, dtd_symbol *url)
 { parser_data *pd = p->closure;
 
   if ( pd->stopped )
@@ -1701,6 +1706,62 @@ on_decl(dtd_parser *p, const ichar *decl)
   return TRUE;
 }
 
+
+static int
+on_begin(dtd_parser *p, dtd_element *e, int argc, sgml_attribute *argv)
+{ int rc;
+
+  PL_STRINGS_MARK();
+  rc = on_begin_(p, e, argc, argv);
+  PL_STRINGS_RELEASE();
+
+  return rc;
+}
+
+static int
+on_data(dtd_parser *p, data_type type, int len, const wchar_t *data)
+{ int rc;
+
+  PL_STRINGS_MARK();
+  rc = on_data_(p, type, len, data);
+  PL_STRINGS_RELEASE();
+
+  return rc;
+}
+
+static int
+on_entity(dtd_parser *p, dtd_entity *e, int chr)
+{ int rc;
+
+  PL_STRINGS_MARK();
+  rc = on_entity_(p, e, chr);
+  PL_STRINGS_RELEASE();
+
+  return rc;
+}
+
+static int
+on_error(dtd_parser *p, dtd_error *error)
+{ int rc;
+
+  PL_STRINGS_MARK();
+  rc = on_error_(p, error);
+  PL_STRINGS_RELEASE();
+
+  return rc;
+}
+
+
+static int
+on_xmlns(dtd_parser *p, dtd_symbol *ns, dtd_symbol *url)
+{ int rc;
+
+  PL_STRINGS_MARK();
+  rc = on_xmlns_(p, ns, url);
+  PL_STRINGS_RELEASE();
+
+  return rc;
+}
 
 static int
 write_parser(void *h, char *buf, int len)
