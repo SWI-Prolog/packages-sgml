@@ -474,13 +474,16 @@ load_one_catalogue(catalog_file * file)
   { t = scan(src, buffer, sizeof(buffer), 1);
     switch (t)
     { case CAT_BASE:
+      { size_t blen;
 	if (scan(src, buffer, sizeof(buffer), 0) == EOF)
 	  break;
 	(void) istrcpy(base, buffer);
-	p = base + istrlen(base);
-	if (p != base && !isDirSep(p[-1]))
+	blen = istrlen(base);
+	p = base + blen;
+	if (blen > 0 && !isDirSep(base[blen-1]))
 	  *p++ = '/';
 	continue;
+      }
       case CAT_OVERRIDE:
 	if (scan(src, buffer, sizeof(buffer), 0) == EOF)
 	  break;
