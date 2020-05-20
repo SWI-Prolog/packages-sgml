@@ -555,7 +555,7 @@ elements adds these elements to the DTD object. Re-using a DTD object to
 parse multiple documents should be restricted to situations where the
 documents processed are known to be error-free.
 
-The DTD \const{html} is handled seperately. The Prolog flag
+The DTD \const{html} is handled separately. The Prolog flag
 \const{html_dialect} specifies the default html dialect, which is either
 \const{html4} or \const{html5} (default).\footnote{Note that HTML5 has
 no DTD. The loaded DTD is an informal DTD that includes most of the
