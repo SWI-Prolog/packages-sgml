@@ -193,7 +193,7 @@ test('3.2.4.2.2 Test case c14n11/xmlbase-c14n11spec-102', [blocked('Cannot expre
         c14n_test('testdata/xmlbase-c14n11spec2-input.xml', unknown, 'xmlbase-c14n11spec2-102.output').
 
 test('3.2.4.2.3 Test case c14n11/xmlbase-c14n11spec-102', [blocked('Cannot express [self::a or ancestor-or-self::d] using builtin xpath')]):-
-        c14n_test('testdata/xmlbase-c14n11spec3-input.xml', unknown 'xmlbase-c14n11spec3-102.output').
+        c14n_test('testdata/xmlbase-c14n11spec3-input.xml', unknown, 'xmlbase-c14n11spec3-102.output').
 
 
 :-end_tests(c14n).
