@@ -4765,12 +4765,14 @@ add_cdata(dtd_parser *p, int chr)
       p->blank_cdata = FALSE;
     }
 
-    if ( chr == '\n' )			/* insert missing CR */
-    { int sz;
+    if ( p->environments && p->environments->space_mode != SP_STRICT)
+    { if ( chr == '\n' )			/* insert missing CR */
+      { int sz;
 
-      if ( (sz=buf->size) == 0 ||
-	   fetch_ocharbuf(buf, sz-1) != CR )
-	add_cdata(p, CR);
+        if ( (sz=buf->size) == 0 ||
+             fetch_ocharbuf(buf, sz-1) != CR )
+        add_cdata(p, CR);
+      }
     }
 
     add_ocharbuf(buf, chr);
