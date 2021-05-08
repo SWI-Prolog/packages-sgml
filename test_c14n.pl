@@ -119,6 +119,14 @@ delete_subdocument([element(NS:OtherElement, Attributes, Children)|Siblings], El
 delete_subdocument([Atom|Siblings], Element, [Atom|NewSiblings]):-
         delete_subdocument(Siblings, Element, NewSiblings).
 
+:- meta_predicate ignore_space_error(0).
+
+ignore_space_error(Goal) :-
+    setup_call_cleanup(
+        asserta((user:thread_message_hook(sgml(_Parser,_File,_Line,Msg), error, _) :-
+                          sub_string(Msg, 0, _, _, "xml:space-mode")), Ref),
+        Goal,
+        erase(Ref)).
 
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -148,16 +156,16 @@ test('3.2.1.4 Test case c14n11/xmllang-4'):-
 % These 4 tests all produce an SGML warning that xml:space="true" is invalid
 % It is indeed invalid, but that is what is in the official input document
 test('3.2.2.1 Test case c14n11/xmlspace-1'):-
-        c14n_test('testdata/xmlspace-input.xml', e1, 'testdata/xmlspace-1-exc.output').
+        ignore_space_error(c14n_test('testdata/xmlspace-input.xml', e1, 'testdata/xmlspace-1-exc.output')).
 
 test('3.2.2.2 Test case c14n11/xmlspace-2'):-
-        c14n_test('testdata/xmlspace-input.xml', e2, 'testdata/xmlspace-2-exc.output').
+        ignore_space_error(c14n_test('testdata/xmlspace-input.xml', e2, 'testdata/xmlspace-2-exc.output')).
 
 test('3.2.2.3 Test case c14n11/xmlspace-3'):-
-        c14n_test('testdata/xmlspace-input.xml', e11, 'testdata/xmlspace-3-exc.output').
+        ignore_space_error(c14n_test('testdata/xmlspace-input.xml', e11, 'testdata/xmlspace-3-exc.output')).
 
 test('3.2.2.4 Test case c14n11/xmlspace-4'):-
-        c14n_test('testdata/xmlspace-input.xml', (e11 ; e12), 'testdata/xmlspace-4-exc.output').
+        ignore_space_error(c14n_test('testdata/xmlspace-input.xml', (e11 ; e12), 'testdata/xmlspace-4-exc.output')).
 
 test('3.2.3.1 Test case c14n11/xmlid-1'):-
         c14n_test('testdata/xmlid-input.xml', e1, 'testdata/xmlid-1-exc.output').
