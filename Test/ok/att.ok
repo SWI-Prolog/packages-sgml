@@ -1,2 +1,0 @@
-[element(foo,[bar='10'],[])].
-[sgml(sgml_parser(1082316),'att.xml',3,'Unquoted attribute in XML is not allowed, found "foo bar="')].

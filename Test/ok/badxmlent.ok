@@ -1,2 +1,0 @@
-[element(test,[a='John & Mary'],['\n   John & Mary\n'])].
-[sgml(sgml_parser(955504),'badxmlent.xml',3,'Illegal entity, found "& Mary""'),sgml(sgml_parser(955504),'badxmlent.xml',4,'Illegal entity, found "& "')].
