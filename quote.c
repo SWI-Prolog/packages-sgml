@@ -174,7 +174,7 @@ add_str_bufW(charbuf *b, const char *s)
 
 
 static foreign_t
-do_quote(term_t in, term_t quoted, char **map, int maxchr)
+do_quote(term_t in, term_t quoted, const char **map, int maxchr)
 { char *inA = NULL;
   wchar_t *inW = NULL;
   size_t len;
@@ -290,24 +290,30 @@ xml_quote_attribute(term_t in, term_t out, term_t encoding)
 
   if ( !map )
   { int i;
+    char **m;
+    char **null = {NULL};
 
-    if ( !(map = malloc(CHARSET*sizeof(char*))) )
+    if ( !(m = malloc(CHARSET*sizeof(char*))) )
       return sgml2pl_error(ERR_ERRNO, errno);
 
     for(i=0; i<CHARSET; i++)
-      map[i] = NULL;
+      m[i] = NULL;
 
-    map['<']  = "&lt;";
-    map['>']  = "&gt;";
-    map['&']  = "&amp;";
-/*  map['\''] = "&apos;"; See (*) */
-    map['"']  = "&quot;";
+    m['<']  = "&lt;";
+    m['>']  = "&gt;";
+    m['&']  = "&amp;";
+/*  m['\''] = "&apos;"; See (*) */
+    m['"']  = "&quot;";
+
+    if ( !__atomic_compare_exchange_n(&map, &null, m, FALSE,
+				      __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST) )
+      free(m);
   }
 
   if ( !get_max_chr(encoding, &maxchr) )
     return FALSE;
 
-  return do_quote(in, out, map, maxchr);
+  return do_quote(in, out, (const char **)map, maxchr);
 }
 
 
@@ -318,22 +324,28 @@ xml_quote_cdata(term_t in, term_t out, term_t encoding)
 
   if ( !map )
   { int i;
+    char **m;
+    char **null = {NULL};
 
-    if ( !(map = malloc(CHARSET*sizeof(char*))) )
+    if ( !(m = malloc(CHARSET*sizeof(char*))) )
       return sgml2pl_error(ERR_ERRNO, errno);
 
     for(i=0; i<CHARSET; i++)
-      map[i] = NULL;
+      m[i] = NULL;
 
-    map['<']  = "&lt;";
-    map['>']  = "&gt;";
-    map['&']  = "&amp;";
+    m['<']  = "&lt;";
+    m['>']  = "&gt;";
+    m['&']  = "&amp;";
+
+    if ( !__atomic_compare_exchange_n(&map, &null, m, FALSE,
+				      __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST) )
+      free(m);
   }
 
   if ( !get_max_chr(encoding, &maxchr) )
     return FALSE;
 
-  return do_quote(in, out, map, maxchr);
+  return do_quote(in, out, (const char **)map, maxchr);
 }
 
 
