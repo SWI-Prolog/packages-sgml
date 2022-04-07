@@ -92,7 +92,15 @@ c14n_test(InputFile, XPathSpec, TargetFile):-
                        current_output, SubDocument,
                        [ method('http://www.w3.org/2001/10/xml-exc-c14n#')
                        ]))),
-        TargetDocument == GeneratedDocument.
+        (   TargetDocument == GeneratedDocument
+        ->  true
+        ;   format('~NGenerated:~n~q~nTarget from ~p:~n~q~n',
+                   [ GeneratedDocument,
+                     TargetFile,
+                     TargetDocument
+                   ]),
+            fail
+        ).
 
 extract_subdocument(InputDocument, (A ; B), SubDocument):-
         !,
