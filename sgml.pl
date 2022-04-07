@@ -389,6 +389,8 @@ dtd_property(DTD, Prop) :-
 %       stream is opened in text mode using the given encoding.
 %     - Otherwise (no `Encoding`), the stream is opened in binary
 %       mode and doing the correct decoding is left to the parser.
+%       Under Windows, the stream is opened in text mode with utf-8
+%       encoding.
 
 load_structure(Spec, DOM, Options) :-
     sgml_open_options(Options, OpenOptions, SGMLOptions),
@@ -406,7 +408,10 @@ sgml_open_options(Options, OpenOptions, SGMLOptions) :-
         ;   OpenOptions = Plain,
             SGMLOptions = M:NoEnc
         )
-    ;   merge_options(Plain, [type(binary)], OpenOptions),
+    ;   (   current_prolog_flag(windows, true)
+        ->  merge_options(Plain, [type(text), encoding(utf8)], OpenOptions)
+        ;   merge_options(Plain, [type(binary)], OpenOptions)
+        ),
         SGMLOptions = Options
     ).
 
