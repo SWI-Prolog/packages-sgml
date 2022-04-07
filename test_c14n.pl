@@ -66,19 +66,32 @@ xml_file(File, Abs) :-
 c14n_test(InputFile, XPathSpec, TargetFile):-
         xml_file(InputFile, InputFilename),
         xml_file(TargetFile, TargetFilename),
-        setup_call_cleanup(open(InputFilename, read, InputStream),
-                           load_structure(InputStream, InputDocument, [dialect(xmlns), space(preserve), keep_prefix(true)]),
+        setup_call_cleanup(open(InputFilename, read, InputStream,
+                                [ encoding(utf8),
+                                  newline(detect)
+                                ]),
+                           load_structure(InputStream, InputDocument,
+                                          [ dialect(xmlns),
+                                            space(preserve),
+                                            keep_prefix(true)
+                                          ]),
                            close(InputStream)),
-        setup_call_cleanup(open(TargetFilename, read, TargetStream),
+        setup_call_cleanup(open(TargetFilename, read, TargetStream,
+                                [ encoding(utf8),
+                                  newline(detect)
+                                ]),
                            read_string(TargetStream, _, TargetDocument),
                            close(TargetStream)),
         findall(SubDocument,
                 extract_subdocument(InputDocument, XPathSpec, SubDocument),
                 SubDocuments),
-        with_output_to(string(GeneratedDocument),
-                       forall(member(SubDocument, SubDocuments),
-                              xml_write_canonical(current_output, SubDocument, [method('http://www.w3.org/2001/10/xml-exc-c14n#')]))),
-        %format(user_error, '~w~n~n', [GeneratedDocument]),
+        with_output_to(
+            string(GeneratedDocument),
+            forall(member(SubDocument, SubDocuments),
+                   xml_write_canonical(
+                       current_output, SubDocument,
+                       [ method('http://www.w3.org/2001/10/xml-exc-c14n#')
+                       ]))),
         TargetDocument == GeneratedDocument.
 
 extract_subdocument(InputDocument, (A ; B), SubDocument):-
