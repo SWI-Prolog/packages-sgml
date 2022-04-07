@@ -155,24 +155,24 @@ compare_errors([sgml(_Parser1, _File1, Line, Msg)|T0],
                [sgml(_Parser2, _File2, Line, Msg)|T]) :-
     compare_errors(T0, T).
 
-load_file(File, Term) :-
-    load_pred(Ext, Pred),
-    file_name_extension(_, Ext, File),
-    !,
+load_file(Spec, Term) :-
+    (   load_pred(Ext, Pred),
+        file_name_extension(_, Ext, Spec)
+    ->  File = Spec
+    ;   load_pred(Ext, Pred),
+        file_name_extension(Spec, Ext, File),
+        exists_file(File)
+    ->  true
+    ;   existence_error(test_file, Spec)
+    ),
     retractall(error(_,_,_)),
-    call(Pred, File, Term).
-load_file(Base, Term) :-
-    load_pred(Ext, Pred),
-    file_name_extension(Base, Ext, File),
-    exists_file(File),
-    !,
-    retractall(error(_,_,_)),
-    call(Pred, File, Term).
+    call(Pred, File, Term,
+         [ encoding('utf-8')
+         ]).
 
-
-load_pred(sgml, load_sgml_file).
-load_pred(xml,  load_xml_file).
-load_pred(html, load_html_file).
+load_pred(sgml, load_sgml).
+load_pred(xml,  load_xml).
+load_pred(html, load_html).
 
 okfile(File, OkFile) :-
     file_name_extension(Plain, _, File),
@@ -182,16 +182,19 @@ okfile(File, OkFile) :-
     writeln(File-OkFile).
 
 load_prolog_file(File, Term, Errors) :-
-    open(File, read, Fd,
-         [ encoding(utf8)
-         ]),
-    read(Fd, Term),
-    (   read(Fd, Errors),
-        Errors \== end_of_file
-    ->  true
-    ;   Errors = []
-    ),
-    close(Fd).
+    setup_call_cleanup(
+        open(File, read, Fd,
+             [ encoding(utf8),
+               newline(detect)
+             ]),
+        ( read(Fd, Term),
+          (   read(Fd, Errors),
+              Errors \== end_of_file
+          ->  true
+          ;   Errors = []
+          )
+        ),
+        close(Fd)).
 
 compare_dom([], []) :- !.
 compare_dom([H1|T1], [H2|T2]) :-
