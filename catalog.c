@@ -3,7 +3,8 @@
     Author:        Jan Wielemaker and Richard O'Keefe
     E-mail:        wielemak@science.uva.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2000-2012, University of Amsterdam
+    Copyright (c)  2000-2022, University of Amsterdam
+			      SWI-Prolog Solutions b.v.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -57,9 +58,28 @@ static pthread_mutex_t catalog_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define UNLOCK()
 #endif
 
-#ifndef MAXPATHLEN
-#define MAXPATHLEN 1024
+#include <limits.h>
+
+#ifndef PATH_MAX
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
 #endif
+#if defined(MAXPATHLEN)
+#define PATH_MAX MAXPATHLEN
+#elif defined(PATHSIZE)
+#define PATH_MAX PATHSIZE
+#endif
+#endif
+
+#if PATH_MAX < 1024 && defined(__WINDOWS__)
+#undef PATH_MAX
+#if WIN_PATH_MAX
+#define PATH_MAX WIN_PATH_MAX
+#else
+#define PATH_MAX 32768
+#endif
+#endif
+
 #ifndef MAXLINE
 #define MAXLINE 1024
 #endif
@@ -161,7 +181,7 @@ localpath(const ichar *ref, const ichar *name)
   if (!ref || is_absolute_path(name))
     local = istrdup(name);
   else
-  { ichar buf[MAXPATHLEN];
+  { ichar buf[PATH_MAX];
 
     DirName(ref, buf);
     istrcat(buf, DIRSEPSTR);
@@ -240,7 +260,7 @@ init_catalog()
     }
 
     while (*path)
-    { ichar buf[MAXPATHLEN];
+    { ichar buf[PATH_MAX];
       ichar *s;
 
       if ((s = istrchr(path, L':')))
