@@ -115,12 +115,12 @@ xsd_number_string(term_t number, term_t string)
       if ( isfloat )
       { int dot;
 	int rc;
-	char *end;
 
 	if ( hasdot && (dot=decimal_dot()) != '.' )
 	{ char fast[64];
 	  char *fs = len < sizeof(fast) ? fast : malloc(len+1);
 	  char *o;
+	  char *end;
 
 	  if ( !fs )
 	    return PL_resource_error("memory");
@@ -132,10 +132,12 @@ xsd_number_string(term_t number, term_t string)
 	  rc = PL_unify_float(number, strtod(fs, &end));
 	  if ( fs != fast )
 	    free(fs);
+	  assert(*end == '\0');
 	} else
-	{ rc = PL_unify_float(number, strtod(in, &end));
+	{ char *end;
+	  rc = PL_unify_float(number, strtod(in, &end));
+	  assert(*end == '\0');
 	}
-	assert(*end == '\0');
 
 	return rc;
       } else
