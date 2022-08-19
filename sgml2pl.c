@@ -3,8 +3,9 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2000-2020, University of Amsterdam
+    Copyright (c)  2000-2022, University of Amsterdam
                               VU University Amsterdam
+			      SWI-Prolog Solutions b.v.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -2768,6 +2769,11 @@ dtd_property(DTD, notations(ListOfNotationNames)
 dtd_property(DTD, notation(Name, File))
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+typedef int (*fptr1)(dtd *dtd, term_t);
+typedef int (*fptr2)(dtd *dtd, term_t, term_t);
+typedef int (*fptr3)(dtd *dtd, term_t, term_t, term_t);
+typedef int (*fptr4)(dtd *dtd, term_t, term_t, term_t, term_t);
+
 static foreign_t
 pl_dtd_property(term_t ref, term_t property)
 { dtd *dtd;
@@ -2788,13 +2794,13 @@ pl_dtd_property(term_t ref, term_t property)
 
       switch(p->arity)
       { case 1:
-	  return (*p->func)(dtd, a+0);
+	  return (*(fptr1)p->func)(dtd, a+0);
 	case 2:
-	  return (*p->func)(dtd, a+0, a+1);
+	  return (*(fptr2)p->func)(dtd, a+0, a+1);
 	case 3:
-	  return (*p->func)(dtd, a+0, a+1, a+2);
+	  return (*(fptr3)p->func)(dtd, a+0, a+1, a+2);
 	case 4:
-	  return (*p->func)(dtd, a+0, a+1, a+2, a+3);
+	  return (*(fptr4)p->func)(dtd, a+0, a+1, a+2, a+3);
 	default:
 	  assert(0);
 	  return FALSE;
@@ -2842,7 +2848,7 @@ extern void sgml_statistics(void);
 #endif
 
 install_t
-install(void)
+install_sgml2pl(void)
 { initConstants();
 
   init_ring();
@@ -2870,6 +2876,6 @@ install(void)
 
 
 install_t
-uninstall(void)
+uninstall_sgml2pl(void)
 { stop_ring();
 }
