@@ -288,9 +288,6 @@ load_dtd(DTD, DtdFile, Options) :-
 %   Destroy  DTDs  cached  by  this  thread   as  they  will  become
 %   unreachable anyway.
 
-:- public
-    destroy_dtds/0.                     % called through register_cleanup/0
-
 destroy_dtds :-
     (   current_dtd(_Type, DTD),
         free_dtd(DTD),
