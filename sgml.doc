@@ -297,6 +297,9 @@ Sets the starting line-number for reporting errors.
     \termitem{max_memory}{+Max}
 Sets the maximum buffer size in bytes available for input data and CDATA output. If this limit is reached a resource error is raised. Using \term{max_memory}{0} (the default) means no resource limit will be enforced.
 
+    \termitem{ignore_doctype}{+Bool}
+If set, doctype declarations in the document will be ignored. This can help prevent XXE attacks
+
     \termitem{cdata}{+Representation}
 Specify the representation of \jargon{cdata} elements. Supported are
 \const{atom} (default), and \const{string}. The choice is not obvious.

@@ -183,6 +183,7 @@ static functor_t FUNCTOR_case_sensitive_attributes1;
 static functor_t FUNCTOR_case_preserving_attributes1;
 static functor_t FUNCTOR_system_entities1;
 static functor_t FUNCTOR_max_memory1;
+static functor_t FUNCTOR_ignore_doctype1;
 static functor_t FUNCTOR_qualify_attributes1;
 static functor_t FUNCTOR_encoding1;
 static functor_t FUNCTOR_xmlns1;
@@ -230,6 +231,7 @@ initConstants()
   FUNCTOR_dialect1	 = mkfunctor("dialect", 1);
   FUNCTOR_keep_prefix1	 = mkfunctor("keep_prefix", 1);
   FUNCTOR_max_errors1	 = mkfunctor("max_errors", 1);
+  FUNCTOR_ignore_doctype1 = mkfunctor("ignore_doctype", 1);
   FUNCTOR_parse1	 = mkfunctor("parse", 1);
   FUNCTOR_source1	 = mkfunctor("source", 1);
   FUNCTOR_content_length1= mkfunctor("content_length", 1);
@@ -290,7 +292,7 @@ static int on_data(dtd_parser *p, data_type type, int len, const wchar_t *data);
 static int
 unify_parser(term_t parser, dtd_parser *p)
 { return PL_unify_term(parser, PL_FUNCTOR, FUNCTOR_sgml_parser1,
-		         PL_POINTER, p);
+			 PL_POINTER, p);
 }
 
 
@@ -610,6 +612,15 @@ pl_set_sgml_parser(term_t parser, term_t option)
       p->buffer->limit = val;
     if ( p->cdata )
       p->cdata->limit = val;
+  } else if ( PL_is_functor(option, FUNCTOR_ignore_doctype1 ) )
+  { term_t a = PL_new_term_ref();
+    int val;
+
+    _PL_get_arg(1, option, a);
+    if ( !PL_get_bool_ex(a, &val) )
+      return FALSE;
+
+    p->ignore_doctype = val;
   } else if ( PL_is_functor(option, FUNCTOR_number1) )
   { term_t a = PL_new_term_ref();
     char *s;
@@ -1012,8 +1023,8 @@ put_element_name(dtd_parser *p, term_t t, dtd_element *e)
       if ( p->dtd->keep_prefix )
       { /* creates ns(prefix,url):local */
 	return PL_unify_term(t, PL_FUNCTOR, FUNCTOR_ns2,
-			          PL_FUNCTOR, FUNCTOR_prefix2,
-			            PL_NWCHARS, ENDSNUL, prefix ? prefix : L"",
+				  PL_FUNCTOR, FUNCTOR_prefix2,
+				    PL_NWCHARS, ENDSNUL, prefix ? prefix : L"",
 				    PL_NWCHARS, ENDSNUL, url,
 				  PL_NWCHARS, ENDSNUL, local);
       } else
@@ -1530,7 +1541,7 @@ on_error_(dtd_parser *p, dtd_error *error)
 	  rc = PL_unify_term(ex,
 			     PL_FUNCTOR, FUNCTOR_error2,
 			       PL_FUNCTOR, FUNCTOR_syntax_error1,
-			         PL_NWCHARS, (size_t)-1, error->plain_message,
+				 PL_NWCHARS, (size_t)-1, error->plain_message,
 			       PL_TERM, pos);
 	if ( rc )
 	  rc = PL_raise_exception(ex);
@@ -1989,7 +2000,7 @@ pl_sgml_parse(term_t parser, term_t options)
     p->on_entity	= on_entity;
     p->on_pi		= on_pi;
     p->on_data          = on_cdata;
-    p->on_error	        = on_error;
+    p->on_error		= on_error;
     p->on_xmlns		= on_xmlns;
     p->on_decl		= on_decl;
     p->cdata_rep        = PL_ATOM;
@@ -2401,8 +2412,8 @@ dtd_prop_element(dtd *dtd, term_t name, term_t omit, term_t content)
     return FALSE;
 
   if ( !PL_unify_term(omit, PL_FUNCTOR, FUNCTOR_omit2,
-		        PL_ATOM, def->omit_open ?  ATOM_true : ATOM_false,
-		        PL_ATOM, def->omit_close ? ATOM_true : ATOM_false) )
+			PL_ATOM, def->omit_open ?  ATOM_true : ATOM_false,
+			PL_ATOM, def->omit_close ? ATOM_true : ATOM_false) )
     return FALSE;
 
   return ( put_content(model, def) &&
@@ -2700,14 +2711,14 @@ dtd_prop_notation(dtd *dtd, term_t nname, term_t desc)
 	{ if ( !PL_unify_list(tail, head, tail) ||
 	       !PL_unify_term(head,
 			      PL_FUNCTOR_CHARS, "system", 1,
-			        PL_CHARS, n->system) )
+				PL_CHARS, n->system) )
 	    return FALSE;
 	}
 	if ( n->public )
 	{ if ( !PL_unify_list(tail, head, tail) ||
 	       !PL_unify_term(head,
 			      PL_FUNCTOR_CHARS, "public", 1,
-			        PL_CHARS, n->public) )
+				PL_CHARS, n->public) )
 	    return FALSE;
 	}
 
