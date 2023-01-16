@@ -2068,8 +2068,7 @@ make_model(dtd_parser *p, const ichar *decl, const ichar **end)
       modeltype mt;
 
       if ( !(sub = make_model(p, decl, &s)) )
-      { free_model(sub);
-	return NULL;
+      { return NULL;
       }
       decl = s;
       add_submodel(m, sub);
