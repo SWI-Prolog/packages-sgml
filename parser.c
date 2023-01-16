@@ -3972,7 +3972,7 @@ process_declaration(dtd_parser *p, const ichar *decl)
     else if ( (s = isee_identifier(dtd, decl, "sgml")) )
       process_sgml_declaration(p, s);
     else if ( (s = isee_identifier(dtd, decl, "doctype")) )
-    { if ( p->dmode != DM_DTD )
+    { if ( p->dmode != DM_DTD && !p->ignore_doctype )
 	process_doctype(p, s, decl-1);
     } else
     { s = iskip_layout(dtd, decl);

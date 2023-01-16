@@ -183,6 +183,7 @@ static functor_t FUNCTOR_case_sensitive_attributes1;
 static functor_t FUNCTOR_case_preserving_attributes1;
 static functor_t FUNCTOR_system_entities1;
 static functor_t FUNCTOR_max_memory1;
+static functor_t FUNCTOR_ignore_doctype1;
 static functor_t FUNCTOR_qualify_attributes1;
 static functor_t FUNCTOR_encoding1;
 static functor_t FUNCTOR_xmlns1;
@@ -230,6 +231,7 @@ initConstants()
   FUNCTOR_dialect1	 = mkfunctor("dialect", 1);
   FUNCTOR_keep_prefix1	 = mkfunctor("keep_prefix", 1);
   FUNCTOR_max_errors1	 = mkfunctor("max_errors", 1);
+  FUNCTOR_ignore_doctype1 = mkfunctor("ignore_doctype", 1);
   FUNCTOR_parse1	 = mkfunctor("parse", 1);
   FUNCTOR_source1	 = mkfunctor("source", 1);
   FUNCTOR_content_length1= mkfunctor("content_length", 1);
@@ -610,6 +612,15 @@ pl_set_sgml_parser(term_t parser, term_t option)
       p->buffer->limit = val;
     if ( p->cdata )
       p->cdata->limit = val;
+  } else if ( PL_is_functor(option, FUNCTOR_ignore_doctype1 ) )
+  { term_t a = PL_new_term_ref();
+    int val;
+
+    _PL_get_arg(1, option, a);
+    if ( !PL_get_bool(a, &val) )
+      return sgml2pl_error(ERR_TYPE, "boolean", a);
+
+    p->ignore_doctype = val;
   } else if ( PL_is_functor(option, FUNCTOR_number1) )
   { term_t a = PL_new_term_ref();
     char *s;

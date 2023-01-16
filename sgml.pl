@@ -113,6 +113,7 @@
                        case_preserving_attributes(boolean),
                        system_entities(boolean),
                        max_memory(integer),
+                       ignore_doctype(boolean),
                        space(oneof([sgml,preserve,default,remove,strict])),
                        xmlns(atom),
                        xmlns(atom,atom),
@@ -491,6 +492,7 @@ parser_option(case_sensitive_attributes(_)).
 parser_option(case_preserving_attributes(_)).
 parser_option(system_entities(_)).
 parser_option(max_memory(_)).
+parser_option(ignore_doctype(_)).
 parser_option(file(_)).
 parser_option(line(_)).
 parser_option(space(_)).
