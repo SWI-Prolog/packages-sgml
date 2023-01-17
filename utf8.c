@@ -3,7 +3,8 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2000-2011, University of Amsterdam
+    Copyright (c)  2000-2023, University of Amsterdam
+			      SWI-Prolog Solutions b.v.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -44,7 +45,7 @@ UTF-8 Decoding, based on http://www.cl.cam.ac.uk/~mgk25/unicode.html
 
 char *
 sgml__utf8_get_char(const char *in, int *chr)
-{ 					/* 2-byte, 0x80-0x7ff */
+{					/* 2-byte, 0x80-0x7ff */
   if ( (in[0]&0xe0) == 0xc0 && CONT(1) )
   { *chr = ((in[0]&0x1f) << 6)|VAL(1,0);
     return (char *)in+2;

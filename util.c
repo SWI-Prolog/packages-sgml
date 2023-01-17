@@ -410,7 +410,14 @@ malloc_ocharbuf(ocharbuf *buf)
 
 void
 add_ocharbuf(ocharbuf *buf, int chr)
-{ if ( buf->size == buf->allocated )
+{ size_t needed = 1;
+
+#if SIZEOF_WCHAR_T == 2
+  if ( chr > 0xffff )
+    needed = 2;
+#endif
+
+  if ( buf->size+needed > buf->allocated )
   { size_t sz = buf->allocated * 2;
     if ( buf->limit && sz*sizeof(wchar_t) > buf->limit )
     { buf->limit_reached = TRUE;
@@ -425,14 +432,20 @@ add_ocharbuf(ocharbuf *buf, int chr)
       memcpy(buf->data.w, buf->localbuf, sizeof(buf->localbuf));
     }
   }
-  buf->data.w[buf->size++] = chr;
+  put_wchar(&buf->data.w[buf->size], chr);
+  buf->size += needed;
 }
 
 
 void
 del_ocharbuf(ocharbuf *buf)
 { if ( buf->size > 0 )
-    buf->size--;
+  { int c;
+    const wchar_t *s = get_wchar_r(&buf->data.w[buf->size], &c);
+    (void) c;
+
+    buf->size = s - buf->data.w;
+  }
 }
 
 
@@ -495,7 +508,7 @@ free_ring(void *ptr)
 
 
 static ring *
-my_ring()
+my_ring(void)
 { ring *r;
 
   if ( (r=pthread_getspecific(ring_key)) )
@@ -591,19 +604,19 @@ str_summary(wchar_t const *s, int len)
 wchar_t *
 utf8towcs(const char *in)
 { size_t sl = strlen(in);
-  size_t len = utf8_strlen(in, sl);
+  size_t len = utf8_utf16strlen(in, sl);
   wchar_t *buf = sgml_malloc((len + 1)*sizeof(wchar_t));
   const char *e = in+sl;
-  int i;
+  wchar_t *o = buf;
 
-  for(i=0; in < e;)
+  while( in < e )
   { int chr;
 
     in = utf8_get_char(in, &chr);
-    buf[i++] = chr;
+    o = put_wchar(o, chr);
   }
 
-  buf[i] = 0;
+  *o = 0;
   return buf;
 }
 
@@ -614,11 +627,14 @@ wcstoutf8(const wchar_t *in)
   const wchar_t *s;
   char *rc, *o;
 
-  for(s=in; *s; s++)
+  for(s=in; *s; )
   { char buf[6];
+    int c;
 
-    if ( *s >= 0x80 )
-    { char *o2 = utf8_put_char(buf, *s);
+    s = get_wchar(s, &c);
+
+    if ( c >= 0x80 )
+    { char *o2 = utf8_put_char(buf, c);
       size += o2-buf;
     } else
     { size++;
@@ -626,8 +642,11 @@ wcstoutf8(const wchar_t *in)
   }
 
   rc = sgml_malloc(size+1);
-  for(o=rc, s=in; *s; s++)
-  { o = utf8_put_char(o, *s);
+  for(o=rc, s=in; *s; )
+  { int c;
+
+    s = get_wchar(s, &c);
+    o = utf8_put_char(o, c);
   }
   *o = '\0';
 
@@ -770,7 +789,7 @@ load_sgml_file_to_charp(const ichar *file, int normalise_rsre, size_t *length)
 #endif
 
 void
-sgml_nomem()
+sgml_nomem(void)
 { fprintf(stderr, "SGML: Fatal: out of memory\n");
 
 #ifdef _WINDOWS

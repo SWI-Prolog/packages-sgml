@@ -3,8 +3,9 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2002-2015, University of Amsterdam
+    Copyright (c)  2002-2023, University of Amsterdam
                               VU University Amsterdam
+                              SWI-Prolog Solutions b.v.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -47,6 +48,7 @@
 #include <wctype.h>
 #include "xml_unicode.h"
 #include "dtd.h"
+#include "utf8.h"
 #ifdef __WINDOWS__
 #define inline __inline
 #endif
@@ -126,7 +128,23 @@ add_char_buf(charbuf *b, int chr)
 
 static int
 add_char_bufW(charbuf *b, int chr)
-{ if ( room_buf(b, sizeof(wchar_t)) )
+{
+#if SIZEOF_WCHAR_T == 2
+  if ( chr > 0xffff )
+  { if ( room_buf(b, 2*sizeof(wchar_t)) )
+    { wchar_t *p = (wchar_t*)b->end;
+
+      p = utf16_put_char(p, chr);
+      b->end = (char *)p;
+
+      return TRUE;
+    }
+
+    return FALSE;
+  }
+#endif
+
+  if ( room_buf(b, sizeof(wchar_t)) )
   { wchar_t *p = (wchar_t*)b->end;
 
     *p++ = chr;
@@ -176,7 +194,7 @@ add_str_bufW(charbuf *b, const char *s)
 static foreign_t
 do_quote(term_t in, term_t quoted, const char **map, int maxchr)
 { char *inA = NULL;
-  wchar_t *inW = NULL;
+  wchar_t *inW0 = NULL;
   size_t len;
   const unsigned  char *s;
   charbuf buffer;
@@ -184,8 +202,8 @@ do_quote(term_t in, term_t quoted, const char **map, int maxchr)
   int rc;
 
   if ( !PL_get_nchars(in, &len, &inA, CVT_ATOMIC) &&
-       !PL_get_wchars(in, &len, &inW, CVT_ATOMIC) )
-    return sgml2pl_error(ERR_TYPE, "atom", in);
+       !PL_get_wchars(in, &len, &inW0, CVT_ATOMIC|CVT_EXCEPTION) )
+    return FALSE;
   if ( len == 0 )
     return PL_unify(in, quoted);
 
@@ -218,8 +236,13 @@ do_quote(term_t in, term_t quoted, const char **map, int maxchr)
     else
       rc = PL_unify(in, quoted);
   } else
-  { for( ; len-- > 0; inW++ )
-    { int c = *inW;
+  { const wchar_t *inW = inW0;
+    const wchar_t *endW = inW+len;
+
+    while(inW < endW)
+    { int c;
+
+      inW = get_wchar(inW, &c);
 
       if ( c <= 0xff && map[c] )
       { if ( !add_str_bufW(&buffer, map[c]) )
@@ -234,7 +257,7 @@ do_quote(term_t in, term_t quoted, const char **map, int maxchr)
 	  return FALSE;
 
 	changes++;
-      }else
+      } else
       { add_char_bufW(&buffer, c);
       }
     }
@@ -263,7 +286,7 @@ get_max_chr(term_t t, int *maxchr)
     else if ( a == ATOM_utf8 )
       *maxchr = 0x7ffffff;
     else if ( a == ATOM_unicode )
-      *maxchr = 0xffff;
+      *maxchr = 0x10ffff;
     else if ( a == ATOM_ascii )
       *maxchr = 0x7f;
     else
@@ -380,7 +403,7 @@ static dtd_charclass *map;
 static foreign_t
 xml_name(term_t in, term_t encoding)
 { char *ins;
-  wchar_t *inW;
+  wchar_t *inW0;
   size_t len;
   unsigned int i;
   int maxchr;
@@ -412,16 +435,21 @@ xml_name(term_t in, term_t encoding)
 
     return TRUE;
   }
-  if ( PL_get_wchars(in, &len, &inW, CVT_ATOMIC) )
-  { if ( len == 0 )
+  if ( PL_get_wchars(in, &len, &inW0, CVT_ATOMIC) )
+  { const wchar_t *inW = inW0;
+    const wchar_t *endW = inW0+len;
+    int c;
+
+    if ( len == 0 )
       return FALSE;
 
-    if ( inW[0] > maxchr ||
-	 !is_xml_nmstart(map, inW[0]) )
+    inW = get_wchar(inW, &c);
+    if ( c > maxchr ||
+	 !is_xml_nmstart(map, c) )
       return FALSE;
 
-    for(i=1; i<len; i++)
-    { int c = inW[i];
+    while(inW < endW)
+    { inW = get_wchar(inW, &c);
 
       if ( c > maxchr ||
 	   !is_xml_chname(map, c) )
@@ -438,7 +466,7 @@ xml_name(term_t in, term_t encoding)
 static foreign_t
 iri_xml_namespace(term_t iri, term_t namespace, term_t localname)
 { char *s;
-  pl_wchar_t *w;
+  wchar_t *w;
   size_t len;
 
   if ( !map )
@@ -463,11 +491,20 @@ iri_xml_namespace(term_t iri, term_t namespace, term_t localname)
   } else if ( PL_get_wchars(iri, &len, &w, CVT_ATOM|CVT_STRING|CVT_EXCEPTION) )
   { const pl_wchar_t *e = &w[len];
     const pl_wchar_t *p = e;
+    int c;
 
-    while(p>w && is_xml_chname(map, p[-1]) )
-      p--;
+    while( p>w )
+    { const wchar_t *n = get_wchar_r(p, &c);
+      if ( !is_xml_chname(map, c) )
+	break;
+      p = n;
+    }
     while(p<e && !is_xml_nmstart(map, p[0]) )
-      p++;
+    { const wchar_t *n = get_wchar(p, &c);
+      if ( is_xml_nmstart(map, c) )
+	break;
+      p = n;
+    }
 
     if ( !PL_unify_wchars(namespace, PL_ATOM, p-w, w) )
       return FALSE;

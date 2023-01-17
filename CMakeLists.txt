@@ -8,6 +8,7 @@ AC_CHECK_HEADERS(malloc.h unistd.h sys/time.h fcntl.h floatingpoint.h io.h)
 AC_CHECK_FUNCS(snprintf strerror strtoll)
 
 check_type_size("long" SIZEOF_LONG)
+check_type_size("wchar_t" SIZEOF_WCHAR_T)
 
 configure_file(config.h.cmake config.h)
 

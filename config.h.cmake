@@ -7,3 +7,5 @@
 #cmakedefine HAVE_STRERROR        @HAVE_STRERROR@
 #cmakedefine HAVE_STRTOLL         @HAVE_STRTOLL@
 #cmakedefine _REENTRANT           @_REENTRANT@
+#cmakedefine SIZEOF_WCHAR_T       @SIZEOF_WCHAR_T@
+#cmakedefine SIZEOF_LONG          @SIZEOF_LONG@
