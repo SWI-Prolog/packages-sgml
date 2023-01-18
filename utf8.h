@@ -131,7 +131,7 @@ static inline const wchar_t*
 get_wchar_r(const wchar_t *in, int *chr)
 {
 #if SIZEOF_WCHAR_T == 2
-  if ( IS_UTF16_LEAD(-2) && IS_UTF16_TRAIL(in[-1]) )
+  if ( IS_UTF16_TRAIL(in[-1]) && IS_UTF16_LEAD(in[-2]) )
   { *chr = utf16_decode(in[-2], in[-1]);
     in -= 2;
   } else
