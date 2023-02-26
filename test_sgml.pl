@@ -42,11 +42,11 @@
             test_sgml/0
           ]).
 
-:- asserta(user:file_search_path(library, '.')).
-:- asserta(user:file_search_path(library, '../RDF')).
-:- asserta(user:file_search_path(foreign, '.')).
 :- use_module(library(sgml)).
 :- use_module(library(pprint)).
+:- use_module(library(apply)).
+:- use_module(library(debug)).
+:- use_module(library(error)).
 
 :- dynamic failed/1.
 
@@ -225,22 +225,26 @@ pretty_print(Term) :-
 test_callback :-
     retractall(content(_)),
     test_input('Test/utf8.xml', File),
-    open(File, read, In),
-    new_sgml_parser(Parser, []),
-    set_sgml_parser(Parser, file(File)),
-    set_sgml_parser(Parser, dialect(xml)),
-    sgml_parse(Parser,
-               [ source(In),
-                 call(begin, on_begin),
-                 call(end, on_end)
-               ]),
-    close(In),
+    setup_call_cleanup(
+        open(File, read, In),
+        setup_call_cleanup(
+            new_sgml_parser(Parser, []),
+            ( set_sgml_parser(Parser, file(File)),
+              set_sgml_parser(Parser, dialect(xml)),
+              sgml_parse(Parser,
+                         [ source(In),
+                           call(begin, on_begin),
+                           call(end, on_end)
+                         ])
+            ),
+            free_sgml_parser(Parser)),
+        close(In)),
     findall(X, content(X), Xs),
     length(Xs, 2),
     maplist(cdata, Xs).
 
 cdata([]).
-cdata([Atom]) :- atom(Atom).
+cdata([Atom]) :- must_be(atom, Atom).
 
 on_begin(name, _Attr, Parser) :-
     sgml_parse(Parser,
