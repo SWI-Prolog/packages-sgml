@@ -3,9 +3,10 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2009-2019, University of Amsterdam
+    Copyright (c)  2009-2023, University of Amsterdam
                               VU University Amsterdam
                               CWI, Amsterdam
+                              SWI-Prolog Solutions b.v.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -139,7 +140,7 @@ xpath_chk(DOM, Spec, Content) :-
 %       $ =|@|=Attribute :
 %       Evaluates to the value of the given attribute.  Attribute
 %       can be a compound term. In this case the functor name
-%       denotes the element and arguments perform transformations
+%       denotes the attribute and arguments perform transformations
 %       on the attribute value.  Defined transformations are:
 %
 %         - number
@@ -151,6 +152,12 @@ xpath_chk(DOM, Spec, Content) :-
 %         - float
 %         As `number`, but subsequently transform the value
 %         into a float using the float/1 function.
+%         - atom
+%         Translate the value into a Prolog atom.  Note that
+%         an atom is normally the default, so ``@href`` and
+%         ``@href(atom)`` are equivalent.  The SGML parser
+%         can return attributes as strings using the
+%         attribute_value(string) option.
 %         - string
 %         Translate the value into a Prolog string.
 %         - lower
@@ -486,6 +493,8 @@ translate_attr(integer, Value0, Value) :-
 translate_attr(float, Value0, Value) :-
     xsd_number_string(Value1, Value0),
     Value is float(Value1).
+translate_attr(atom, Value0, Value) :-
+    atom_string(Value, Value0).
 translate_attr(string, Value0, Value) :-
     atom_string(Value0, Value).
 translate_attr(lower, Value0, Value) :-
