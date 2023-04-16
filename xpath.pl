@@ -151,6 +151,8 @@ xpath_chk(DOM, Spec, Content) :-
 %         - float
 %         As `number`, but subsequently transform the value
 %         into a float using the float/1 function.
+%         - atom
+%         Translate the value into a Prolog atom.
 %         - string
 %         Translate the value into a Prolog string.
 %         - lower
@@ -486,6 +488,8 @@ translate_attr(integer, Value0, Value) :-
 translate_attr(float, Value0, Value) :-
     xsd_number_string(Value1, Value0),
     Value is float(Value1).
+translate_attr(atom, Value0, Value) :-
+    string_to_atom(Value0, Value).
 translate_attr(string, Value0, Value) :-
     atom_string(Value0, Value).
 translate_attr(lower, Value0, Value) :-
