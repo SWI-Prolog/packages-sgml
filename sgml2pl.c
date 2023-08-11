@@ -2755,15 +2755,16 @@ static prop dtd_props[] =
 
 
 static void
-initprops()
+initprops(void)
 { static int done = FALSE;
 
-  if ( !done )
+  if ( !done )  /* Could be done by two threads, that is ok */
   { prop *p;
 
-    done = TRUE;
     for(p=dtd_props; p->func; p++)
       p->functor = PL_new_functor(PL_new_atom(p->name), p->arity);
+
+    done = TRUE;
   }
 }
 
