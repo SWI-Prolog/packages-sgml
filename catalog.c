@@ -34,6 +34,7 @@
 */
 
 #define _ISOC99_SOURCE 1		/* fwprintf(), etc prototypes */
+#define _CRT_SECURE_NO_WARNINGS 1
 #include "util.h"
 #include "catalog.h"
 #include <stdio.h>

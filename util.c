@@ -3,8 +3,9 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2000-2014, University of Amsterdam
+    Copyright (c)  2000-2023, University of Amsterdam
                               VU University Amsterdam
+			      SWI-Prolog Solutions b.v.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -34,6 +35,7 @@
 */
 
 #define _ISOC99_SOURCE 1		/* fwprintf(), etc prototypes */
+#define _CRT_SECURE_NO_WARNINGS 1
 
 #include <config.h>
 #define UTIL_H_IMPLEMENTATION
@@ -50,8 +52,11 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_IO_H
+#ifdef __WINDOWS__
 #include <io.h>
+#define open _open
+#define close _close
+#define read _read
 #endif
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -396,7 +401,7 @@ Make sure the data of the buffer is malloc'ed and nul-terminated.
 ocharbuf *
 malloc_ocharbuf(ocharbuf *buf)
 { if ( buf->data.w == buf->localbuf )
-  { int bytes = (buf->size+1) * sizeof(wchar_t);
+  { size_t bytes = (buf->size+1) * sizeof(wchar_t);
 
     buf->data.w = sgml_malloc(bytes);
     memcpy(buf->data.w, buf->localbuf, bytes);
@@ -785,6 +790,8 @@ load_sgml_file_to_charp(const ichar *file, int normalise_rsre, size_t *length)
 		 *******************************/
 
 #ifdef _WINDOWS
+#undef CR
+#undef LF
 #include <windows.h>
 #endif
 

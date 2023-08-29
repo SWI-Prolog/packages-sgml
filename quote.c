@@ -34,6 +34,7 @@
     POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define _CRT_SECURE_NO_WARNINGS 1
 #include <config.h>
 #include <SWI-Stream.h>			/* encoding */
 #include <SWI-Prolog.h>
@@ -57,6 +58,25 @@ static atom_t ATOM_iso_latin_1;
 static atom_t ATOM_utf8;
 static atom_t ATOM_unicode;
 static atom_t ATOM_ascii;
+
+#define __COMPARE_AND_SWAP(at, from, to) \
+	__atomic_compare_exchange_n(at, &(from), to, FALSE, \
+				    __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
+
+static inline int
+COMPARE_AND_SWAP_PTR(void *at, void *from, void *to)
+{
+#ifdef _MSC_VER
+# if SIZEOF_VOIDP == 4
+  return _InterlockedCompareExchange(at, (long)to, (long)from) == (long)from;
+# else
+  return _InterlockedCompareExchange64(at, (int64_t)to, (int64_t)from) == (int64_t)from;
+#endif
+#else
+  void **ptr = at;
+  return __COMPARE_AND_SWAP(ptr, from, to);
+#endif
+}
 
 #define CHARSET 256
 
@@ -314,7 +334,6 @@ xml_quote_attribute(term_t in, term_t out, term_t encoding)
   if ( !map )
   { int i;
     char **m;
-    char **null = {NULL};
 
     if ( !(m = malloc(CHARSET*sizeof(char*))) )
       return sgml2pl_error(ERR_ERRNO, errno);
@@ -328,8 +347,7 @@ xml_quote_attribute(term_t in, term_t out, term_t encoding)
 /*  m['\''] = "&apos;"; See (*) */
     m['"']  = "&quot;";
 
-    if ( !__atomic_compare_exchange_n(&map, &null, m, FALSE,
-				      __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST) )
+    if ( !COMPARE_AND_SWAP_PTR(&map, NULL, m) )
       free(m);
   }
 
@@ -348,7 +366,6 @@ xml_quote_cdata(term_t in, term_t out, term_t encoding)
   if ( !map )
   { int i;
     char **m;
-    char **null = {NULL};
 
     if ( !(m = malloc(CHARSET*sizeof(char*))) )
       return sgml2pl_error(ERR_ERRNO, errno);
@@ -360,8 +377,7 @@ xml_quote_cdata(term_t in, term_t out, term_t encoding)
     m['>']  = "&gt;";
     m['&']  = "&amp;";
 
-    if ( !__atomic_compare_exchange_n(&map, &null, m, FALSE,
-				      __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST) )
+    if ( !COMPARE_AND_SWAP_PTR(&map, NULL, m) )
       free(m);
   }
 

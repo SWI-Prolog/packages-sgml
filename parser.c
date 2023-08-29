@@ -36,6 +36,7 @@
 
 #define _ISOC99_SOURCE 1		/* fwprintf(), etc prototypes */
 
+#define _CRT_SECURE_NO_WARNINGS 1
 #define DTD_IMPLEMENTATION 1
 #include <stdio.h>
 #include <wchar.h>
