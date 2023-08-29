@@ -260,14 +260,14 @@ istrcasehash(const ichar *t, int tsize)
 
 
 int
-istrtol(const ichar *s, long *val)
-{ long v;
+istrtol(const ichar *s, intptr_t *val)
+{ long long v;
   ichar *e;
 
   if ( *s )
-  { v = wcstol(s, &e, 10);
+  { v = wcstoll(s, &e, 10);
     if ( !e[0] && errno != ERANGE )
-    { *val = v;
+    { *val = (intptr_t)v;
       return TRUE;
     }
   }

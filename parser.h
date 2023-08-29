@@ -47,7 +47,7 @@
 typedef struct _sgml_attribute
 { struct				/* so we can free members */
   { wchar_t *textW;			/* UCS textual value */
-    long   number;			/* numeric value/length */
+    intptr_t number;			/* numeric value/length */
   } value;
   dtd_attr *definition;			/* DTD definition */
   unsigned flags;			/* additional flags */
@@ -57,14 +57,14 @@ typedef struct _dtd_parser *dtd_parser_p;
 
 typedef int (*sgml_begin_element_f)(dtd_parser_p parser,
 				    dtd_element *e,
-				    int argc,
+				    size_t argc,
 				    sgml_attribute *argv);
 typedef int (*sgml_end_element_f)(dtd_parser_p parser,
 				  dtd_element *e);
 typedef int (*sgml_data_f)(dtd_parser_p parser,
-			   data_type type, int len, const wchar_t *text);
+			   data_type type, size_t len, const wchar_t *text);
 typedef int (*sgml_wdata_f)(dtd_parser_p parser,
-			   data_type type, int len, const wchar_t *text);
+			   data_type type, size_t len, const wchar_t *text);
 typedef int (*sgml_entity_f)(dtd_parser_p parser,
 			     dtd_entity *entity,
 			     int chr);

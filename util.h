@@ -3,7 +3,8 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2000-2014, University of Amsterdam
+    Copyright (c)  2000-2023, University of Amsterdam
+			      SWI-Prolog Solutions b.v.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -38,6 +39,7 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+#include <stdint.h>
 #include <wchar.h>
 
 #ifdef _WINDOWS				/* get size_t */
@@ -78,7 +80,7 @@ int		istrncaseeq(const ichar *s1, const ichar *s2, int len);
 int             istrhash(const ichar *t, int tsize);
 int             istrcasehash(const ichar *t, int tsize);
 ichar *		istrchr(const ichar *s, int c);
-int		istrtol(const ichar *s, long *val);
+int		istrtol(const ichar *s, intptr_t *val);
 void *		sgml_malloc(size_t size);
 void *		sgml_calloc(size_t n, size_t size);
 void		sgml_free(void *mem);

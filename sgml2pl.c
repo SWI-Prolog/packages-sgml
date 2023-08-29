@@ -282,7 +282,7 @@ initConstants()
   ATOM_position = PL_new_atom("#position");
 }
 
-static int on_data(dtd_parser *p, data_type type, int len, const wchar_t *data);
+static int on_data(dtd_parser *p, data_type type, size_t len, const wchar_t *data);
 
 
 		 /*******************************
@@ -1091,7 +1091,7 @@ put_attribute_value(dtd_parser *p, term_t t, sgml_attribute *a)
       return put_att_text(p, t, a);
     case AT_NUMBER:
     { if ( !put_att_text(p, t, a) )
-	return PL_put_integer(t, a->value.number);
+	return PL_put_int64(t, a->value.number);
       return TRUE;
     }
     default:				/* multi-valued attribute */
@@ -1151,8 +1151,8 @@ put_tag_position(dtd_parser *p, term_t pos)
 
 WUNUSED static int
 unify_attribute_list(dtd_parser *p, term_t alist,
-		     int argc, sgml_attribute *argv)
-{ int i;
+		     size_t argc, sgml_attribute *argv)
+{ size_t i;
   term_t tail = PL_copy_term_ref(alist);
   term_t h    = PL_new_term_ref();
   term_t a    = PL_new_term_refs(2);
@@ -1188,7 +1188,7 @@ unify_attribute_list(dtd_parser *p, term_t alist,
 
 
 static int
-on_begin_(dtd_parser *p, dtd_element *e, int argc, sgml_attribute *argv)
+on_begin_(dtd_parser *p, dtd_element *e, size_t argc, sgml_attribute *argv)
 { parser_data *pd = p->closure;
 
   if ( pd->stopped )
@@ -1375,7 +1375,7 @@ on_entity_(dtd_parser *p, dtd_entity *e, int chr)
 
 
 static int
-on_data_(dtd_parser *p, data_type type, int len, const wchar_t *data)
+on_data_(dtd_parser *p, data_type type, size_t len, const wchar_t *data)
 { parser_data *pd = p->closure;
 
   if ( pd->on_cdata )
@@ -1445,7 +1445,7 @@ on_data_(dtd_parser *p, data_type type, int len, const wchar_t *data)
 
 
 static int
-on_cdata(dtd_parser *p, data_type type, int len, const wchar_t *data)
+on_cdata(dtd_parser *p, data_type type, size_t len, const wchar_t *data)
 { return on_data(p, type, len, data);
 }
 
@@ -1722,7 +1722,7 @@ on_decl(dtd_parser *p, const ichar *decl)
 
 
 static int
-on_begin(dtd_parser *p, dtd_element *e, int argc, sgml_attribute *argv)
+on_begin(dtd_parser *p, dtd_element *e, size_t argc, sgml_attribute *argv)
 { int rc;
 
   PL_STRINGS_MARK();
@@ -1733,7 +1733,7 @@ on_begin(dtd_parser *p, dtd_element *e, int argc, sgml_attribute *argv)
 }
 
 static int
-on_data(dtd_parser *p, data_type type, int len, const wchar_t *data)
+on_data(dtd_parser *p, data_type type, size_t len, const wchar_t *data)
 { int rc;
 
   PL_STRINGS_MARK();

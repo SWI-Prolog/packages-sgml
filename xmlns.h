@@ -45,7 +45,7 @@ void		xmlns_free(xmlns *list);
 xmlns*		xmlns_find(dtd_parser *p, dtd_symbol *ns);
 xmlns *		xmlns_push(dtd_parser *p, const ichar *ns, const ichar *url);
 void		update_xmlns(dtd_parser *p, dtd_element *e,
-			     int natts, sgml_attribute *atts);
+			     size_t natts, sgml_attribute *atts);
 int		xmlns_resolve_attribute(dtd_parser *p, dtd_symbol *id,
                                         const ichar **local, const ichar **url, const ichar **prefix);
 int		xmlns_resolve_element(dtd_parser *p,

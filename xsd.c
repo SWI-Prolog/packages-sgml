@@ -178,7 +178,7 @@ xsd_number_string(term_t number, term_t string)
       } else
       { char *dp = strchr(s, '.');
 	if ( dp-s > 1 )
-	{ exp_shift = dp-s-1;
+	{ exp_shift = (int)(dp-s-1);
 	  memmove(&s[2], &s[1], exp_shift);
 	  s[1] = '.';
 	}

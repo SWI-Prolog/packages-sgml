@@ -3,7 +3,8 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2000-2011, University of Amsterdam
+    Copyright (c)  2000-2023, University of Amsterdam
+			      SWI-Prolog Solutions b.v.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -111,7 +112,7 @@ isxmlns(const ichar *s, int nschr)
 
 
 void
-update_xmlns(dtd_parser *p, dtd_element *e, int natts, sgml_attribute *atts)
+update_xmlns(dtd_parser *p, dtd_element *e, size_t natts, sgml_attribute *atts)
 { dtd_attr_list *al;
   int nschr = p->dtd->charfunc->func[CF_NS]; /* : */
 
