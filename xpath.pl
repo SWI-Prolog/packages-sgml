@@ -44,8 +44,8 @@
             op(200, fy, @)
           ]).
 :- use_module(library(record),[record/1, op(_,_,record)]).
+:- use_module(library(debug),[assertion/1]).
 
-:- autoload(library(debug),[assertion/1]).
 :- autoload(library(error),[instantiation_error/1,must_be/2]).
 :- autoload(library(lists),[member/2]).
 :- autoload(library(sgml),[xsd_number_string/2]).
