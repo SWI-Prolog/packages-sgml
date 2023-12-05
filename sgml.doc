@@ -92,7 +92,7 @@ This is called `omitted-tag' handling.
 
 \begin{code}
 ?- load_html('test.html', Term, []),
-   pretty_print(Term).
+   print_term(Term, []).
 
 [ element(html,
           [],
