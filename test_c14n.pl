@@ -37,13 +37,16 @@
 :- module(test_c14n,
           [ test_c14n/0
           ]).
-
 :- use_module(library(c14n2)).
+:- use_module(library(lists)).
+:- use_module(library(plunit)).
+:- use_module(library(sgml)).
+:- use_module(library(xpath)).
 
 test_c14n :-
     run_tests([ c14n ]).
 
-:-begin_tests(c14n).
+:- begin_tests(c14n).
 
 
 %!  xml_file(+File, -Absolute)

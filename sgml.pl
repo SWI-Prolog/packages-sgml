@@ -179,8 +179,7 @@ data structure. The library defines several families of predicates:
 :- multifile user:file_search_path/2.
 :- dynamic   user:file_search_path/2.
 
-user:file_search_path(dtd, '.').
-user:file_search_path(dtd, swi('library/DTD')).
+user:file_search_path(dtd, library('DTD')).
 
 sgml_register_catalog_file(File, Location) :-
     prolog_to_os_filename(File, OsFile),
