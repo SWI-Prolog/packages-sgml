@@ -81,6 +81,10 @@ static pthread_mutex_t catalog_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 #endif
 
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
 #ifndef MAXLINE
 #define MAXLINE 1024
 #endif
