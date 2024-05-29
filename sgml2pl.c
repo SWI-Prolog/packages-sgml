@@ -1290,7 +1290,8 @@ ok:
   if ( pd->tail && !pd->stopped )
   { if ( !PL_unify_nil(pd->tail) )
       return FALSE;
-    PL_reset_term_refs(pd->tail);	/* ? */
+    PL_reset_term_refs(pd->tail);
+    pd->tail = 0;
 
     if ( pd->stack )
     { env *parent = pd->stack->parent;
