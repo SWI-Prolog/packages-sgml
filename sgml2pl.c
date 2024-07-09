@@ -1778,8 +1778,8 @@ on_xmlns(dtd_parser *p, dtd_symbol *ns, dtd_symbol *url)
   return rc;
 }
 
-static int
-write_parser(void *h, char *buf, int len)
+static ssize_t
+write_parser(void *h, char *buf, size_t len)
 { parser_data *pd = h;
   unsigned char *s = (unsigned char *)buf;
   unsigned char *e = s+len;
