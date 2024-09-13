@@ -1421,9 +1421,9 @@ is represented by the table below.
 \textbf{Prolog term}	   & \textbf{Type} & \textbf{XSD string} \\
 \hline
 date(Y,M,D)		   & xsd:date	   & YYYY-MM-DD \\
-date_time(Y,M,D,H,Mi,S)	   & xsd:dateTime  & YYYY-MM-DDTHH-MM-SS \\
-date_time(Y,M,D,H,Mi,S,0)  & xsd:dateTime  & YYYY-MM-DDTHH-MM-SSZ \\
-date_time(Y,M,D,H,Mi,S,TZ) & xsd:dateTime  & YYYY-MM-DDTHH-MM-SS[+-]HH:MM \\
+date_time(Y,M,D,H,Mi,S)	   & xsd:dateTime  & YYYY-MM-DDTHH:MM:SS \\
+date_time(Y,M,D,H,Mi,S,0)  & xsd:dateTime  & YYYY-MM-DDTHH:MM:SSZ \\
+date_time(Y,M,D,H,Mi,S,TZ) & xsd:dateTime  & YYYY-MM-DDTHH:MM:SS[+-]HH:MM \\
 time(H,M,S)		   & xsd:time	   & HH:MM:SS \\
 year_month(Y,M)		   & xsd:gYearMonth& YYYY-MM \\
 month_day(M,D)		   & xsd:gMonthDay & MM-DD \\
