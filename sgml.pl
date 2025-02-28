@@ -3,9 +3,10 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2000-2020, University of Amsterdam
+    Copyright (c)  2000-2025, University of Amsterdam
                               VU University Amsterdam
                               CWI, Amsterdam
+                              SWI-Prolog Solutions b.v.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -188,12 +189,11 @@ sgml_register_catalog_file(File, Location) :-
 :- use_foreign_library(foreign(sgml2pl)).
 
 register_catalog(Base) :-
-    absolute_file_name(dtd(Base),
-                           [ extensions([soc]),
-                             access(read),
-                             file_errors(fail)
-                           ],
-                           SocFile),
+    absolute_file_name(dtd(Base), SocFile,
+                       [ extensions([soc]),
+                         access(read),
+                         file_errors(fail)
+                       ]),
     sgml_register_catalog_file(SocFile, end).
 
 :- initialization
