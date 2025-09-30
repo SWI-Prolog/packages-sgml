@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2002-2023, University of Amsterdam
+    Copyright (c)  2002-2025, University of Amsterdam
                               VU University Amsterdam
                               SWI-Prolog Solutions b.v.
     All rights reserved.
@@ -39,6 +39,7 @@
 #include <SWI-Stream.h>			/* encoding */
 #include <SWI-Prolog.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
@@ -296,7 +297,7 @@ do_quote(term_t in, term_t quoted, const char **map, int maxchr)
 }
 
 
-static int
+static bool
 get_max_chr(term_t t, int *maxchr)
 { atom_t a;
 
@@ -310,12 +311,12 @@ get_max_chr(term_t t, int *maxchr)
     else if ( a == ATOM_ascii )
       *maxchr = 0x7f;
     else
-      return sgml2pl_error(ERR_DOMAIN, "encoding", t);
+      return sgml2pl_error(ERR_DOMAIN, "encoding", t),false;
 
-    return TRUE;
+    return true;
   }
 
-  return sgml2pl_error(ERR_TYPE, "atom", t);
+  return sgml2pl_error(ERR_TYPE, "atom", t),false;
 }
 
 

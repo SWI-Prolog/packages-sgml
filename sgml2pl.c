@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2000-2022, University of Amsterdam
+    Copyright (c)  2000-2025, University of Amsterdam
                               VU University Amsterdam
 			      SWI-Prolog Solutions b.v.
     All rights reserved.
@@ -49,6 +49,7 @@
 #include <errno.h>
 #include "error.h"
 #include <stdlib.h>
+#include <stdbool.h>
 #include <assert.h>
 #include <string.h>
 #include <wctype.h>
@@ -296,7 +297,7 @@ unify_parser(term_t parser, dtd_parser *p)
 }
 
 
-static int
+static bool
 get_parser(term_t parser, dtd_parser **p)
 { if ( PL_is_functor(parser, FUNCTOR_sgml_parser1) )
   { term_t a = PL_new_term_ref();
@@ -311,11 +312,11 @@ get_parser(term_t parser, dtd_parser **p)
 
         return TRUE;
       }
-      return sgml2pl_error(ERR_EXISTENCE, "sgml_parser", parser);
+      return sgml2pl_error(ERR_EXISTENCE, "sgml_parser", parser),false;
     }
   }
 
-  return sgml2pl_error(ERR_TYPE, "sgml_parser", parser);
+  return sgml2pl_error(ERR_TYPE, "sgml_parser", parser),false;
 }
 
 
@@ -332,7 +333,7 @@ unify_dtd(term_t t, dtd *dtd)
 }
 
 
-static int
+static bool
 get_dtd(term_t t, dtd **dtdp)
 { if ( PL_is_functor(t, FUNCTOR_dtd2) )
   { term_t a = PL_new_term_ref();
@@ -345,13 +346,13 @@ get_dtd(term_t t, dtd **dtdp)
       if ( tmp->magic == SGML_DTD_MAGIC )
       { *dtdp = tmp;
 
-        return TRUE;
+        return true;
       }
-      return sgml2pl_error(ERR_EXISTENCE, "dtd", t);
+      return sgml2pl_error(ERR_EXISTENCE, "dtd", t),false;
     }
   }
 
-  return sgml2pl_error(ERR_TYPE, "dtd", t);
+  return sgml2pl_error(ERR_TYPE, "dtd", t),false;
 }
 
 
