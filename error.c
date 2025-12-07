@@ -156,7 +156,7 @@ sgml2pl_error(plerrorid id, ...)
     { const char *id = va_arg(args, const char *);
       const char *fmt = va_arg(args, const char *);
 
-      vsprintf(msgbuf, fmt, args);
+      vsnprintf(msgbuf, sizeof msgbuf, fmt, args);
       msg = msgbuf;
 
       rc = PL_unify_term(formal,
