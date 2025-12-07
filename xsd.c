@@ -59,7 +59,7 @@ decimal_dot(void)
     return ddot;
 
   char buf[10];
-  sprintf(buf, "%f", 1.0);
+  snprintf(buf, sizeof buf, "%f", 1.0);
   ddot = buf[1];
 
   return ddot;
@@ -189,7 +189,7 @@ xsd_number_string(term_t number, term_t string)
 	if ( e[0] == '+' )
 	  memmove(&e[0], &e[1], strlen(&e[1])+1);
 	if ( exp_shift )
-	  sprintf(e, "%d", atoi(e)+exp_shift);
+	  snprintf(e, e-buf, "%d", atoi(e)+exp_shift);
       } else
       { e = &buf[strlen(buf)];
 
@@ -197,7 +197,7 @@ xsd_number_string(term_t number, term_t string)
 	{ while(e[-1] == '0' && e[-2] != '.')
 	    e--;
 	}
-	sprintf(e, "E%d", exp_shift);
+	snprintf(e, e-buf, "E%d", exp_shift);
       }
 
       return PL_unify_chars(string, PL_STRING, (size_t)-1, buf);
@@ -556,15 +556,15 @@ is_time_seq(const int av[], time *t)
 
 
 static char *
-time_sec_chars(time *t, char *buf)
+time_sec_chars(time *t, char *buf, size_t sz)
 { if ( !t->sec_is_float )
-  { sprintf(buf, "%02d", t->second.i);
+  { snprintf(buf, sz, "%02d", t->second.i);
     return buf;
   } else
   { char *s, *e;
 
     buf[0] = '0';
-    sprintf(&buf[1], "%f", t->second.f);
+    snprintf(&buf[1], sz-1, "%f", t->second.f);
     if ( !isdigit(buf[2]) )
     { buf[2] = '.';
       s = buf;
@@ -684,7 +684,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
       { sign = "-";
 	v[0] = mkyear(v[0], -1);
       }
-      sprintf(buf, "%s%04d-%02d-%02d", sign, v[0],v[1],v[2]);
+      snprintf(buf, sizeof buf, "%s%04d-%02d-%02d", sign, v[0],v[1],v[2]);
     } else if ( PL_is_functor(term, FUNCTOR_date_time6) )
     { int v[3];
       time t;
@@ -699,8 +699,8 @@ xsd_time_string(term_t term, term_t type, term_t string)
       { sign = "-";
 	v[0] = mkyear(v[0], -1);
       }
-      sprintf(buf, "%s%04d-%02d-%02dT%02d:%02d:%s",
-	      sign, v[0], v[1], v[2], t.hour, t.minute, time_sec_chars(&t, b2));
+      snprintf(buf, sizeof buf, "%s%04d-%02d-%02dT%02d:%02d:%s",
+	      sign, v[0], v[1], v[2], t.hour, t.minute, time_sec_chars(&t, b2, sizeof b2));
     } else if ( PL_is_functor(term, FUNCTOR_date_time7) )
     { int v[3], tz;
       time t;
@@ -717,15 +717,15 @@ xsd_time_string(term_t term, term_t type, term_t string)
       { sign = "-";
 	v[0] = mkyear(v[0], -1);
       }
-      sprintf(buf, "%s%04d-%02d-%02dT%02d:%02d:%s",
-	      sign, v[0], v[1], v[2], t.hour, t.minute, time_sec_chars(&t, b2));
+      snprintf(buf, sizeof buf, "%s%04d-%02d-%02dT%02d:%02d:%s",
+	      sign, v[0], v[1], v[2], t.hour, t.minute, time_sec_chars(&t, b2, sizeof b2));
       if ( tz == 0 )
       { strcat(buf, "Z");
       } else
       { char sign = tz < 0 ? '-' : '+';
 	int tza   = tz < 0 ? -tz : tz;
 	char *out = buf+strlen(buf);
-	sprintf(out, "%c%02d:%02d", sign, tza/3600, (tza % 3600)/60);
+	snprintf(out, sizeof buf - strlen(buf), "%c%02d:%02d", sign, tza/3600, (tza % 3600)/60);
       }
     } else if ( PL_is_functor(term, FUNCTOR_time3) )
     { time t;
@@ -733,15 +733,15 @@ xsd_time_string(term_t term, term_t type, term_t string)
       if ( !get_time_args(term, 0, &t) || !valid_time(&t) )
 	return FALSE;
       at = URL_time;
-      sprintf(buf, "%02d:%02d:%s",
-	      t.hour, t.minute, time_sec_chars(&t, b2));
+      snprintf(buf, sizeof buf, "%02d:%02d:%s",
+	      t.hour, t.minute, time_sec_chars(&t, b2, sizeof b2));
     } else if ( PL_is_functor(term, FUNCTOR_month_day2) )
     { int v[2];
 
       if ( !get_int_args(term, 2, v) )
 	return FALSE;
       at = URL_gMonthDay;
-      sprintf(buf, "%02d-%02d",
+      snprintf(buf, sizeof buf, "%02d-%02d",
 	      v[0], v[1]);
     } else if ( PL_is_functor(term, FUNCTOR_year_month2) )
     { int v[2];
@@ -754,7 +754,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	v[0] = mkyear(v[0], -1);
       }
       at = URL_gYearMonth;
-      sprintf(buf, "%s%04d-%02d", sign, v[0], v[1]);
+      snprintf(buf, sizeof buf, "%s%04d-%02d", sign, v[0], v[1]);
     } else if ( PL_get_integer(term, &v) )
     { atom_t url;
 
@@ -763,11 +763,11 @@ xsd_time_string(term_t term, term_t type, term_t string)
       if ( url == URL_gDay )
       { if ( !valid_day(v) )
 	  return FALSE;
-	sprintf(buf, "%02d", v);
+	snprintf(buf, sizeof buf, "%02d", v);
       } else if ( url == URL_gMonth )
       { if ( !valid_month(v) )
 	  return FALSE;
-	sprintf(buf, "%02d", v);
+	snprintf(buf, sizeof buf, "%02d", v);
       } else if ( url == URL_gYear )
       { char *sign = "";
 	if ( !valid_year(v) )
@@ -776,7 +776,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	{ sign = "-";
 	  v = mkyear(v, -1);
 	}
-	sprintf(buf, "%s%04d", sign, v);
+	snprintf(buf, sizeof buf, "%s%04d", sign, v);
       } else if ( is_time_url(url) )
       { return incompatible_time_term(term, url);
       } else
