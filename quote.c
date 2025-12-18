@@ -273,7 +273,7 @@ do_quote(term_t in, term_t quoted, const char **map, int maxchr)
       } else if ( c > maxchr )
       { char buf[20];
 
-	sprintf(buf, "&#%d;", c);
+	snprintf(buf, sizeof(buf), "&#%d;", c);
 	if ( !add_str_bufW(&buffer, buf) )
 	  return FALSE;
 
