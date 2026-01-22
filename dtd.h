@@ -37,14 +37,14 @@
 #define DTD_H_INCLUDED
 #include "sgmldefs.h"
 
-#define CH_WHITE	0x0001
-#define CH_LCLETTER	0x0002
-#define CH_UCLETTER	0x0004
-#define CH_CNMSTRT	0x0008		/* may start a name */
-#define CH_CNM		0x0010		/* may be in a name */
-#define CH_DIGIT	0x0020
-#define CH_RE		0x0040
-#define CH_RS		0x0080
+#define CH_WHITE	0x01
+#define CH_LCLETTER	0x02
+#define CH_UCLETTER	0x04
+#define CH_CNMSTRT	0x08		/* may start a name */
+#define CH_CNM		0x10		/* may be in a name */
+#define CH_DIGIT	0x20
+#define CH_RE		0x40
+#define CH_RS		0x80
 
 #define CH_LETTER	(CH_LCLETTER|CH_UCLETTER)
 #define CH_NMSTART	(CH_LCLETTER|CH_UCLETTER|CH_CNMSTRT)
@@ -324,7 +324,7 @@ typedef struct _dtd_entity
   entity_type type;			/* ET_* */
   data_type content;			/* EC_* */
   int catalog_location;			/* what catalog to use for lookup */
-  int length;				/* size of literal value */
+  size_t length;			/* size of literal value */
   ichar *value;				/* literal value */
   ichar *extid;				/* external identifier */
   ichar *exturl;			/* url to fetch from */

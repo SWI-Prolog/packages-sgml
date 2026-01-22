@@ -51,9 +51,9 @@
    a bad idea anyway.
 */
 
-static int
+static char
 decimal_dot(void)
-{ static int ddot = '\0';
+{ static char ddot = '\0';
 
   if ( ddot )
     return ddot;
@@ -114,7 +114,7 @@ xsd_number_string(term_t number, term_t string)
 
     ok:
       if ( isfloat )
-      { int dot;
+      { char dot;
 	int rc;
 
 	if ( hasdot && (dot=decimal_dot()) != '.' )

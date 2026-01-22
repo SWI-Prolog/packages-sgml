@@ -37,7 +37,7 @@
 #include "dtd.h"
 
 static void
-char_range(dtd_charclass *map, int from, int to, int msk)
+char_range(dtd_charclass *map, int from, int to, unsigned char msk)
 { unsigned char *ca;
   int i;
 

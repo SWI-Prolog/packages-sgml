@@ -447,7 +447,7 @@ entity_file(dtd *dtd, dtd_entity *e)
 
 
 static const ichar *
-entity_value(dtd_parser *p, dtd_entity *e, int *len)
+entity_value(dtd_parser *p, dtd_entity *e, size_t *len)
 { ichar *file;
 
   if ( !e->value && (file=entity_file(p->dtd, e)) )
@@ -455,7 +455,7 @@ entity_value(dtd_parser *p, dtd_entity *e, int *len)
     size_t l;
 
     e->value = load_sgml_file_to_charp(file, normalise, &l);
-    e->length = (long)l;
+    e->length = l;
     sgml_free(file);
   }
 
@@ -4485,7 +4485,7 @@ process_entity(dtd_parser *p, const ichar *name)
   { dtd_symbol *id;
     dtd_entity *e;
     dtd *dtd = p->dtd;
-    int len;
+    size_t len;
     const ichar *text;
     const ichar *s;
     int   chr;

@@ -135,15 +135,15 @@ used_buf(const charbuf *b)
 }
 
 
-static int
-add_char_buf(charbuf *b, int chr)
+static bool
+add_char_buf(charbuf *b, char chr)
 { if ( room_buf(b, 1) )
   { *b->end++ = chr;
 
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -232,7 +232,7 @@ do_quote(term_t in, term_t quoted, const char **map, int maxchr)
 
   if ( inA )
   { for(s = (unsigned char*)inA ; len-- > 0; s++ )
-    { int c = *s;
+    { unsigned char c = *s;
 
       if ( map[c] )
       { if ( !add_str_buf(&buffer, map[c]) )
