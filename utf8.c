@@ -76,36 +76,36 @@ sgml__utf8_get_char(const char *in, int *chr)
   return (char *)in+1;
 }
 
-
 char *
 sgml_utf8_put_char(char *out, int chr)
 { if ( chr < 0x80 )
-  { *out++ = chr;
+  { *out++ = (char) chr; /* dubious cast if chr < 0 */ 
   } else if ( chr < 0x800 )
-  { *out++ = 0xc0|((chr>>6)&0x1f);
-    *out++ = 0x80|(chr&0x3f);
+  { *out++ = (char) (0xc0|((chr>>6)&0x1f));
+    *out++ = (char) (0x80|(chr&0x3f));
   } else if ( chr < 0x10000 )
-  { *out++ = 0xe0|((chr>>12)&0x0f);
-    *out++ = 0x80|((chr>>6)&0x3f);
-    *out++ = 0x80|(chr&0x3f);
+  { *out++ = (char) (0xe0|((chr>>12)&0x0f));
+    *out++ = (char) (0x80|((chr>>6)&0x3f));
+    *out++ = (char) (0x80|(chr&0x3f));
   } else if ( chr < 0x200000 )
-  { *out++ = 0xf0|((chr>>18)&0x07);
-    *out++ = 0x80|((chr>>12)&0x3f);
-    *out++ = 0x80|((chr>>6)&0x3f);
-    *out++ = 0x80|(chr&0x3f);
+  { *out++ = (char) (0xf0|((chr>>18)&0x07));
+    *out++ = (char) (0x80|((chr>>12)&0x3f));
+    *out++ = (char) (0x80|((chr>>6)&0x3f));
+    *out++ = (char) (0x80|(chr&0x3f));
   } else if ( chr < 0x4000000 )
-  { *out++ = 0xf8|((chr>>24)&0x03);
-    *out++ = 0x80|((chr>>18)&0x3f);
-    *out++ = 0x80|((chr>>12)&0x3f);
-    *out++ = 0x80|((chr>>6)&0x3f);
-    *out++ = 0x80|(chr&0x3f);
-  } else if ( (unsigned)chr < 0x80000000 )
-  { *out++ = 0xfc|((chr>>30)&0x01);
-    *out++ = 0x80|((chr>>24)&0x3f);
-    *out++ = 0x80|((chr>>18)&0x3f);
-    *out++ = 0x80|((chr>>12)&0x3f);
-    *out++ = 0x80|((chr>>6)&0x3f);
-    *out++ = 0x80|(chr&0x3f);
+  { *out++ = (char) (0xf8|((chr>>24)&0x03));
+    *out++ = (char) (0x80|((chr>>18)&0x3f));
+    *out++ = (char) (0x80|((chr>>12)&0x3f));
+    *out++ = (char) (0x80|((chr>>6)&0x3f));
+    *out++ = (char) (0x80|(chr&0x3f));
+  } else if ( (unsigned)chr < 0x80000000 ) /* do we get here? if chr < 1, the MSB is 1 (?) */
+  { /* assert(0); this part does not seem to be covered by the unit tests */
+    *out++ = (char) (0xfc|((chr>>30)&0x01));
+    *out++ = (char) (0x80|((chr>>24)&0x3f));
+    *out++ = (char) (0x80|((chr>>18)&0x3f));
+    *out++ = (char) (0x80|((chr>>12)&0x3f));
+    *out++ = (char) (0x80|((chr>>6)&0x3f));
+    *out++ = (char) (0x80|(chr&0x3f));
   }
 
   return out;
