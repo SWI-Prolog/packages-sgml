@@ -231,8 +231,8 @@ set_caret_and_inform(M) :->
     send(M, report, warning, 'SGML warning: %s', Balloon).
 
 event(M, Ev:event) :->
-    "Show insert-menu on right-down"::
-    send(Ev, is_a, ms_right_down),
+    "Show insert-menu on popup request"::
+    send(Ev, is_popup),
     (   get(M?image, index, Ev, I)
     ->  send(M, caret, I)
     ;   true
