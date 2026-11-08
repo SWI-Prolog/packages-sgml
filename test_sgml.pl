@@ -53,7 +53,8 @@
 test_sgml :-
     test_input('Test', Path),
     testdir(Path),
-    test_callback.
+    test_callback,
+    test_max_errors0.
 
 test_input(Name, Path) :-
     source_file(test_sgml, MyFile),
@@ -254,3 +255,22 @@ on_begin(name, _Attr, Parser) :-
     assertz(content(Content)).
 
 on_end(_Tag, _Parser).
+
+%   test_max_errors0
+%
+%   With max_errors(0), an error raised while closing open elements
+%   at the end of the input leaked a foreign frame, corrupting the
+%   local stack (packages-sgml#100).
+
+test_max_errors0 :-
+    forall(between(1, 100, _),
+           ( catch(load_truncated, E, true),
+             subsumes_term(error(syntax_error(_), _), E)
+           )),
+    garbage_collect.
+
+load_truncated :-
+    setup_call_cleanup(
+        open_string("<a>\n<b x=\"1\">\n", In),
+        load_structure(In, _, [max_errors(0), dialect(xml)]),
+        close(In)).

@@ -1546,6 +1546,7 @@ on_error_(dtd_parser *p, dtd_error *error)
 			       PL_TERM, pos);
 	if ( rc )
 	  rc = PL_raise_exception(ex);
+	PL_close_foreign_frame(fid);
       } else
       { predicate_t pred = PL_predicate("print_message", 2, "user");
 	term_t av = PL_new_term_refs(2);
