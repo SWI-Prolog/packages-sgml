@@ -319,6 +319,7 @@ register_cleanup :-
                  *******************************/
 
 prop(doctype(_), _).
+prop(internal_subset(_), _).
 prop(elements(_), _).
 prop(entities(_), _).
 prop(notations(_), _).
@@ -621,7 +622,23 @@ load_html(File, Term, M:Options) :-
                     max_errors(-1),
                     syntax_errors(quiet)
                   ], Options1),
-    load_structure(File, Term, M:Options1).
+    call_cleanup(load_structure(File, Term, M:Options1),
+                 check_cached_dtd(Dialect, DTD, Options)).
+
+%   check_cached_dtd(+Type, +DTD, +Options)
+%
+%   If the document modified the cached DTD using its internal subset or
+%   the options define entities, remove the DTD from the cache such that
+%   it does not affect the next document.
+
+check_cached_dtd(Type, DTD, Options) :-
+    (   '$dtd_property'(DTD, internal_subset(true))
+    ;   memberchk(entity(_,_), Options)
+    ),
+    retract(current_dtd(Type, DTD)),
+    !,
+    free_dtd(DTD).
+check_cached_dtd(_, _, _).
 
 %!  load_xml(+Input, -DOM, +Options) is det.
 %

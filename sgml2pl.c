@@ -2386,6 +2386,12 @@ static int put_model(term_t t, dtd_model *m) WUNUSED;
 /* doctype(DocType) */
 
 static int
+dtd_prop_internal_subset(dtd *dtd, term_t prop)
+{ return PL_unify_bool(prop, dtd->internal_subset);
+}
+
+
+static int
 dtd_prop_doctype(dtd *dtd, term_t prop)
 { if ( dtd->doctype )
     return PL_unify_wchars(prop, PL_ATOM, ENDSNUL, dtd->doctype);
@@ -2874,6 +2880,7 @@ typedef struct _prop
 
 static prop dtd_props[] =
 { { dtd_prop_doctype,    "doctype",    1 },
+  { dtd_prop_internal_subset, "internal_subset", 1 },
   { dtd_prop_elements,	 "elements",   1 },
   { dtd_prop_element,	 "element",    3 },
   { dtd_prop_attributes, "attributes", 2, },

@@ -414,10 +414,13 @@ find_pentity(dtd *dtd, dtd_symbol *id)
 }
 
 
-/* returned path must be freed when done */
+/* returned path must be freed when done.  If catalog is not NULL, it is
+   set to TRUE if the file was found through the catalog rather than
+   being the system identifier itself.
+*/
 
 static ichar *
-entity_file(dtd *dtd, dtd_entity *e)
+entity_file_ex(dtd *dtd, dtd_entity *e, int *catalog)
 { switch(e->type)
   { case ET_SYSTEM:
     case ET_PUBLIC:
@@ -432,6 +435,9 @@ entity_file(dtd *dtd, dtd_entity *e)
       if ( f )				/* owned by catalog */
       { ichar *file;
 
+	if ( catalog )
+	  *catalog = (f != e->exturl);
+
 	if ( is_absolute_path(f) || is_url(f) || !e->baseurl )
 	  file = istrdup(f);
 	else
@@ -443,6 +449,45 @@ entity_file(dtd *dtd, dtd_entity *e)
     default:
       return NULL;
   }
+}
+
+
+static ichar *
+entity_file(dtd *dtd, dtd_entity *e)
+{ return entity_file_ex(dtd, e, NULL);
+}
+
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+external_entity_allowed() is true if we may access the file of an external
+entity.  This is the case if it was found through the catalog, the
+system_entities option is true, the entity was declared in a DTD rather
+than in the internal subset of a document or the entity was declared in a
+document that is read from a file (i.e., not from a string or stream).
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+static int
+external_entity_allowed(dtd_parser *p, dtd_entity *e, ichar *file,
+			int catalog)
+{ if ( catalog || p->dtd->system_entities || e->trusted || e->baseurl )
+    return TRUE;
+
+  gripe(p, ERC_ET_SYSTEM, file);
+  return FALSE;
+}
+
+
+static ichar *
+external_entity_file(dtd_parser *p, dtd_entity *e)
+{ int catalog = FALSE;
+  ichar *file = entity_file_ex(p->dtd, e, &catalog);
+
+  if ( file && !external_entity_allowed(p, e, file, catalog) )
+  { sgml_free(file);
+    return NULL;
+  }
+
+  return file;
 }
 
 
@@ -478,7 +523,7 @@ static const ichar *
 entity_value(dtd_parser *p, dtd_entity *e, size_t *len)
 { ichar *file;
 
-  if ( !e->value && (file=entity_file(p->dtd, e)) )
+  if ( !e->value && (file=external_entity_file(p, e)) )
   { int normalise = (e->content == EC_SGML || e->content == EC_CDATA);
     size_t l;
 
@@ -1485,6 +1530,7 @@ process_entity_declaration(dtd_parser *p, const ichar *decl)
   e = sgml_calloc(1, sizeof(*e));
   e->name = id;
   e->catalog_location = (isparam ? CAT_PENTITY : CAT_ENTITY);
+  e->trusted = !p->internal_subset;
 
   if ( (s = isee_identifier(dtd, decl, "system")) )
   { e->type = ET_SYSTEM;
@@ -3758,8 +3804,19 @@ process_doctype(dtd_parser *p, const ichar *decl, const ichar *decl0)
 
     dtd->doctype = istrdup(id->name);	/* Fill it */
     if ( et )
-      file = entity_file(dtd, et);
-    else
+    { int catalog = FALSE;
+
+      file = entity_file_ex(dtd, et, &catalog);
+      if ( file &&
+	   !(catalog || dtd->system_entities || baseurl(p)) )
+      { gripe(p, ERC_ET_SYSTEM, file);	/* only for documents from files */
+	sgml_free(file);
+	file = NULL;
+	free_entity_list(et);
+	et = NULL;
+	goto local;
+      }
+    } else
       file = istrdup(find_in_catalogue(CAT_DOCTYPE,
 				       dtd->doctype, NULL, NULL,
 				       IS_XML_DIALECT(dtd->dialect)));
@@ -3801,6 +3858,8 @@ local:
     p->state = S_PCDATA;
     p->buffer = new_icharbuf(p->max_memory);
     p->utf8_decode = FALSE;
+    p->internal_subset++;
+    dtd->internal_subset = TRUE;
 
     for( ; *s; s++ )
     { if ( isee_func(dtd, s, CF_LIT) ||	/* skip quoted strings */
@@ -3824,6 +3883,7 @@ local:
       putchar_dtd_parser(p, *s);
     }
     p->dtd->implicit = FALSE;
+    p->internal_subset--;
 
     p->state       = oldstate;
     p->dmode       = oldmode;
@@ -4182,9 +4242,13 @@ process_include(dtd_parser *p, const ichar *entity_name)
   if ( (id=dtd_find_entity_symbol(dtd, entity_name)) &&
        (pe=find_pentity(p->dtd, id)) )
   { ichar *file;
+    int catalog = FALSE;
 
-    if ( (file = entity_file(dtd, pe)) )
-    { int rc = sgml_process_file(p, file, SGML_SUB_DOCUMENT);
+    if ( (file = entity_file_ex(dtd, pe, &catalog)) )
+    { int rc = TRUE;
+
+      if ( external_entity_allowed(p, pe, file, catalog) )
+	rc = sgml_process_file(p, file, SGML_SUB_DOCUMENT);
       sgml_free(file);
 
       return rc;

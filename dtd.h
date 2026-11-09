@@ -330,6 +330,7 @@ typedef struct _dtd_entity
   ichar *exturl;			/* url to fetch from */
   ichar *baseurl;			/* base url for exturl */
   int in_use;				/* being expanded */
+  int trusted;				/* not from an internal subset */
   struct _dtd_entity *next;		/* list-link */
 } dtd_entity;
 
@@ -445,6 +446,7 @@ typedef struct _dtd_charfunc
 typedef struct _dtd
 { int		        magic;		/* SGML_DTD_MAGIC */
   int			implicit;	/* There is no DTD */
+  int			internal_subset; /* Modified by a document */
   dtd_dialect		dialect;	/* DL_* */
   int			case_sensitive;	/* Tags are case-sensitive */
   int			ent_case_sensitive; /* Entities are case-sensitive */

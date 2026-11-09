@@ -274,7 +274,20 @@ was added to support HTML quasi quotations and most likely has
 little value in other contexts.
 
     \termitem{system_entities}{+Boolean}
-Define whether SYSTEM entities are expanded. The default is \const{false}.
+Define whether SYSTEM entities are expanded. The default is
+\const{false}.  If \const{false}, general entities in the content are
+not expanded.  Other external resources --- parameter entities, entities
+used in attribute values and the external DTD subset (\verb$<!DOCTYPE
+name SYSTEM "file">$) --- are only accessed if they are found through
+the catalog, are declared in a DTD file or the document is read from a
+file.  Notably, a document read from a string or stream cannot access
+local files unless this option is \const{true}.
+
+    \termitem{max_entity_expansion}{+Max}
+Limit the number of characters produced by entities that are referenced
+from the value of other entities.  The default is 10,000,000.  Use
+\const{infinite} for no limit.  This avoids excessive resource usage
+on documents with deeply nested entities.
 
     \termitem{defaults}{+Bool}
 Determines how default and fixed values from the DTD are used.  By
@@ -581,6 +594,11 @@ of:
 \begin{description}
     \termitem{doctype}{DocType}
 An atom representing the document-type defined by this DTD.
+
+    \termitem{internal_subset}{Boolean}
+\const{true} if a document has added declarations to the DTD using its
+internal subset (\verb$<!DOCTYPE name [...]>$).  load_html/3 uses this
+to discard a cached DTD that was modified by a document.
 
     \termitem{elements}{ListOfElements}
 A list of atoms representing the names of the elements in this DTD.

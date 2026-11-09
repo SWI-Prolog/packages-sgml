@@ -69,7 +69,9 @@ test_sgml :-
     test_allowed_overflow,
     test_long_system_id,
     test_malformed_dtd,
-    test_entity_expansion.
+    test_entity_expansion,
+    test_external_entities,
+    test_html_dtd_cache.
 
 test_input(Name, Path) :-
     source_file(test_sgml, MyFile),
@@ -476,3 +478,40 @@ time_limited(Time, Goal) :-
 time_limited(_Time, Goal) :-
     call(Goal).
 :- endif.
+
+%   test_external_entities
+%
+%   Documents read from a string cannot access files through parameter
+%   entities, entities in attributes or an external DTD subset unless
+%   system_entities(true) is given.
+
+test_external_entities :-
+    tmp_file_stream(text, File, Out),
+    format(Out, 'SECRET', []),
+    close(Out),
+    call_cleanup(external_entities(File), delete_file(File)).
+
+external_entities(File) :-
+    format(string(D1), '<!DOCTYPE a [<!ENTITY % p SYSTEM "~w">\c
+                        <!ENTITY x "%p;">]><a>&x;</a>', [File]),
+    format(string(D2), '<!DOCTYPE a [<!ENTITY x SYSTEM "~w">]>\c
+                        <a v="&x;"/>', [File]),
+    forall(member(D, [D1,D2]),
+           ( load_structure(string(D), DOM, [ dialect(xml),
+                                              syntax_errors(quiet)
+                                            ]),
+             \+ sub_term('SECRET', DOM)
+           )),
+    load_structure(string(D1), [element(a, [], ['SECRET'])],
+                   [dialect(xml), system_entities(true)]).
+
+%   test_html_dtd_cache
+%
+%   The internal subset of a document does not affect later documents
+%   parsed by load_html/3.
+
+test_html_dtd_cache :-
+    load_html(string("<!DOCTYPE html [<!ENTITY foo \"bar\">]><p>x</p>"),
+              _, []),
+    load_html(string("<p>&foo;</p>"), DOM, []),
+    \+ sub_term(bar, DOM).
