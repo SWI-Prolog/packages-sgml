@@ -85,7 +85,8 @@
           ]).
 :- autoload(library(error),[instantiation_error/1]).
 :- autoload(library(iostream),[open_any/5,close_any/1]).
-:- autoload(library(lists),[member/2,selectchk/3]).
+:- autoload(library(lists),[member/2,selectchk/3,append/2,append/3]).
+:- autoload(library(apply),[maplist/3]).
 :- autoload(library(option),[select_option/3,merge_options/3]).
 
 :- meta_predicate
@@ -797,9 +798,54 @@ call_params(urlns, urlns(url,url,parser)).
 
 :- multifile
     sandbox:safe_primitive/1,
-    sandbox:safe_meta_predicate/1.
+    sandbox:safe_meta/2.
 
-sandbox:safe_meta_predicate(sgml:load_structure/3).
+%   load_structure/3 and friends are safe if the input is a string, code
+%   list or already opened stream and the call(Event, Closure) options
+%   only call safe goals.
+
+sandbox:safe_meta(sgml:Load, Called) :-
+    sandbox_load(Load, Source, Options),
+    sandbox_source(Source),
+    strip_module(Options, _, Plain),
+    is_list(Plain),
+    maplist(sandbox_option, Plain, CalledLists),
+    append(CalledLists, Called).
+
+sandbox_load(load_structure(Source, _, Options), Source, Options).
+sandbox_load(load_html(Source, _, Options), Source, Options).
+sandbox_load(load_xml(Source, _, Options), Source, Options).
+sandbox_load(load_sgml(Source, _, Options), Source, Options).
+
+sandbox_source(Source) :-
+    nonvar(Source),
+    sandbox_source_(Source).
+
+sandbox_source_(string(_)).
+sandbox_source_(codes(_)).
+sandbox_source_(stream(_)).
+
+sandbox_option(Option, Called) :-
+    nonvar(Option),
+    (   Option = call(Event, Closure)
+    ->  atom(Event),
+        call_params(Event, Template),
+        callable(Closure),
+        functor(Template, _, Arity),
+        length(Extra, Arity),
+        extend_goal(Closure, Extra, Goal),
+        Called = [Goal]
+    ;   Called = []
+    ).
+
+extend_goal(M:Closure, Extra, M:Goal) :-
+    !,
+    extend_goal(Closure, Extra, Goal).
+extend_goal(Closure, Extra, Goal) :-
+    Closure =.. List0,
+    append(List0, Extra, List),
+    Goal =.. List.
+
 sandbox:safe_primitive(sgml:dtd(Dialect, _)) :-
     dtd_alias(Dialect, _).
 sandbox:safe_primitive(sgml:xml_quote_attribute(_,_,_)).

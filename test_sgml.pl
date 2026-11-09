@@ -47,6 +47,7 @@
 :- use_module(library(apply)).
 :- use_module(library(debug)).
 :- use_module(library(error)).
+:- use_module(library(sandbox), [safe_goal/1]).
 
 :- dynamic failed/1.
 
@@ -54,7 +55,8 @@ test_sgml :-
     test_input('Test', Path),
     testdir(Path),
     test_callback,
-    test_max_errors0.
+    test_max_errors0,
+    test_sandbox.
 
 test_input(Name, Path) :-
     source_file(test_sgml, MyFile),
@@ -274,3 +276,16 @@ load_truncated :-
         open_string("<a>\n<b x=\"1\">\n", In),
         load_structure(In, _, [max_errors(0), dialect(xml)]),
         close(In)).
+
+%   test_sandbox
+%
+%   load_structure/3 and friends are only safe on in-memory input and
+%   with safe call/2 option closures.
+
+test_sandbox :-
+    safe_goal(load_html(string("<p>x</p>"), _, [])),
+    safe_goal(load_structure(string("<p>x</p>"), _, [dialect(xml)])),
+    \+ catch(safe_goal(load_structure(string("<a>ls</a>"), _,
+                                     [call(cdata, shell)])), _, fail),
+    \+ catch(safe_goal(load_xml('/etc/passwd', _, [])), _, fail),
+    \+ catch(safe_goal(load_structure(string("<a/>"), _, _)), _, fail).
