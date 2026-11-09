@@ -56,7 +56,8 @@ test_sgml :-
     testdir(Path),
     test_callback,
     test_max_errors0,
-    test_sandbox.
+    test_sandbox,
+    test_entity_option.
 
 test_input(Name, Path) :-
     source_file(test_sgml, MyFile),
@@ -289,3 +290,15 @@ test_sandbox :-
                                      [call(cdata, shell)])), _, fail),
     \+ catch(safe_goal(load_xml('/etc/passwd', _, [])), _, fail),
     \+ catch(safe_goal(load_structure(string("<a/>"), _, _)), _, fail).
+
+%   test_entity_option
+%
+%   The entity(Name, Value) option must not allow injecting declarations.
+
+test_entity_option :-
+    load_structure(string("<a>&x;</a>"), [element(a, [], ['50%'])],
+                   [dialect(xml), entity(x, '50%')]),
+    catch(load_structure(string("<a/>"), _,
+                         [dialect(xml), entity('x "y"> <!ENTITY z', v)]),
+          error(domain_error(xml_name, _), _),
+          true).

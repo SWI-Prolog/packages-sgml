@@ -83,7 +83,7 @@
             iri_xml_namespace/3,        % +IRI, -Namespace, -LocalName
             xml_is_dom/1                % +Term
           ]).
-:- autoload(library(error),[instantiation_error/1]).
+:- autoload(library(error),[instantiation_error/1,domain_error/2]).
 :- autoload(library(iostream),[open_any/5,close_any/1]).
 :- autoload(library(lists),[member/2,selectchk/3,append/2,append/3]).
 :- autoload(library(apply),[maplist/3]).
@@ -506,7 +506,13 @@ parser_option(keep_prefix(_)).
 
 def_entity(entity(Name, Value), Parser) :-
     get_sgml_parser(Parser, dtd(DTD)),
-    xml_quote_attribute(Value, QValue),
+    (   xml_name(Name)
+    ->  true
+    ;   domain_error(xml_name, Name)
+    ),
+    xml_quote_attribute(Value, QValue0),
+    atomic_list_concat(Parts, '%', QValue0),
+    atomic_list_concat(Parts, '&#37;', QValue),
     setup_call_cleanup(open_dtd(DTD, [], Stream),
                        format(Stream, '<!ENTITY ~w "~w">~n',
                               [Name, QValue]),
