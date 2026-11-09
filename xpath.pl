@@ -44,7 +44,6 @@
             op(200, fy, @)
           ]).
 :- use_module(library(record),[record/1, op(_,_,record)]).
-:- use_module(library(debug),[assertion/1]).
 
 :- autoload(library(error),[instantiation_error/1,must_be/2]).
 :- autoload(library(lists),[member/2]).
@@ -610,8 +609,11 @@ text_of_1(element(_,_,Content)) -->
     !,
     text_of_list(Content).
 text_of_1(Data) -->
-    { assertion(atom_or_string(Data)) },
+    { atom_or_string(Data) },
+    !,
     [Data].
+text_of_1(_) -->                % pi(_), sdata(_), ndata(_), ...
+    [].
 
 atom_or_string(Data) :-
     (   atom(Data)

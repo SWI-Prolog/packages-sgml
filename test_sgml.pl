@@ -48,6 +48,7 @@
 :- use_module(library(debug)).
 :- use_module(library(error)).
 :- use_module(library(sandbox), [safe_goal/1]).
+:- use_module(library(xpath)).
 
 :- dynamic failed/1.
 
@@ -57,7 +58,8 @@ test_sgml :-
     test_callback,
     test_max_errors0,
     test_sandbox,
-    test_entity_option.
+    test_entity_option,
+    test_xpath_pi.
 
 test_input(Name, Path) :-
     source_file(test_sgml, MyFile),
@@ -302,3 +304,12 @@ test_entity_option :-
                          [dialect(xml), entity('x "y"> <!ENTITY z', v)]),
           error(domain_error(xml_name, _), _),
           true).
+
+%   test_xpath_pi
+%
+%   Extracting text skips processing instructions.
+
+test_xpath_pi :-
+    load_structure(string("<a>x<?y z?>w</a>"), DOM, [dialect(xml)]),
+    xpath(DOM, //a(text), Text),
+    Text == xw.
