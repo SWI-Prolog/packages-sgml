@@ -87,6 +87,13 @@ typedef struct _env
 } env;
 
 
+#define URL_CACHE 4			/* # entries cached */
+
+typedef struct
+{ const ichar *url;			/* URL pointer */
+  atom_t canonical;
+} url_cache;
+
 typedef struct _parser_data
 { int	      magic;			/* PD_MAGIC */
   dtd_parser *parser;			/* parser itself */
@@ -118,7 +125,20 @@ typedef struct _parser_data
   term_t      tail;			/* tail of the list */
   env	     *stack;			/* environment stack */
   int	      free_on_close;		/* sgml_free parser on close */
+  int	      in_begin;			/* Running the begin callback */
+  url_cache   url_cache[URL_CACHE];	/* cache for put_url() */
 } parser_data;
+
+
+static void
+free_env_stack(parser_data *pd, env *upto)
+{ while ( pd->stack && pd->stack != upto )
+  { env *parent = pd->stack->parent;
+
+    sgml_free(pd->stack);
+    pd->stack = parent;
+  }
+}
 
 
 		 /*******************************
@@ -297,6 +317,68 @@ unify_parser(term_t parser, dtd_parser *p)
 }
 
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Parsers created by new_sgml_parser/2 are registered, such that we can
+detect stale handles to parsers that have been freed without accessing
+the freed memory.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+#ifdef _REENTRANT
+#include <pthread.h>
+static pthread_mutex_t parser_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define PLOCK()   pthread_mutex_lock(&parser_mutex)
+#define PUNLOCK() pthread_mutex_unlock(&parser_mutex)
+#else
+#define PLOCK()   (void)0
+#define PUNLOCK() (void)0
+#endif
+
+static dtd_parser **live_parsers = NULL;
+static size_t live_count = 0;
+static size_t live_size  = 0;
+
+static int
+register_parser(dtd_parser *p)
+{ int rc = TRUE;
+
+  PLOCK();
+  if ( live_count == live_size )
+  { size_t nsize = live_size ? live_size*2 : 16;
+    dtd_parser **n = realloc(live_parsers, nsize*sizeof(*n));
+
+    if ( n )
+    { live_parsers = n;
+      live_size = nsize;
+    } else
+      rc = FALSE;
+  }
+  if ( rc )
+    live_parsers[live_count++] = p;
+  PUNLOCK();
+
+  return rc;
+}
+
+static int
+live_parser(dtd_parser *p, int unregister)
+{ size_t i;
+  int rc = FALSE;
+
+  PLOCK();
+  for(i=0; i<live_count; i++)
+  { if ( live_parsers[i] == p )
+    { if ( unregister )
+	live_parsers[i] = live_parsers[--live_count];
+      rc = TRUE;
+      break;
+    }
+  }
+  PUNLOCK();
+
+  return rc;
+}
+
+
 static bool
 get_parser(term_t parser, dtd_parser **p)
 { if ( PL_is_functor(parser, FUNCTOR_sgml_parser1) )
@@ -307,7 +389,7 @@ get_parser(term_t parser, dtd_parser **p)
     if ( PL_get_pointer(a, &ptr) )
     { dtd_parser *tmp = ptr;
 
-      if ( tmp->magic == SGML_PARSER_MAGIC )
+      if ( live_parser(tmp, FALSE) && tmp->magic == SGML_PARSER_MAGIC )
       { *p = tmp;
 
         return TRUE;
@@ -384,6 +466,10 @@ pl_new_sgml_parser(term_t ref, term_t options)
   }
 
   p = new_dtd_parser(dtd);
+  if ( !register_parser(p) )
+  { free_dtd_parser(p);
+    return sgml2pl_error(ERR_ERRNO, ENOMEM);
+  }
 
   return unify_parser(ref, p);
 }
@@ -394,7 +480,12 @@ pl_free_sgml_parser(term_t parser)
 { dtd_parser *p;
 
   if ( get_parser(parser, &p) )
-  { free_dtd_parser(p);
+  { if ( p->closure )
+      return PL_permission_error("free", "sgml_parser", parser);
+    if ( live_parser(p, TRUE) )
+    { p->magic = 0;
+      free_dtd_parser(p);
+    }
     return TRUE;
   }
 
@@ -811,7 +902,7 @@ pl_get_sgml_parser(term_t parser, term_t option)
     if ( env )
     { for( ; env; env = env->parent)
       { dtd_element *buf[256];		/* MAX_VISITED! */
-	int n = sizeof(buf)/sizeof(dtd_element *); /* not yet used! */
+	int n = sizeof(buf)/sizeof(dtd_element *);
 	int i;
 
 	state_allows_for(env->state, buf, &n);
@@ -885,6 +976,18 @@ call_prolog(parser_data *pd, predicate_t pred, term_t av)
 }
 
 
+static int
+call_begin(parser_data *pd, term_t av)
+{ int rc;
+
+  pd->in_begin++;
+  rc = call_prolog(pd, pd->on_begin, av);
+  pd->in_begin--;
+
+  return rc;
+}
+
+
 static void
 end_frame(fid_t fid, term_t ex)
 { if ( ex )
@@ -907,19 +1010,10 @@ put_url(dtd_parser *p, term_t t, const ichar *url)
     the cache a little.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#define URL_CACHE 4			/* # entries cached */
-
-typedef struct
-{ const ichar *url;			/* URL pointer */
-  atom_t canonical;
-} url_cache;
-
-static url_cache cache[URL_CACHE];
-
 static void
-reset_url_cache()
+reset_url_cache(parser_data *pd)
 { int i;
-  url_cache *c = cache;
+  url_cache *c = pd->url_cache;
 
   for(i=0; i<URL_CACHE; i++)
   { c[i].url = NULL;
@@ -933,6 +1027,7 @@ reset_url_cache()
 WUNUSED static int
 put_url(dtd_parser *p, term_t t, const ichar *url)
 { parser_data *pd = p->closure;
+  url_cache *cache = pd->url_cache;
   fid_t fid;
   int i;
 
@@ -1240,7 +1335,7 @@ on_begin_(dtd_parser *p, dtd_element *e, size_t argc, sgml_attribute *argv)
       rc = ( put_element_name(p, av+0, e) &&
 	     unify_attribute_list(p, av+1, argc, argv) &&
 	     unify_parser(av+2, p) &&
-	     call_prolog(pd, pd->on_begin, av)
+	     call_begin(pd, av)
 	   );
 
       PL_discard_foreign_frame(fid);
@@ -1333,7 +1428,7 @@ on_entity_(dtd_parser *p, dtd_entity *e, int chr)
 
       if ( rc )
 	rc = ( unify_parser(av+1, p) &&
-	       call_prolog(pd, pd->on_end, av)
+	       call_prolog(pd, pd->on_entity, av)
 	     );
 
       PL_discard_foreign_frame(fid);
@@ -1358,7 +1453,7 @@ on_entity_(dtd_parser *p, dtd_entity *e, int chr)
     if ( e )
       rc = PL_unify_term(h,
 			 PL_FUNCTOR, FUNCTOR_entity1,
-			   PL_CHARS, e->name->name);
+			   PL_NWCHARS, (size_t)-1, e->name->name);
     else
       rc = PL_unify_term(h,
 			 PL_FUNCTOR, FUNCTOR_entity1,
@@ -1872,33 +1967,36 @@ pl_open_dtd(term_t ref, term_t options, term_t stream)
   parser_data *pd;
   IOSTREAM *s;
 
+  term_t dialect = 0;
+  dtd_dialect dl = DL_SGML;
+
   if ( !get_dtd(ref, &dtd) )
     return FALSE;
+  if ( !PL_scan_options(options, 0, "dtd_option", open_dtd_options,
+			&dialect) )
+    return FALSE;
+  if ( dialect )
+  { char *dia;
+
+    if ( !PL_get_atom_chars(dialect, &dia) )
+      return sgml2pl_error(ERR_TYPE, "atom", dialect);
+
+    if ( streq(dia, "xml") )
+      dl = DL_XML;
+    else if ( streq(dia, "xmlns") )
+      dl = DL_XMLNS;
+    else if ( streq(dia, "sgml") )
+      dl = DL_SGML;
+    else
+      return sgml2pl_error(ERR_DOMAIN, "sgml_dialect", dialect);
+  }
+
   p = new_dtd_parser(dtd);
   p->dmode = DM_DTD;
   pd = new_parser_data(p);
   pd->free_on_close = TRUE;
-
-  { term_t dialect = 0;
-    char *dia;
-
-    if ( !PL_scan_options(options, 0, "dtd_option", open_dtd_options,
-			  &dialect) )
-      return FALSE;
-    if ( dialect )
-    { if ( !PL_get_atom_chars(dialect, &dia) )
-	return sgml2pl_error(ERR_TYPE, "atom", dialect);
-
-      if ( streq(dia, "xml") )
-	set_dialect_dtd(dtd, p, DL_XML);
-      else if ( streq(dia, "xmlns") )
-	set_dialect_dtd(dtd, p, DL_XMLNS);
-      else if ( streq(dia, "sgml") )
-	set_dialect_dtd(dtd, p, DL_SGML);
-      else
-	return sgml2pl_error(ERR_DOMAIN, "sgml_dialect", dialect);
-    }
-  }
+  if ( dialect )
+    set_dialect_dtd(dtd, p, dl);
 
   s = Snew(pd, SIO_OUTPUT|SIO_FBUF, &sgml_stream_functions);
 
@@ -1988,8 +2086,15 @@ pl_sgml_parse(term_t parser, term_t options)
       return sgml2pl_error(ERR_MISC, "sgml",
 			   "Parser associated with illegal data");
 
+    if ( !oldpd->in_begin )
+      return sgml2pl_error(ERR_MISC, "sgml",
+			   "sgml_parse/2 can only be called recursively "
+			   "from the begin callback");
+
     pd = sgml_calloc(1, sizeof(*pd));
     *pd = *oldpd;
+    pd->in_begin = 0;
+    memset(pd->url_cache, 0, sizeof(pd->url_cache));
     p->closure = pd;
 
     in = pd->source;
@@ -2029,31 +2134,31 @@ pl_sgml_parse(term_t parser, term_t options)
 
       _PL_get_arg(1, head, a);
       if ( !PL_get_int64(a, &content_length) )
-	return sgml2pl_error(ERR_TYPE, "integer", a);
+	{ rc = sgml2pl_error(ERR_TYPE, "integer", a); goto out; }
       has_content_length = TRUE;
     } else if ( PL_is_functor(head, FUNCTOR_call2) )
     { if ( !set_callback_predicates(pd, head) )
-	return FALSE;
+	{ rc = FALSE; goto out; }
     } else if ( PL_is_functor(head, FUNCTOR_xml_no_ns1) )
     { term_t a = PL_new_term_ref();
       char *s;
 
       _PL_get_arg(1, head, a);
       if ( !PL_get_atom_chars(a, &s) )
-	return sgml2pl_error(ERR_TYPE, "atom", a);
+	{ rc = sgml2pl_error(ERR_TYPE, "atom", a); goto out; }
       if ( streq(s, "error") )
 	p->xml_no_ns = NONS_ERROR;
       else if ( streq(s, "quiet") )
 	p->xml_no_ns = NONS_QUIET;
       else
-	return sgml2pl_error(ERR_DOMAIN, "xml_no_ns", a);
+	{ rc = sgml2pl_error(ERR_DOMAIN, "xml_no_ns", a); goto out; }
     } else if ( PL_is_functor(head, FUNCTOR_parse1) )
     { term_t a = PL_new_term_ref();
       char *s;
 
       _PL_get_arg(1, head, a);
       if ( !PL_get_atom_chars(a, &s) )
-	return sgml2pl_error(ERR_TYPE, "atom", a);
+	{ rc = sgml2pl_error(ERR_TYPE, "atom", a); goto out; }
       if ( streq(s, "element") )
 	pd->stopat = SA_ELEMENT;
       else if ( streq(s, "content") )
@@ -2065,20 +2170,20 @@ pl_sgml_parse(term_t parser, term_t options)
       else if ( streq(s, "declaration") )
 	pd->stopat = SA_DECL;
       else
-	return sgml2pl_error(ERR_DOMAIN, "parse", a);
+	{ rc = sgml2pl_error(ERR_DOMAIN, "parse", a); goto out; }
     } else if ( PL_is_functor(head, FUNCTOR_max_errors1) )
     { term_t a = PL_new_term_ref();
 
       _PL_get_arg(1, head, a);
       if ( !PL_get_integer(a, &pd->max_errors) )
-	return sgml2pl_error(ERR_TYPE, "integer", a);
+	{ rc = sgml2pl_error(ERR_TYPE, "integer", a); goto out; }
     } else if ( PL_is_functor(head, FUNCTOR_syntax_errors1) )
     { term_t a = PL_new_term_ref();
       char *s;
 
       _PL_get_arg(1, head, a);
       if ( !PL_get_atom_chars(a, &s) )
-	return sgml2pl_error(ERR_TYPE, "atom", a);
+	{ rc = sgml2pl_error(ERR_TYPE, "atom", a); goto out; }
 
       if ( streq(s, "quiet") )
 	pd->error_mode = EM_QUIET;
@@ -2087,58 +2192,57 @@ pl_sgml_parse(term_t parser, term_t options)
       else if ( streq(s, "style") )
 	pd->error_mode = EM_STYLE;
       else
-	return sgml2pl_error(ERR_DOMAIN, "syntax_error", a);
+	{ rc = sgml2pl_error(ERR_DOMAIN, "syntax_error", a); goto out; }
     } else if ( PL_is_functor(head, FUNCTOR_positions1) )
     { term_t a = PL_new_term_ref();
       char *s;
 
       _PL_get_arg(1, head, a);
       if ( !PL_get_atom_chars(a, &s) )
-	return sgml2pl_error(ERR_TYPE, "atom", a);
+	{ rc = sgml2pl_error(ERR_TYPE, "atom", a); goto out; }
 
       if ( streq(s, "true") )
 	pd->positions = TRUE;
       else if ( streq(s, "false") )
 	pd->positions = FALSE;
       else
-	return sgml2pl_error(ERR_DOMAIN, "positions", a);
+	{ rc = sgml2pl_error(ERR_DOMAIN, "positions", a); goto out; }
     } else if ( PL_is_functor(head, FUNCTOR_cdata1) )
     { term_t arg = PL_new_term_ref();
       atom_t a;
       _PL_get_arg(1, head, arg);
       if (!PL_get_atom_ex(arg, &a))
-	return FALSE;
+	{ rc = FALSE; goto out; }
       if (a == ATOM_atom)
 	p->cdata_rep = PL_ATOM;
       else if (a == ATOM_string)
 	p->cdata_rep = PL_STRING;
       else
-	return sgml2pl_error(ERR_DOMAIN, "representation", a);
+	{ rc = sgml2pl_error(ERR_DOMAIN, "representation", arg); goto out; }
     } else if ( PL_is_functor(head, FUNCTOR_attribute_value1) )
     { term_t arg = PL_new_term_ref();
       atom_t a;
       _PL_get_arg(1, head, arg);
       if (!PL_get_atom_ex(arg, &a))
-	return FALSE;
+	{ rc = FALSE; goto out; }
       if (a == ATOM_atom)
 	p->att_rep = PL_ATOM;
       else if (a == ATOM_string)
 	p->att_rep = PL_STRING;
       else
-	return sgml2pl_error(ERR_DOMAIN, "representation", a);
+	{ rc = sgml2pl_error(ERR_DOMAIN, "representation", arg); goto out; }
     } else if ( PL_is_functor(head, FUNCTOR_source1) )
     { term_t a = PL_new_term_ref();
 
       _PL_get_arg(1, head, a);
       if ( !PL_get_stream(a, &in, SIO_INPUT) )
-	return FALSE;
+	{ rc = FALSE; goto out; }
       release = in;
     }/* else ignored option */
   }
   if ( !PL_get_nil_ex(tail) )
-  { if ( release )
-      PL_release_stream(release);
-    return FALSE;
+  { rc = FALSE;
+    goto out;
   }
 
 					/* Parsing input from a stream */
@@ -2232,30 +2336,28 @@ pl_sgml_parse(term_t parser, term_t options)
     if ( !recursive && pd->stopat != SA_INPUT )
       end_document_dtd_parser(p);
     CHECKERROR;
-
-  out:
-    if ( release )
-      rc = PL_release_stream(release) && rc;
-
-    reset_url_cache();
-    if ( pd->tail && rc )
-      rc = PL_unify_nil(pd->tail);
-
-    if ( recursive )
-    { p->closure = oldpd;
-    } else
-    { p->closure = NULL;
-    }
-
-    pd->magic = 0;			/* invalidate */
-    sgml_free(pd);
-
-    return rc;
   }
 
-  reset_url_cache();
+out:
+  if ( release )
+    rc = PL_release_stream(release) && rc;
 
-  return TRUE;
+  reset_url_cache(pd);
+  if ( pd->tail && rc )
+    rc = PL_unify_nil(pd->tail);
+
+  if ( recursive )
+  { free_env_stack(pd, oldpd->stack);
+    p->closure = oldpd;
+  } else
+  { free_env_stack(pd, NULL);
+    p->closure = NULL;
+  }
+
+  pd->magic = 0;			/* invalidate */
+  sgml_free(pd);
+
+  return rc;
 }
 
 
@@ -2642,16 +2744,20 @@ dtd_prop_entity(dtd *dtd, term_t ename, term_t value)
 
   switch(e->type)
   { case ET_SYSTEM:
+      if ( !e->exturl )
+	return FALSE;
       return PL_unify_term(value, PL_FUNCTOR_CHARS, "system", 1,
-			   PL_CHARS, e->exturl);
+			   PL_NWCHARS, (size_t)-1, e->exturl);
     case ET_PUBLIC:
+      if ( !e->extid )
+	return FALSE;
       if ( e->exturl )
 	return PL_unify_term(value, PL_FUNCTOR_CHARS, "public", 2,
-			     PL_CHARS, e->extid,
-			     PL_CHARS, e->exturl);
+			     PL_NWCHARS, (size_t)-1, e->extid,
+			     PL_NWCHARS, (size_t)-1, e->exturl);
       else
 	return PL_unify_term(value, PL_FUNCTOR_CHARS, "public", 2,
-			     PL_CHARS, e->extid,
+			     PL_NWCHARS, (size_t)-1, e->extid,
 			     PL_VARIABLE);
 
     case ET_LITERAL:
@@ -2672,7 +2778,7 @@ dtd_prop_entity(dtd *dtd, term_t ename, term_t value)
 
 	if ( wrap )
 	  return PL_unify_term(value, PL_FUNCTOR_CHARS, wrap, 1,
-			       PL_CHARS, e->value);
+			       PL_NWCHARS, (size_t)-1, e->value);
 	else
 	  return PL_unify_wchars(value, PL_ATOM, wcslen(e->value), e->value);
       }
@@ -2703,13 +2809,13 @@ dtd_prop_notations(dtd *dtd, term_t list)
 
 static int
 dtd_prop_notation(dtd *dtd, term_t nname, term_t desc)
-{ char *s;
+{ ichar *s;
   dtd_symbol *id;
 
-  if ( !PL_get_atom_chars(nname, &s) )
+  if ( !PL_get_wchars(nname, NULL, &s, CVT_ATOM) )
     return sgml2pl_error(ERR_TYPE, "atom", nname);
 
-  if ( (id=dtd_find_symbol(dtd, (ichar *)s)) )
+  if ( (id=dtd_find_symbol(dtd, s)) )
   { dtd_notation *n;
 
     for(n=dtd->notations; n; n=n->next)
@@ -2721,14 +2827,14 @@ dtd_prop_notation(dtd *dtd, term_t nname, term_t desc)
 	{ if ( !PL_unify_list(tail, head, tail) ||
 	       !PL_unify_term(head,
 			      PL_FUNCTOR_CHARS, "system", 1,
-				PL_CHARS, n->system) )
+				PL_NWCHARS, (size_t)-1, n->system) )
 	    return FALSE;
 	}
 	if ( n->public )
 	{ if ( !PL_unify_list(tail, head, tail) ||
 	       !PL_unify_term(head,
 			      PL_FUNCTOR_CHARS, "public", 1,
-				PL_CHARS, n->public) )
+				PL_NWCHARS, (size_t)-1, n->public) )
 	    return FALSE;
 	}
 

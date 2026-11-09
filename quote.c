@@ -111,7 +111,7 @@ room_buf(charbuf *b, size_t room)
   { if ( b->bufp == b->buffer )
     { b->size = sizeof(b->buffer)*2;
       if ( !(b->bufp = malloc(b->size)) )
-	return sgml2pl_error(ERR_ERRNO);
+	return sgml2pl_error(ERR_ERRNO, errno);
 
       memcpy(b->bufp, b->buffer, used);
     } else
@@ -119,7 +119,7 @@ room_buf(charbuf *b, size_t room)
 
       b->size *= 2;
       if ( !(ptr = realloc(b->bufp, b->size)) )
-	return sgml2pl_error(ERR_ERRNO);
+	return sgml2pl_error(ERR_ERRNO, errno);
       b->bufp = ptr;
     }
     b->end = b->bufp + used;

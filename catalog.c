@@ -186,13 +186,14 @@ localpath(const ichar *ref, const ichar *name)
   if (!ref || is_absolute_path(name))
     local = istrdup(name);
   else
-  { ichar buf[PATH_MAX];
+  { size_t reflen = istrlen(ref);
+    size_t len = reflen + 2 + istrlen(name) + 1; /* dir <= max(ref, ".") */
+    ichar *buf = sgml_malloc(len*sizeof(ichar));
 
     DirName(ref, buf);
     istrcat(buf, DIRSEPSTR);
     istrcat(buf, name);
-
-    local = istrdup(buf);
+    local = buf;
   }
 
   if (!local)
@@ -479,8 +480,9 @@ static void
 load_one_catalogue(catalog_file * file)
 { FILE *src = wfopen(file->file, "r");
   ichar buffer[2 * FILENAME_MAX];
-  ichar base[2 * FILENAME_MAX];
-  ichar *p;
+  const size_t buflen = sizeof(buffer)/sizeof(ichar);
+  ichar *base;				/* malloced; directory prefix */
+  size_t baselen;			/* length of the directory prefix */
   int t;
   catalogue_item_ptr this_item;
   int override = 0;
@@ -490,27 +492,31 @@ load_one_catalogue(catalog_file * file)
     return;
   }
 
-  (void) istrcpy(base, file->file);
-  p = base + istrlen(base);
-  while (p != base && !isDirSep(p[-1]))
-    p--;
+  base = istrdup(file->file);
+  baselen = istrlen(base);
+  while (baselen > 0 && !isDirSep(base[baselen-1]))
+    baselen--;
 
   for (;;)
-  { t = scan(src, buffer, sizeof(buffer), 1);
+  { t = scan(src, buffer, buflen, 1);
     switch (t)
     { case CAT_BASE:
       { size_t blen;
-	if (scan(src, buffer, sizeof(buffer), 0) == EOF)
+	if (scan(src, buffer, buflen, 0) == EOF)
 	  break;
-	(void) istrcpy(base, buffer);
-	blen = istrlen(base);
-	p = base + blen;
+	blen = istrlen(buffer);
+	sgml_free(base);
+	base = sgml_malloc((blen+2)*sizeof(ichar));
+	istrcpy(base, buffer);
+	baselen = blen;
 	if (blen > 0 && !isDirSep(base[blen-1]))
-	  *p++ = '/';
+	{ base[baselen++] = '/';
+	  base[baselen] = EOS;
+	}
 	continue;
       }
       case CAT_OVERRIDE:
-	if (scan(src, buffer, sizeof(buffer), 0) == EOF)
+	if (scan(src, buffer, buflen, 0) == EOF)
 	  break;
 	override = towlower(buffer[0]) == 'y' ? CAT_OVERRIDE : 0;
 	continue;
@@ -518,24 +524,31 @@ load_one_catalogue(catalog_file * file)
       case CAT_SYSTEM:
       case CAT_ENTITY:
       case CAT_DOCTYPE:
-	this_item = sgml_malloc(sizeof *this_item);
-	if (scan(src, buffer, sizeof buffer, 0) == EOF)
+	if (scan(src, buffer, buflen, 0) == EOF)
 	  break;
+	this_item = sgml_malloc(sizeof *this_item);
 	if (t == CAT_PUBLIC)
 	  squish(buffer);
 	this_item->next = 0;
 	this_item->kind = t == CAT_SYSTEM ? t : t + override;
 	this_item->target = istrdup(buffer);
 
-	if (scan(src, buffer, sizeof buffer, 0) == EOF)
+	if (scan(src, buffer, buflen, 0) == EOF)
+	{ sgml_free((void*)this_item->target);
+	  sgml_free(this_item);
 	  break;
+	}
 
-	if (is_absolute_path(buffer) || p == base)
+	if (is_absolute_path(buffer) || baselen == 0)
 	{ this_item->replacement = istrdup(buffer);
 	} else
-        { (void) istrcpy(p, buffer);
-          this_item->replacement = istrdup(base);
-        }
+	{ size_t len = istrlen(buffer);
+	  ichar *r = sgml_malloc((baselen+len+1)*sizeof(ichar));
+
+	  memcpy(r, base, baselen*sizeof(ichar));
+	  memcpy(r+baselen, buffer, (len+1)*sizeof(ichar));
+	  this_item->replacement = r;
+	}
 
 	if (file->first_item == 0)
 	{ file->first_item = this_item;
@@ -553,6 +566,7 @@ load_one_catalogue(catalog_file * file)
     break;
   }
 
+  sgml_free(base);
   fclose(src);
 }
 

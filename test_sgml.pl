@@ -59,7 +59,11 @@ test_sgml :-
     test_max_errors0,
     test_sandbox,
     test_entity_option,
-    test_xpath_pi.
+    test_xpath_pi,
+    test_dtd_entity_property,
+    test_parser_lifetime,
+    test_allowed_overflow,
+    test_long_system_id.
 
 test_input(Name, Path) :-
     source_file(test_sgml, MyFile),
@@ -313,3 +317,82 @@ test_xpath_pi :-
     load_structure(string("<a>x<?y z?>w</a>"), DOM, [dialect(xml)]),
     xpath(DOM, //a(text), Text),
     Text == xw.
+
+%   test_dtd_entity_property
+%
+%   dtd_property/2 for entities and notations used to read wide strings
+%   as narrow ones.
+
+test_dtd_entity_property :-
+    new_dtd(test, DTD),
+    setup_call_cleanup(
+        open_dtd(DTD, [dialect(xml)], Out),
+        format(Out, '<!ENTITY s SYSTEM "sys.xml">~n\c
+                     <!ENTITY p PUBLIC "-//p//id" "pub.xml">~n\c
+                     <!NOTATION n SYSTEM "viewer">~n', []),
+        close(Out)),
+    dtd_property(DTD, entity(s, system('sys.xml'))),
+    dtd_property(DTD, entity(p, public('-//p//id', 'pub.xml'))),
+    dtd_property(DTD, notation(n, [system(viewer)])),
+    free_dtd(DTD).
+
+%   test_parser_lifetime
+%
+%   Using a freed parser raises an existence error, freeing it during
+%   parsing raises a permission error.
+
+test_parser_lifetime :-
+    new_sgml_parser(P, []),
+    free_sgml_parser(P),
+    catch(free_sgml_parser(P), error(existence_error(sgml_parser, _), _), true),
+    new_sgml_parser(P2, []),
+    setup_call_cleanup(
+        open_string("<a><b/></a>", In),
+        catch(sgml_parse(P2, [source(In), call(begin, free_in_begin)]),
+              error(permission_error(free, sgml_parser, _), _), true),
+        close(In)),
+    free_sgml_parser(P2).
+
+free_in_begin(_, _, Parser) :-
+    free_sgml_parser(Parser).
+
+%   test_allowed_overflow
+%
+%   get_sgml_parser(P, allowed(L)) with more than 256 alternatives.
+
+test_allowed_overflow :-
+    numlist(1, 600, L),
+    maplist([I,E]>>format(atom(E), 'e~d', [I]), L, Es),
+    atomic_list_concat(Es, '|', Alt),
+    findall(D, ( member(E, Es),
+                 format(atom(D), '<!ELEMENT ~w EMPTY>', [E])
+               ), Ds),
+    atomic_list_concat(Ds, Decls),
+    format(string(Doc), '<!DOCTYPE root [<!ELEMENT root (~w)*>~w]><root>',
+           [Alt, Decls]),
+    new_sgml_parser(P, []),
+    set_sgml_parser(P, dialect(xml)),
+    setup_call_cleanup(
+        open_string(Doc, In),
+        sgml_parse(P, [source(In), parse(input), syntax_errors(quiet)]),
+        close(In)),
+    get_sgml_parser(P, allowed(A)),
+    length(A, N),
+    N > 0,
+    free_sgml_parser(P).
+
+%   test_long_system_id
+%
+%   A long SYSTEM id relative to the document location used to overflow
+%   a buffer.
+
+test_long_system_id :-
+    tmp_file_stream(text, File, Out),
+    length(Cs, 3000),
+    maplist(=(0'a), Cs),
+    format(Out, '<!DOCTYPE a [<!ENTITY x SYSTEM "~s">]><a>&x;</a>~n', [Cs]),
+    close(Out),
+    call_cleanup(catch(load_structure(File, _, [dialect(xml),
+                                                syntax_errors(quiet)]),
+                       _, true),
+                 delete_file(File)).

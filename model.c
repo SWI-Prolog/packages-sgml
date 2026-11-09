@@ -193,13 +193,14 @@ same_state(dtd_state *final, dtd_state *here)
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 state_allows_for(dtd_state *state, dtd_element **allow, int *n)
-    See what elements are allowed if we are in this state.  This is
+    See what elements are allowed if we are in this state.  On entry, *n
+    is the size of allow.  On exit it is the number of elements found.  This is
     currently not used, but might prove handly for error messages or
     syntax-directed editors.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static void
-do_state_allows_for(dtd_state *here, dtd_element **allow, int *n,
+do_state_allows_for(dtd_state *here, dtd_element **allow, int *n, int max,
 		    visited *visited)
 { transition *t;
 
@@ -208,12 +209,14 @@ do_state_allows_for(dtd_state *here, dtd_element **allow, int *n,
 
     if ( t->element == NULL )
     { if ( visit(t->state, visited) )
-	do_state_allows_for(t->state, allow, n, visited);
+	do_state_allows_for(t->state, allow, n, max, visited);
     } else
     { for(i=0; i<*n; i++)
       { if ( allow[i] == t->element )
 	  goto next;
       }
+      if ( *n >= max )
+	return;
       allow[(*n)++] = t->element;
     }
   next:
@@ -225,11 +228,12 @@ do_state_allows_for(dtd_state *here, dtd_element **allow, int *n,
 void
 state_allows_for(dtd_state *state, dtd_element **allow, int *n)
 { visited visited;
+  int max = *n;				/* size of allow */
   visited.size = 0;
 
   *n = 0;
   if ( state )
-    do_state_allows_for(state, allow, n, &visited);
+    do_state_allows_for(state, allow, n, max, &visited);
 }
 
 
