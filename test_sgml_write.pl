@@ -40,11 +40,13 @@
 :- use_module(library(sgml)).
 :- use_module(library(sgml_write)).
 :- use_module(library(pprint)).
+:- use_module(library(plunit)).
 
 :- dynamic failed/2.
 
 test_sgml_write :-                              % default test
-    fp('Test').
+    fp('Test'),
+    run_tests(sgml_write_escape).
 
 test(File) :-
     file_name_extension(_, xml, File),
@@ -293,3 +295,34 @@ eat_blanks(L, L).
 
 pretty_print(Term) :-
     print_term(Term, [output(current_output)]).
+
+
+		 /*******************************
+		 *     ESCAPING AND CHECKING	*
+		 *******************************/
+
+:- begin_tests(sgml_write_escape).
+
+xml_string(DOM, String) :-
+    with_output_to(string(String),
+                   xml_write(current_output, DOM, [header(false)])).
+html_string(DOM, String) :-
+    with_output_to(string(String),
+                   html_write(current_output, DOM, [header(false)])).
+
+test(element_name, error(domain_error(xml_name, _))) :-
+    xml_string(element('a><b', [], []), _).
+test(attribute_name, error(domain_error(xml_name, _))) :-
+    xml_string(element(a, ['x="1" y'=v], []), _).
+test(prefixed_name, S == "<a xml:lang=\"en\"/>") :-
+    xml_string(element(a, [xml:lang=en], []), S).
+test(pi, error(domain_error(processing_instruction, _))) :-
+    xml_string(element(a, [], [pi('x?><b/><?y')]), _).
+test(control_char, error(representation_error(xml_char(1)))) :-
+    xml_string(element(a, [], ['a\u0001b']), _).
+test(script, error(domain_error(cdata, _))) :-
+    html_string(element(html, [], [element(script, [], ['</SCRIPT>'])]), _).
+test(doctype, error(domain_error(doctype_literal, _))) :-
+    html_string(element(html, [version='"><x'], []), _).
+
+:- end_tests(sgml_write_escape).

@@ -47,12 +47,13 @@
 	    [ must_be/2,
 	      domain_error/2,
 	      instantiation_error/1,
-	      type_error/2
+	      type_error/2,
+	      representation_error/1
 	    ]).
 :- autoload(library(gensym),[gensym/2]).
 :- autoload(library(lists),[select/3]).
 :- autoload(library(option),[option/3]).
-:- autoload(library(sgml),[dtd/2,dtd_property/2]).
+:- autoload(library(sgml),[dtd/2,dtd_property/2,xml_name/1]).
 
 :- predicate_options(xml_write/2, 2, [pass_to(xml_write/3, 3)]).
 :- predicate_options(xml_write/3, 3,
@@ -303,6 +304,7 @@ emit_doctype(_Options, Data, Out) :-
     ),
     memberchk(version=Version, Att),
     !,
+    doctype_literal(Version),
     format(Out, '<!DOCTYPE HTML PUBLIC "~w">~n~n', [Version]).
 emit_doctype(Options, Data, Out) :-
     (   memberchk(public(PubId), Options) -> true
@@ -323,6 +325,11 @@ emit_doctype(Options, Data, Out) :-
     write_doctype(Out, DocType, PubId, SysId).
 emit_doctype(_, _, _).
 
+write_doctype(_Out, DocType, PubId, SysId) :-
+    valid_name(DocType),
+    doctype_literal(PubId),
+    doctype_literal(SysId),
+    fail.
 write_doctype(Out, DocType, -, -) :-
     !,
     format(Out, '<!DOCTYPE ~w []>~n~n', [DocType]).
@@ -335,6 +342,20 @@ write_doctype(Out, DocType, PubId, -) :-
 write_doctype(Out, DocType, PubId, SysId) :-
     format(Out, '<!DOCTYPE ~w PUBLIC "~w" "~w">~n~n', [DocType,PubId,SysId]).
 
+
+%   doctype_literal(+Literal) is det.
+%
+%   Raise a domain error if Literal cannot be written as a quoted public
+%   or system identifier.
+
+doctype_literal(-) :-
+    !.
+doctype_literal(Literal) :-
+    format(string(String), '~w', [Literal]),
+    (   sub_string(String, _, _, _, "\"")
+    ->  domain_error(doctype_literal, Literal)
+    ;   true
+    ).
 
 %!  emit(+Element, +Out, +State, +Options)
 %
@@ -359,6 +380,15 @@ emit(Element, Out, State) :-
 emit_element(pi(PI), Out, State) :-
     !,
     get_state(State, entity_map, EntityMap),
+    (   get_state(State, dialect, xml)
+    ->  End = '?>'
+    ;   End = '>'
+    ),
+    (   is_text(PI),
+        sub_atom(PI, _, _, _, End)
+    ->  domain_error(processing_instruction, PI)
+    ;   true
+    ),
     write(Out, <?),
     write_quoted(Out, PI, '', EntityMap),
     (   get_state(State, dialect, xml) ->
@@ -461,23 +491,51 @@ vlen_list([H|T], L0, L) :-
 emit_name(Name, Out, _) :-
     atom(Name),
     !,
+    valid_name(Name),
     write(Out, Name).
 emit_name(ns(NS,_URI):Name, Out, _State) :-
     !,
+    valid_name(Name),
     (  NS == ''
     -> write(Out, Name)
-    ;  format(Out, '~w:~w', [NS, Name])
+    ;  valid_name(NS),
+       format(Out, '~w:~w', [NS, Name])
     ).
 emit_name(URI:Name, Out, State) :-
     get_state(State, nsmap, NSMap),
     memberchk(NS=URI, NSMap),
     !,
+    valid_name(Name),
     (   NS == []
     ->  write(Out, Name)
-    ;   format(Out, '~w:~w', [NS, Name])
+    ;   valid_name(NS),
+        format(Out, '~w:~w', [NS, Name])
     ).
-emit_name(Term, Out, _) :-              % error?
-    write(Out, Term).
+emit_name(Prefix:Name, Out, _) :-
+    atom(Prefix), atom(Name),
+    !,
+    valid_name(Prefix),
+    valid_name(Name),
+    format(Out, '~w:~w', [Prefix, Name]).
+emit_name(Term, Out, _) :-
+    is_text(Term),
+    !,
+    atom_string(Name, Term),
+    valid_name(Name),
+    write(Out, Name).
+emit_name(Term, _, _) :-
+    type_error(xml_name, Term).
+
+%   valid_name(+Name) is det.
+%
+%   Raise a domain error if Name is not a valid XML name.  Writing such
+%   a name would change the structure of the document.
+
+valid_name(Name) :-
+    (   xml_name(Name)
+    ->  true
+    ;   domain_error(xml_name, Name)
+    ).
 
 %!  update_nsmap(+Attributes, -Attributes1, !State)
 %
@@ -556,7 +614,8 @@ content([CDATA], Out, Element, State) :-
         sgml_write_content(Out, CDATA, State),
         write(Out, /)
     ;   verbatim_element(Element, State)
-    ->  write(Out, >),
+    ->  valid_verbatim(Element, CDATA),
+        write(Out, >),
         write(Out, CDATA),
         emit_close(Element, Out, State)
     ;/* XML or not NET */
@@ -593,6 +652,18 @@ verbatim_element(Element, State) :-
 
 verbatim_element(script).
 verbatim_element(style).
+
+%   valid_verbatim(+Element, +CDATA) is det.
+%
+%   The content of script and style elements is not escaped and thus
+%   may not contain the closing tag.
+
+valid_verbatim(Element, CDATA) :-
+    atomic_list_concat(['</', Element], End),
+    (   sub_atom_icasechk(CDATA, _, End)
+    ->  domain_error(cdata, CDATA)
+    ;   true
+    ).
 
 emit_close(Element, Out, State) :-
     write(Out, '</'),
@@ -783,6 +854,7 @@ sgml_write_attribute(Out, Value, State) :-
     is_text(Value),
     !,
     get_state(State, entity_map, EntityMap),
+    xml_chars(State, Value),
     put_char(Out, '"'),
     write_quoted(Out, Value, '"<&\r\n\t', EntityMap),
     put_char(Out, '"').
@@ -807,9 +879,33 @@ sgml_write_content(Out, Value, State) :-
     is_text(Value),
     !,
     get_state(State, entity_map, EntityMap),
+    xml_chars(State, Value),
     write_quoted(Out, Value, '<&>\r', EntityMap).
 sgml_write_content(Out, Value, _) :-
     write(Out, Value).
+
+%   xml_chars(+State, +Text) is det.
+%
+%   If we are writing XML, raise a representation error if Text holds
+%   characters that are not allowed in XML.
+
+xml_chars(State, Text) :-
+    get_state(State, dialect, xml),
+    !,
+    (   sub_atom(Text, _, 1, _, C),
+        char_code(C, Code),
+        \+ xml_char(Code)
+    ->  representation_error(xml_char(Code))
+    ;   true
+    ).
+xml_chars(_, _).
+
+xml_char(0x9) :- !.
+xml_char(0xA) :- !.
+xml_char(0xD) :- !.
+xml_char(C) :- C >= 0x20, C =< 0xD7FF, !.
+xml_char(C) :- C >= 0xE000, C =< 0xFFFD, !.
+xml_char(C) :- C >= 0x10000, C =< 0x10FFFF.
 
 is_text(Value) :- atom(Value), !.
 is_text(Value) :- string(Value), !.
