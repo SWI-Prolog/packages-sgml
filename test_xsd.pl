@@ -35,13 +35,15 @@
 
 :- module(test_xsd, [test_xsd/0]).
 :- use_module(library(sgml)).
+:- use_module(library(xsdp_types)).
 :- use_module(library(apply)).
 :- use_module(library(debug)).
 :- use_module(library(plunit)).
 
 test_xsd :-
     run_tests([ xsd_number_string,
-                xsd_time_string
+                xsd_time_string,
+                xsdp_convert
               ]).
 
 expand_xsd(XSD:Local, Out) :-
@@ -83,6 +85,9 @@ test(nan_inf, S == "-INF") :-
     xsd_number_string(Inf, S).
 test(float, F == 110.0) :-
     xsd_number_string(F, "1.1e2").
+
+test(plus, N == 5) :-
+    xsd_number_string(N, "+5").
 
 :- end_tests(xsd_number_string).
 
@@ -224,4 +229,28 @@ test(term_error, error(domain_error(day,35))) :-
 test(term_error, error(domain_error(day,-01))) :-
     xsd_time_string(-01, xsd:gDay, _).
 
+test(big_year, error(syntax_error(xsd_time))) :-
+    xsd_time_string(_, _, "99999999999-01-01").
+test(long_fraction, T == time(12,0,0.123456789)) :-
+    xsd_time_string(T, _, "12:00:00.123456789123").
+test(zero_fraction, T == time(12,0,0.0)) :-
+    xsd_time_string(T, _, "12:00:00.000000000000000000000000000000000000").
+test(minus_zero, S == "01:02:00.0") :-
+    xsd_time_string(time(1,2,-0.0), _, S).
+test(round_60, S == "01:02:59.999999999") :-
+    xsd_time_string(time(1,2,59.99999999999), _, S).
+
 :- end_tests(xsd_time_string).
+
+:- begin_tests(xsdp_convert).
+
+test(int, V == 42) :-
+    xsdp_convert(int, [' 42 '], V).
+test(int, error(domain_error(int, '0x1F'))) :-
+    xsdp_convert(int, ['0x1F'], _).
+test(int, error(domain_error(int, '3000000000'))) :-
+    xsdp_convert(int, ['3000000000'], _).
+test(double, error(domain_error(double, '1.0Inf'))) :-
+    xsdp_convert(double, ['1.0Inf'], _).
+
+:- end_tests(xsdp_convert).

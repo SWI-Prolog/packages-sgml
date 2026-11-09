@@ -37,6 +37,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <math.h>
 
 #define URL_xsd		  "http://www.w3.org/2001/XMLSchema#"
 
@@ -143,6 +144,8 @@ xsd_number_string(term_t number, term_t string)
 	return rc;
       } else
       { term_t n = PL_new_term_ref();
+	if ( *in == '+' )
+	  in++;
 	return ( PL_chars_to_term(in, n) &&
 		 PL_unify(number, n)
 	       );
@@ -189,7 +192,7 @@ xsd_number_string(term_t number, term_t string)
 	if ( e[0] == '+' )
 	  memmove(&e[0], &e[1], strlen(&e[1])+1);
 	if ( exp_shift )
-	  snprintf(e, e-buf, "%d", atoi(e)+exp_shift);
+	  snprintf(e, sizeof(buf)-(e-buf), "%d", atoi(e)+exp_shift);
       } else
       { e = &buf[strlen(buf)];
 
@@ -197,7 +200,7 @@ xsd_number_string(term_t number, term_t string)
 	{ while(e[-1] == '0' && e[-2] != '.')
 	    e--;
 	}
-	snprintf(e, e-buf, "E%d", exp_shift);
+	snprintf(e, sizeof(buf)-(e-buf), "E%d", exp_shift);
       }
 
       return PL_unify_chars(string, PL_STRING, (size_t)-1, buf);
@@ -320,7 +323,9 @@ parse_date_parts(const char *in, int *av, size_t avlen)
 	int n = 4;
 
 	for(n=4; isdigit(in[n]); n++)
-	{ v = v*10+DV(n);
+	{ if ( n >= 9 )
+	    return 2;			/* year too large */
+	  v = v*10+DV(n);
 	}
 
 	ADDINT(INTYEAR);
@@ -347,9 +352,11 @@ parse_date_parts(const char *in, int *av, size_t avlen)
 	  { dl++;
 	    in++;
 	  }
-	  while(isdigit(in[0]))
-	  { v = v*10+DV(0);
-	    dl++;
+	  while(isdigit(in[0]))		/* keep 9 significant digits */
+	  { if ( v < 100000000 )
+	    { v = v*10+DV(0);
+	      dl++;
+	    }
 	    in++;
 	  }
 	  ADDINT(dl);
@@ -537,12 +544,8 @@ is_time_seq(const int av[], time *t)
   { t->hour   = av[1];
     t->minute = av[4];
     if ( av[8] == DECIMAL )
-    { int dl, div = 1;
-
-      t->sec_is_float = TRUE;
-      for(dl=av[9]; dl > 0; dl--)
-	div *= 10;
-      t->second.f = (double)av[7] + (double)av[10]/(double)div;
+    { t->sec_is_float = TRUE;
+      t->second.f = (double)av[7] + (double)av[10]/pow(10.0, (double)av[9]);
       return 11;
     } else
     { t->sec_is_float = FALSE;
@@ -562,9 +565,14 @@ time_sec_chars(time *t, char *buf, size_t sz)
     return buf;
   } else
   { char *s, *e;
+    double f = t->second.f;
 
+    if ( f == 0.0 )
+      f = 0.0;				/* avoid -0.0 */
     buf[0] = '0';
-    snprintf(&buf[1], sz-1, "%f", t->second.f);
+    snprintf(&buf[1], sz-1, "%.9f", f);
+    if ( strncmp(&buf[1], "60", 2) == 0 ) /* rounded up to 60 */
+      snprintf(&buf[1], sz-1, "%.9f", floor(f*1e9)/1e9);
     if ( !isdigit(buf[2]) )
     { buf[2] = '.';
       s = buf;

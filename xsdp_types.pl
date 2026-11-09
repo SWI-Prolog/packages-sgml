@@ -39,6 +39,7 @@
             xsdp_subtype_of/2,          % ?Type, ?Super
             xsdp_convert/3              % +Type, +Content, -Value
           ]).
+:- autoload(library(sgml), [xsd_number_string/2]).
 
 /** <module> XML-Schema primitive types
 
@@ -200,33 +201,47 @@ convert(string, [String], String) :- !.
 convert(IntType, [Text], Integer) :-
     integer_type(IntType),
     !,
-    atom_number(Text, Integer),
-    (   integer(Integer),
+    (   xsd_number(Text, Integer),
+        integer(Integer),
         validate_int_domain(IntType, Integer)
     ->  true
-    ;   throw(error(domain_error(Text, IntType), _))
+    ;   throw(error(domain_error(IntType, Text), _))
     ).
 convert(float, [Text], Float) :-
     !,
-    atom_number(Text, Number),
-    Float is float(Number).
+    xsd_float(Text, float, Float).
 convert(double, [Text], Float) :-
     !,
-    atom_number(Text, Number),
-    Float is float(Number).
+    xsd_float(Text, double, Float).
 convert(_Any, [X], X) :- !.             % TBD: provide for more types
 convert(_Any, X, X).
 
+%   xsd_number(+Text, -Number) is semidet.
+%
+%   Parse Text using the XSD lexical rules, allowing for leading and
+%   trailing white space.
+
+xsd_number(Text, Number) :-
+    split_string(Text, "", " \t\r\n", [Trimmed]),
+    catch(xsd_number_string(Number, Trimmed), error(syntax_error(_), _), fail).
+
+xsd_float(Text, Type, Float) :-
+    (   xsd_number(Text, Number)
+    ->  Float is float(Number)
+    ;   throw(error(domain_error(Type, Text), _))
+    ).
+
 validate_int_domain(integer, _).
-validate_int_domain(int, _).
-validate_int_domain(long, _).
+validate_int_domain(int, I) :-   between(-2147483648, 2147483647, I).
+validate_int_domain(long, I) :-  between(-9223372036854775808,
+                                         9223372036854775807, I).
 validate_int_domain(nonPositiveInteger, I) :- \+ I > 0.
 validate_int_domain(negativeInteger, I) :-    I < 0.
 validate_int_domain(short, I) :-              between(-32768, 32767, I).
 validate_int_domain(byte,  I) :-              between(-128, 127, I).
 validate_int_domain(nonNegativeInteger, I) :- \+ I < 0.
-validate_int_domain(unsignedLong,       I) :- I >= 0.
+validate_int_domain(unsignedLong,       I) :- between(0, 18446744073709551615, I).
 validate_int_domain(positiveInteger,    I) :- I > 0.
-validate_int_domain(unsignedInt,        I) :- I >= 0.
+validate_int_domain(unsignedInt,        I) :- between(0, 4294967295, I).
 validate_int_domain(unsignedShort,      I) :- between(0, 65535, I).
 validate_int_domain(unsignedByte,       I) :- between(0, 255, I).
