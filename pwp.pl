@@ -313,6 +313,22 @@ Examples:
     run-time traversal of terms (because the terms are not known until
     run time).
 
+## Security {#pwp-security}
+
+A PWP template is a program.  The values of `pwp:ask`, `pwp:use` and the
+`c(...)c` and `c[...]c` parts of attribute values are read as Prolog
+terms and executed with full privileges, and the `text-file`, `xml-file`
+and `pwp-file` values of `pwp:how` read arbitrary files (`pwp-file` also
+executes the embedded queries).  Templates must therefore be trusted in
+the same way as Prolog source code.  Notably:
+
+  - Never process PWP documents that may be supplied or modified by
+    untrusted users, for example files in an upload directory that is
+    served by pwp_handler/2.
+  - Data that is substituted into a page is not interpreted as PWP, but
+    do not use request data to construct goals, format strings or file
+    names in templates.
+
 @author Richard O'Keefe
 @tbd    Support compilation of PWP input files
 */
