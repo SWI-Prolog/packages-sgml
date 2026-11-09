@@ -44,7 +44,7 @@
 :- use_module(library(xpath)).
 
 test_c14n :-
-    run_tests([ c14n ]).
+    run_tests([ c14n, c14n_inclusive ]).
 
 :- begin_tests(c14n).
 
@@ -229,3 +229,27 @@ test('3.2.4.2.3 Test case c14n11/xmlbase-c14n11spec-102', [blocked('Cannot expre
 
 
 :-end_tests(c14n).
+
+:- begin_tests(c14n_inclusive).
+
+inclusive(In, Out) :-
+    load_structure(string(In), DOM, [dialect(xmlns), keep_prefix(true)]),
+    with_output_to(string(Out),
+                   xml_write_canonical(current_output, DOM, [])).
+
+test(ns1, Out == "<r xmlns:a=\"urn:z\" xmlns:b=\"urn:a\"><e b:x=\"2\" a:y=\"1\"></e></r>") :-
+    inclusive("<r xmlns:b=\"urn:a\" xmlns:a=\"urn:z\"><e a:y=\"1\" b:x=\"2\"/></r>", Out).
+test(ns2, Out == "<r xmlns=\"urn:d\" xmlns:a=\"urn:z\" xmlns:b=\"urn:a\"><e></e></r>") :-
+    inclusive("<r xmlns=\"urn:d\" xmlns:a=\"urn:z\" xmlns:b=\"urn:a\"><e/></r>", Out).
+test(ns3, Out == "<r><e xmlns:u=\"urn:unused\" x=\"1\"></e></r>") :-
+    inclusive("<r><e xmlns:u=\"urn:unused\" x=\"1\"/></r>", Out).
+test(ns4, Out == "<r xmlns:a=\"urn:x\" xmlns:b=\"urn:x\"><a:e b:z=\"1\"></a:e><b:e></b:e></r>") :-
+    inclusive("<r xmlns:a=\"urn:x\" xmlns:b=\"urn:x\"><a:e b:z=\"1\"/><b:e/></r>", Out).
+test(ns5, Out == "<r xmlns:p=\"urn:1\"><x xmlns:p=\"urn:2\"><y xmlns:p=\"urn:1\"><p:b></p:b></y></x></r>") :-
+    inclusive("<r xmlns:p=\"urn:1\"><x xmlns:p=\"urn:2\"><y xmlns:p=\"urn:1\"><p:b/></y></x></r>", Out).
+test(ns6, Out == "<r xmlns:p=\"urn:1\"><x xmlns:p=\"urn:2\"><y xmlns:p=\"urn:1\"></y><p:b></p:b></x></r>") :-
+    inclusive("<r xmlns:p=\"urn:1\"><x xmlns:p=\"urn:2\"><y xmlns:p=\"urn:1\"/><p:b/></x></r>", Out).
+test(ns7, Out == "<r xmlns=\"urn:d\"><e xmlns=\"\"></e></r>") :-
+    inclusive("<r xmlns=\"urn:d\"><e xmlns=\"\"/></r>", Out).
+
+:- end_tests(c14n_inclusive).
