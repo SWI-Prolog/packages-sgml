@@ -336,10 +336,24 @@ del_icharbuf(icharbuf *buf)
 }
 
 
+/* terminate_*charbuf() adds a terminating 0 without changing the size.
+   If the buffer is full and cannot grow because of the memory limit, the
+   last character is replaced.  The parser reports limit_reached.
+*/
+
 void
 terminate_icharbuf(icharbuf *buf)
-{ add_icharbuf(buf, '\0');
-  buf->size--;
+{ if ( buf->size < buf->allocated )
+  { buf->data[buf->size] = '\0';
+  } else
+  { size_t size0 = buf->size;
+
+    add_icharbuf(buf, '\0');
+    if ( buf->size > size0 )
+      buf->size--;
+    else if ( buf->size > 0 )
+      buf->data[--buf->size] = '\0';
+  }
 }
 
 
@@ -456,8 +470,17 @@ del_ocharbuf(ocharbuf *buf)
 
 void
 terminate_ocharbuf(ocharbuf *buf)
-{ add_ocharbuf(buf, '\0');
-  buf->size--;
+{ if ( buf->size < buf->allocated )
+  { buf->data.w[buf->size] = '\0';
+  } else
+  { size_t size0 = buf->size;
+
+    add_ocharbuf(buf, '\0');
+    if ( buf->size > size0 )
+      buf->size--;
+    else if ( buf->size > 0 )
+      buf->data.w[--buf->size] = '\0';
+  }
 }
 
 

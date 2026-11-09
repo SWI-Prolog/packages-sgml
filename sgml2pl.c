@@ -204,6 +204,7 @@ static functor_t FUNCTOR_case_sensitive_attributes1;
 static functor_t FUNCTOR_case_preserving_attributes1;
 static functor_t FUNCTOR_system_entities1;
 static functor_t FUNCTOR_max_memory1;
+static functor_t FUNCTOR_max_entity_expansion1;
 static functor_t FUNCTOR_ignore_doctype1;
 static functor_t FUNCTOR_qualify_attributes1;
 static functor_t FUNCTOR_encoding1;
@@ -215,6 +216,7 @@ static atom_t ATOM_false;
 static atom_t ATOM_cdata;
 static atom_t ATOM_rcdata;
 static atom_t ATOM_pcdata;
+static atom_t ATOM_infinite;
 static atom_t ATOM_empty;
 static atom_t ATOM_any;
 static atom_t ATOM_position;
@@ -285,6 +287,7 @@ initConstants()
   FUNCTOR_case_preserving_attributes1 = mkfunctor("case_preserving_attributes", 1);
   FUNCTOR_system_entities1 = mkfunctor("system_entities", 1);
   FUNCTOR_max_memory1	 = mkfunctor("max_memory", 1);
+  FUNCTOR_max_entity_expansion1 = mkfunctor("max_entity_expansion", 1);
   FUNCTOR_qualify_attributes1 = mkfunctor("qualify_attributes", 1);
   FUNCTOR_encoding1	 = mkfunctor("encoding", 1);
   FUNCTOR_xmlns1	 = mkfunctor("xmlns", 1);
@@ -296,6 +299,7 @@ initConstants()
   ATOM_cdata = PL_new_atom("cdata");
   ATOM_rcdata = PL_new_atom("rcdata");
   ATOM_pcdata = PL_new_atom("#pcdata");
+  ATOM_infinite = PL_new_atom("infinite");
   ATOM_empty = PL_new_atom("empty");
   ATOM_any = PL_new_atom("any");
   ATOM_atom = PL_new_atom("atom");
@@ -703,6 +707,18 @@ pl_set_sgml_parser(term_t parser, term_t option)
       p->buffer->limit = val;
     if ( p->cdata )
       p->cdata->limit = val;
+  } else if ( PL_is_functor(option, FUNCTOR_max_entity_expansion1) )
+  { term_t a = PL_new_term_ref();
+    atom_t inf;
+    size_t val;
+
+    _PL_get_arg(1, option, a);
+    if ( PL_get_atom(a, &inf) && inf == ATOM_infinite )
+      p->max_entity_expansion = 0;
+    else if ( PL_get_size_ex(a, &val) )
+      p->max_entity_expansion = val;
+    else
+      return FALSE;
   } else if ( PL_is_functor(option, FUNCTOR_ignore_doctype1 ) )
   { term_t a = PL_new_term_ref();
     int val;

@@ -446,6 +446,34 @@ entity_file(dtd *dtd, dtd_entity *e)
 }
 
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+enter_entity() and leave_entity() bracket  the   expansion  of  an entity
+value.  They detect recursive entities and limit the nesting depth.
+entity_value()  counts  the  characters  of  entities  that  are expanded
+inside  other  entities  and  raises  an  error  if  this  exceeds  the
+max_entity_expansion limit.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+static int
+enter_entity(dtd_parser *p, dtd_entity *e)
+{ if ( e->in_use )
+    return gripe(p, ERC_SYNTAX_ERROR, L"Recursive entity", e->name->name);
+  if ( p->entity_depth >= MAX_ENTITY_DEPTH )
+    return gripe(p, ERC_REPRESENTATION, L"entity nesting depth");
+
+  e->in_use = TRUE;
+  p->entity_depth++;
+
+  return TRUE;
+}
+
+static void
+leave_entity(dtd_parser *p, dtd_entity *e)
+{ e->in_use = FALSE;
+  p->entity_depth--;
+}
+
+
 static const ichar *
 entity_value(dtd_parser *p, dtd_entity *e, size_t *len)
 { ichar *file;
@@ -457,6 +485,15 @@ entity_value(dtd_parser *p, dtd_entity *e, size_t *len)
     e->value = load_sgml_file_to_charp(file, normalise, &l);
     e->length = l;
     sgml_free(file);
+  }
+
+  if ( e->value && p->entity_depth > 0 )
+  { p->entity_chars += e->length;
+    if ( p->max_entity_expansion &&
+	 p->entity_chars > p->max_entity_expansion )
+    { gripe(p, ERC_RESOURCE, L"entity expansion");
+      return NULL;
+    }
   }
 
   if ( len )
@@ -499,8 +536,13 @@ expand_pentities(dtd_parser *p, const ichar *in, int ilen, ichar *out, int len)
 	if ( !(eval = entity_value(p, e, NULL)) )
 	  return FALSE;
 
-	if ( !expand_pentities(p, eval, ZERO_TERM_LEN, out, len) )
+	if ( !enter_entity(p, e) )
 	  return FALSE;
+	if ( !expand_pentities(p, eval, ZERO_TERM_LEN, out, len) )
+	{ leave_entity(p, e);
+	  return FALSE;
+	}
+	leave_entity(p, e);
 	l = (int)istrlen(out);		/* could be better */
 	out += l;
 	len -= l;
@@ -643,7 +685,13 @@ expand_entities(dtd_parser *p, const ichar *in, int len, ocharbuf *out)
 	}
 
 	if ( e->content == EC_SGML )
-	{ if ( !expand_entities(p, eval, (int)istrlen(eval), out) )
+	{ int rc;
+
+	  if ( !enter_entity(p, e) )
+	    return FALSE;
+	  rc = expand_entities(p, eval, (int)istrlen(eval), out);
+	  leave_entity(p, e);
+	  if ( !rc )
 	    return FALSE;
 	} else
 	{ const ichar *s;
@@ -859,6 +907,8 @@ iskip_layout(dtd *dtd, const ichar *in)
       { if ( in[0] == cmt && in[1] == cmt )
 	  break;
       }
+      if ( !*in )			/* unterminated comment */
+	return in;
       in++;
       continue;
     }
@@ -1029,7 +1079,12 @@ itake_number(dtd_parser *p, const ichar *in, dtd_attr *at)
       ichar *o = buf;
 
       while( HasClass(dtd, *in, CH_DIGIT) )
+      { if ( o >= buf+MAXNMLEN-1 )
+	{ gripe(p, ERC_REPRESENTATION, L"Number token too long");
+	  return NULL;
+	}
 	*o++ = *in++;
+      }
       if ( o == buf )
 	return NULL;			/* empty */
       *o = '\0';
@@ -1040,6 +1095,7 @@ itake_number(dtd_parser *p, const ichar *in, dtd_attr *at)
     case NU_INTEGER:
     { ichar *end;
 
+      errno = 0;
       at->att_def.number = wcstol(in, &end, 10);
       if ( end > in && errno != ERANGE )
 	return iskip_layout(dtd, end);
@@ -1113,7 +1169,9 @@ itake_nmtoken_chars(dtd_parser *p, const ichar *in, ichar *out, int len)
     return NULL;
   while( HasClass(dtd, *in, CH_NAME) )
   { if ( --len <= 0 )
-      gripe(p, ERC_REPRESENTATION, L"Name token too long");
+    { gripe(p, ERC_REPRESENTATION, L"Name token too long");
+      return NULL;
+    }
     *out++ = (dtd->case_sensitive ? *in++ : (ichar)towlower(*in++));
   }
   *out++ = '\0';
@@ -1355,7 +1413,8 @@ process_entity_value_declaration(dtd_parser *p,
       goto string_expected;
     decl = s;
 
-    expand_pentities(p, start, len, val, sizeof(val)/sizeof(ichar));
+    if ( !expand_pentities(p, start, len, val, sizeof(val)/sizeof(ichar)) )
+      return NULL;
 
     switch ( e->type )
     { case ET_PUBLIC:
@@ -1674,8 +1733,17 @@ shortref_add_map(dtd_parser *p, const ichar *decl, dtd_shortref *sr)
   }
   end = s;
 
+  if ( len == 0 )
+  { gripe(p, ERC_SYNTAX_ERROR, L"empty map-string", decl);
+    return NULL;
+  }
+
   for(decl=start; len > 0;)
-  { if ( *decl == 'B' )		/* blank */
+  { if ( f >= from+MAXMAPLEN-1 )
+    { gripe(p, ERC_REPRESENTATION, L"map-string too long");
+      return NULL;
+    }
+    if ( *decl == 'B' )		/* blank */
     { if ( decl[1] == 'B' )
       { *f++ = CHR_DBLANK;
 	decl += 2;
@@ -1750,7 +1818,8 @@ compile_map(dtd *dtd, dtd_shortref *sr)
       }
 
       default:
-	sr->ends[last] = TRUE;
+	if ( last < SHORTMAP_SIZE )
+	  sr->ends[last] = TRUE;
     }
   }
 }
@@ -2215,7 +2284,11 @@ itake_namegroup(dtd_parser *p, const ichar *decl,
   { charfunc ngs = CF_NG;
 
     for(;;)
-    { if ( !(decl=itake_name(p, s, &names[en++])) )
+    { if ( en >= MAXNAMEGROUP )
+      { gripe(p, ERC_REPRESENTATION, L"Too many names in name group");
+	return NULL;
+      }
+      if ( !(decl=itake_name(p, s, &names[en++])) )
       { gripe(p, ERC_SYNTAX_ERROR, L"Name expected", s);
 	return NULL;
       }
@@ -2240,6 +2313,8 @@ itake_namegroup(dtd_parser *p, const ichar *decl,
 typedef struct
 { dtd_symbol **list;
   int size;
+  int max;
+  int overflow;
 } namelist;
 
 
@@ -2247,7 +2322,10 @@ static void
 add_list_element(dtd_element *e, void *closure)
 { namelist *nl = closure;
 
-  nl->list[nl->size++] = e->name;
+  if ( nl->size < nl->max )
+    nl->list[nl->size++] = e->name;
+  else
+    nl->overflow = TRUE;
 }
 
 
@@ -2265,9 +2343,15 @@ itake_el_or_model_element_list(dtd_parser *p,
 
       nl.list = names;
       nl.size = 0;
+      nl.max = MAXATTELEM;
+      nl.overflow = FALSE;
       for_elements_in_model(model, add_list_element, &nl);
       free_model(model);
 
+      if ( nl.overflow )
+      { gripe(p, ERC_REPRESENTATION, L"Too many elements in group");
+	return NULL;
+      }
       *n = nl.size;
       return s;
     } else
@@ -2434,10 +2518,7 @@ add_attribute(dtd_parser *p, dtd_element *e, dtd_attr *a)
   for(l = &e->attributes; *l; l = &(*l)->next)
   { if ( (*l)->attribute->name == a->name )
     { gripe(p, ERC_REDEFINED, L"attribute", a->name);
-      a->references++;			/* attempt to redefine attribute: */
-      free_attribute(a);		/* first wins according to standard */
-
-      return;
+      return;				/* first wins according to standard */
     }
   }
 
@@ -2602,7 +2683,7 @@ process_attlist_declaraction(dtd_parser *p, const ichar *decl)
       if ( !(end=itake_string(dtd, decl, &start, &len)) )
       { end=itake_nmtoken_chars(p, decl, buf, sizeof(buf)/sizeof(ichar));
 	start = buf;
-	len = (int)istrlen(buf);
+	len = end ? (int)istrlen(buf) : 0;
       }
       if ( !end )
 	return gripe(p, ERC_SYNTAX_ERROR, L"Bad attribute default", decl);
@@ -2652,7 +2733,7 @@ length of the parsed data to verify we parsed all of it.
 	case AT_NMTOKENS:
 	case AT_NUMBERS:
 	case AT_NUTOKENS:
-	{ at->att_def.list = istrndup(buf, len);
+	{ at->att_def.list = istrndup(start, len);
 	  break;
 	}
 	default:
@@ -2665,12 +2746,13 @@ length of the parsed data to verify we parsed all of it.
     }
 
 					/* add to list */
-    at->references = 0;
+    at->references = 1;			/* keep while adding */
     for(i=0; i<en; i++)
     { dtd_element *e = def_element(dtd, eid[i]);
 
       add_attribute(p, e, at);
     }
+    free_attribute(at);			/* frees if no element uses it */
   }
 
   return TRUE;
@@ -3306,7 +3388,7 @@ process_attributes(dtd_parser *p, dtd_element *e, const ichar *decl,
 
 	if ( !HasClass(dtd, nm->name[0], CH_NMSTART) )
 	  gripe(p, ERC_SYNTAX_WARNING,
-		"Illegal start of attribute-name", decl);
+		L"Illegal start of attribute-name", decl);
 
 	decl = s;
 	if ( !(a=find_attribute(e, nm)) )
@@ -3346,7 +3428,7 @@ process_attributes(dtd_parser *p, dtd_element *e, const ichar *decl,
 
 		if ( IS_XML_DIALECT(dtd->dialect) )
 		  gripe(p, ERC_SYNTAX_WARNING,
-			"Value short-hand in XML mode", decl);
+			L"Value short-hand in XML mode", decl);
 		ap = new_attribute(atts);
 		ap->flags	 = 0;
 		ap->definition   = a;
@@ -3893,7 +3975,7 @@ process_pi(dtd_parser *p, const ichar *decl)
 	if ( !(end=itake_string(dtd, s, &start, &len)) )
 	{ end=itake_nmtoken_chars(p, s, buf, sizeof(buf)/sizeof(ichar));
 	  start = buf;
-	  len = (int)istrlen(buf);
+	  len = end ? (int)istrlen(buf) : 0;
 	}
 
 	if ( end )
@@ -4029,6 +4111,7 @@ new_dtd_parser(dtd *dtd)
 
   p->magic       = SGML_PARSER_MAGIC;
   p->dtd	 = dtd;
+  p->max_entity_expansion = MAX_ENTITY_EXPANSION;
   p->state	 = S_PCDATA;
   p->mark_state	 = MS_INCLUDE;
   p->dmode       = DM_DTD;
@@ -4107,11 +4190,17 @@ process_include(dtd_parser *p, const ichar *entity_name)
       return rc;
     } else
     { const ichar *text = entity_value(p, pe, NULL);
+      int rc;
 
       if ( !text )
 	return gripe(p, ERC_NO_VALUE, pe->name->name);
 
-      return process_chars(p, IN_ENTITY, entity_name, text);
+      if ( !enter_entity(p, pe) )
+	return FALSE;
+      rc = process_chars(p, IN_ENTITY, entity_name, text);
+      leave_entity(p, pe);
+
+      return rc;
     }
   }
 
@@ -4538,6 +4627,8 @@ process_entity(dtd_parser *p, const ichar *name)
 	{ locbuf oldloc;
 	  int decode = p->utf8_decode;
 
+	  if ( !enter_entity(p, e) )
+	    return FALSE;
 	  push_location(p, &oldloc);
 	  p->utf8_decode = FALSE;
 	  set_src_dtd_parser(p, IN_ENTITY, e->name->name);
@@ -4546,6 +4637,7 @@ process_entity(dtd_parser *p, const ichar *name)
 	    putchar_dtd_parser(p, *s);
 	  p->utf8_decode = decode;
 	  pop_location(p, &oldloc);
+	  leave_entity(p, e);
 	} else if ( *text )
 	{ const ichar *o;
 
@@ -4682,6 +4774,7 @@ end_document_dtd_parser(dtd_parser *p)
 int
 begin_document_dtd_parser(dtd_parser *p)
 { init_decoding(p);
+  p->entity_chars = 0;
 
   return TRUE;
 }
@@ -4795,6 +4888,15 @@ add_cdata(dtd_parser *p, int chr)
       }
     }
   }
+}
+
+
+static void
+shrink_ocharbuf(ocharbuf *buf, size_t n)
+{ if ( buf->size >= n )
+    buf->size -= n;
+  else
+    buf->size = 0;
 }
 
 
@@ -4935,7 +5037,7 @@ reprocess:
     { if ( f[CF_MDC] == chr &&
 	   p->etaglen == p->buffer->size &&
 	   istrncaseeq(p->buffer->data, p->etag, p->etaglen) )
-      { p->cdata->size -= p->etaglen+2;	/* 2 for </ */
+      { shrink_ocharbuf(p->cdata, p->etaglen+2); /* 2 for </ */
 	terminate_ocharbuf(p->cdata);
 	terminate_icharbuf(p->buffer);
 	if ( p->mark_state == MS_INCLUDE )
@@ -5015,7 +5117,8 @@ reprocess:
     case S_EMSCDATA2:
     { add_verbatim_cdata(p, chr);
       if ( f[CF_MDC] == chr )		/* ]]> */
-      { p->cdata->size -= 3;		/* Delete chars for ]] */
+      { if ( p->mark_state != MS_IGNORE )
+	  shrink_ocharbuf(p->cdata, 3);	/* Delete chars for ]] */
 	pop_marked_section(p);
 	p->state = S_PCDATA;
       } else if ( f[CF_DSC] != chr )	/* if ]]], stay in this state */

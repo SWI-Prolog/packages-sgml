@@ -196,6 +196,9 @@ typedef struct _dtd_parser
   int	   first;			/* Just seen <tag> */
   int	   waiting_for_net;		/* waiting for / in <shorttag/mode/ */
   size_t max_memory;			/* maximum buffer size */
+  size_t entity_chars;			/* chars from nested entity expansion */
+  size_t max_entity_expansion;		/* limit for entity_chars */
+  int	 entity_depth;			/* nesting of entity expansion */
   int      ignore_doctype;              /* If 1, ignore doctype declarations */
   icharbuf *buffer;			/* buffer for temp data */
   ocharbuf *cdata;			/* collected character data */

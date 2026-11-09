@@ -329,6 +329,7 @@ typedef struct _dtd_entity
   ichar *extid;				/* external identifier */
   ichar *exturl;			/* url to fetch from */
   ichar *baseurl;			/* base url for exturl */
+  int in_use;				/* being expanded */
   struct _dtd_entity *next;		/* list-link */
 } dtd_entity;
 

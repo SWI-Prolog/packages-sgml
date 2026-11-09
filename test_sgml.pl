@@ -49,6 +49,10 @@
 :- use_module(library(error)).
 :- use_module(library(sandbox), [safe_goal/1]).
 :- use_module(library(xpath)).
+:- if(exists_source(library(time))).
+:- use_module(library(time)).
+:- endif.
+:- use_module(library(yall)).
 
 :- dynamic failed/1.
 
@@ -63,7 +67,9 @@ test_sgml :-
     test_dtd_entity_property,
     test_parser_lifetime,
     test_allowed_overflow,
-    test_long_system_id.
+    test_long_system_id,
+    test_malformed_dtd,
+    test_entity_expansion.
 
 test_input(Name, Path) :-
     source_file(test_sgml, MyFile),
@@ -396,3 +402,77 @@ test_long_system_id :-
                                                 syntax_errors(quiet)]),
                        _, true),
                  delete_file(File)).
+
+%   test_malformed_dtd
+%
+%   Documents that used to crash the parser.  We only verify that
+%   parsing terminates.
+
+test_malformed_dtd :-
+    forall(malformed(Dialect, Doc),
+           parse_quietly(Dialect, Doc)),
+    length(L, 600),
+    foldl([N,N0,N1]>>(format(atom(N), 'e~d', [N0]), N1 is N0+1), L, 0, _),
+    atomic_list_concat(L, '|', Group),
+    format(string(Doc2), '<!DOCTYPE a [<!ATTLIST (~w) x CDATA #IMPLIED>]><a/>',
+           [Group]),
+    parse_quietly(xml, Doc2),
+    length(Cs, 9000),
+    maplist(=(0'a), Cs),
+    format(string(Doc3), '<?xml version=~s?><a/>', [Cs]),
+    parse_quietly(xml, Doc3),
+    numlist(1, 60, Ns),
+    findall(D, ( member(N, Ns), N1 is N+1,
+                 format(atom(D), '<!ELEMENT a~d O O (a~d)>', [N, N1])
+               ), Ds),
+    atomic_list_concat(Ds, Decls),
+    format(string(Doc4), '<!DOCTYPE r [<!ELEMENT r - - (a1)>~w]><r><a60>',
+           [Decls]),
+    parse_quietly(sgml, Doc4).
+
+malformed(xml,  "<a><![IGNORE[<![CDATA[x]]>]]>hello</a>").
+malformed(xml,  "<!DOCTYPE a [<!ATTLIST (a|b) x CDATA #IMPLIED>\c
+                 <!ATTLIST (a|c) x CDATA #IMPLIED>]><a/>").
+malformed(xml,  "<!DOCTYPE a [<!SHORTREF m \"\u0400\" e>]><a/>").
+malformed(sgml, "<!DOCTYPE a [<!SHORTREF m \"\" e>]><a/>").
+malformed(xml,  "<!DOCTYPE a [<!ENTITY e \"%nope;\">]><a>&e;</a>").
+malformed(xml,  "<!DOCTYPE a [<!ENTITY e \"&e;\">]><a>&e;</a>").
+malformed(xml,  "<!DOCTYPE a [<!ENTITY e \"&e;\">]><a x=\"&e;\"/>").
+malformed(xml,  "<!DOCTYPE a [<!ENTITY % q \"&#37;q;\"> %q;]><a/>").
+
+parse_quietly(Dialect, Doc) :-
+    catch(load_structure(string(Doc), _,
+                         [ dialect(Dialect),
+                           max_errors(-1),
+                           syntax_errors(quiet)
+                         ]),
+          _, true).
+
+%   test_entity_expansion
+%
+%   Nested entity expansion is limited.
+
+test_entity_expansion :-
+    findall(D, ( between(1, 9, I), I0 is I-1,
+                 format(atom(R), '&l~d;', [I0]),
+                 length(Rs, 10), maplist(=(R), Rs),
+                 atomic_list_concat(Rs, V),
+                 format(atom(D), '<!ENTITY l~d "~w">', [I, V])
+               ), Ds),
+    atomic_list_concat(Ds, Decls),
+    format(string(Doc), '<!DOCTYPE a [<!ENTITY l0 "lol">~w]><a>&l9;</a>',
+           [Decls]),
+    time_limited(10, parse_quietly(xml, Doc)).
+
+%   time_limited(+Time, :Goal)
+%
+%   Run Goal with a time limit if library(time) is available.  It is
+%   not in single-threaded builds.
+
+:- if(current_predicate(call_with_time_limit/2)).
+time_limited(Time, Goal) :-
+    call_with_time_limit(Time, Goal).
+:- else.
+time_limited(_Time, Goal) :-
+    call(Goal).
+:- endif.

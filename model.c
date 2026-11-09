@@ -253,6 +253,7 @@ do_find_omitted_path(dtd_state *state, dtd_element *e,
 	 t->element != CDATA_ELEMENT &&
 	 t->element->structure &&
 	 t->element->structure->omit_open &&
+	 pathlen < MAXOMITTED &&
 	 visit(t->state, visited) )
     { dtd_state *initial = make_state_engine(t->element);
 
