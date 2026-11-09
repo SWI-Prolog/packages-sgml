@@ -638,7 +638,9 @@ char_entity_value(const ichar *decl)
       v = wcstoul(s, &end, 10);
 
     if ( *end == '\0' )
-    { return (int)v;
+    { if ( v > 0x10ffff || (v >= 0xd800 && v <= 0xdfff) )
+	return 0;			/* illegal */
+      return (int)v;
     } else if ( istreq(s, L"RS") )
     { return '\n';
     } else if ( istreq(s, L"RE") )
@@ -699,8 +701,8 @@ expand_entities(dtd_parser *p, const ichar *in, int len, ocharbuf *out)
       if ( (s=isee_character_entity(dtd, in, &chr)) )
       { if ( chr == 0 )
 	  gripe(p, ERC_SYNTAX_ERROR, L"Illegal character entity", in);
-
-	add_ocharbuf(out, chr);
+	else
+	  add_ocharbuf(out, chr);
 	in = s;
 	continue;
       }
@@ -5026,14 +5028,21 @@ putchar_dtd_parser(dtd_parser *p, int chr)
   }
 
 #ifdef UTF8
+  if ( p->state == S_UTF8 && (chr & 0xc0) != 0x80 )
+  { gripe(p, ERC_SYNTAX_ERROR,		/* drop sequence; process chr */
+	  L"Bad UTF-8 sequence", L"");
+    p->state = p->utf8_saved_state;
+  }
   if ( p->state == S_UTF8 )
-  { if ( (chr & 0xc0) != 0x80 )	/* TBD: recover */
-      gripe(p, ERC_SYNTAX_ERROR, L"Bad UTF-8 sequence", L"");
-    p->utf8_char <<= 6;
+  { p->utf8_char <<= 6;
     p->utf8_char |= (chr & ~0xc0);
     if ( --p->utf8_left == 0 )
     { chr = p->utf8_char;
       p->state = p->utf8_saved_state;
+      if ( chr > 0x10ffff || (chr >= 0xd800 && chr <= 0xdfff) )
+      { gripe(p, ERC_SYNTAX_ERROR, L"Illegal UTF-8 code point", L"");
+	chr = 0xfffd;
+      }
     } else
     { return TRUE;
     }

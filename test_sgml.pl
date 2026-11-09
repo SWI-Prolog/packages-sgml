@@ -71,7 +71,8 @@ test_sgml :-
     test_malformed_dtd,
     test_entity_expansion,
     test_external_entities,
-    test_html_dtd_cache.
+    test_html_dtd_cache,
+    test_invalid_chars.
 
 test_input(Name, Path) :-
     source_file(test_sgml, MyFile),
@@ -515,3 +516,20 @@ test_html_dtd_cache :-
               _, []),
     load_html(string("<p>&foo;</p>"), DOM, []),
     \+ sub_term(bar, DOM).
+
+%   test_invalid_chars
+%
+%   Character references outside Unicode and invalid UTF-8 do not abort
+%   parsing.
+
+test_invalid_chars :-
+    load_structure(string("<a v=\"&#x110000;\">x&#xD800;y</a>"),
+                   [element(a, [v=''], [xy])],
+                   [dialect(xml), syntax_errors(quiet)]),
+    tmp_file_stream(octet, File, Out),
+    format(Out, '~s', [[0'<,0'a,0'>,0xc3,0'<,0'/,0'a,0'>,0'<,0'b,0'/,0'>]]),
+    close(Out),
+    call_cleanup(
+        load_structure(File, [element(a, [], []), element(b, [], [])],
+                       [dialect(xml), syntax_errors(quiet)]),
+        delete_file(File)).
