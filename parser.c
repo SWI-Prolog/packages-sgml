@@ -2879,6 +2879,11 @@ push_element(dtd_parser *p, dtd_element *e, int callback)
     env->space_mode = (p->environments ? p->environments->space_mode
 				       : p->dtd->space_mode);
     env->parent = p->environments;
+#ifdef XMLNS
+    if ( env->parent )
+      env->ns_parent = ( env->parent->xmlns ? env->parent
+					    : env->parent->ns_parent );
+#endif
     p->environments = env;
 
     if ( p->dtd->shorttag )

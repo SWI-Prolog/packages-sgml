@@ -82,7 +82,7 @@ xmlns_find(dtd_parser *p, dtd_symbol *ns)
 { sgml_environment *env = p->environments;
   xmlns *n;
 
-  for(; env; env = env->parent)
+  for(; env; env = env->ns_parent)	/* skip envs without xmlns */
   { for(n=env->xmlns; n; n = n->next)
     { if ( n->name == ns )
 	return n;

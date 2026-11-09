@@ -168,6 +168,7 @@ typedef struct _sgml_environment
 #ifdef XMLNS
   struct _xmlns *xmlns;			/* XML namespace */
   struct _xmlns *thisns;		/* Name space of element */
+  struct _sgml_environment *ns_parent;	/* Nearest ancestor with xmlns */
 #endif
 #ifdef XMLBASE
   ichar *uri_base;			/* xml:base handling */
