@@ -217,6 +217,7 @@ typedef struct _dtd_parser
   int	   utf8_decode;			/* decode UTF-8 sequences? */
   int      utf8_char;			/* building character */
   int	   utf8_left;			/* bytes left */
+  int	   utf8_min;			/* least code that needs them */
   dtdstate utf8_saved_state;		/* state from which we come */
 #endif
   dtd_srcloc	location;		/* Current location */

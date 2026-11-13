@@ -72,7 +72,8 @@ test_sgml :-
     test_entity_expansion,
     test_external_entities,
     test_html_dtd_cache,
-    test_invalid_chars.
+    test_invalid_chars,
+    test_overlong_utf8.
 
 test_input(Name, Path) :-
     source_file(test_sgml, MyFile),
@@ -533,3 +534,24 @@ test_invalid_chars :-
         load_structure(File, [element(a, [], []), element(b, [], [])],
                        [dialect(xml), syntax_errors(quiet)]),
         delete_file(File)).
+
+%   test_overlong_utf8
+%
+%   Only the shortest UTF-8 encoding of a code point is valid.  Longer
+%   ones, such as C0 AF for "/", are replaced by U+FFFD.
+
+test_overlong_utf8 :-
+    forall(member(Bytes, [ [0xc0,0xaf],
+                           [0xe0,0x80,0xaf],
+                           [0xf0,0x80,0x80,0xaf]
+                         ]),
+           ( append([`<a>x`, Bytes, `y</a>`], Doc),
+             tmp_file_stream(octet, File, Out),
+             format(Out, '~s', [Doc]),
+             close(Out),
+             call_cleanup(
+                 load_structure(File, [element(a, [], [Text])],
+                                [dialect(xml), syntax_errors(quiet)]),
+                 delete_file(File)),
+             atom_codes(Text, [0'x, 0xfffd, 0'y])
+           )).

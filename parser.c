@@ -4901,6 +4901,7 @@ process_utf8(dtd_parser *p, int chr)
   p->state = S_UTF8;
   p->utf8_char = chr & mask;
   p->utf8_left = bytes;
+  p->utf8_min  = bytes == 1 ? 0x80 : 1 << (5*bytes+1); /* else overlong */
 }
 #endif
 
@@ -5044,7 +5045,8 @@ putchar_dtd_parser(dtd_parser *p, int chr)
     if ( --p->utf8_left == 0 )
     { chr = p->utf8_char;
       p->state = p->utf8_saved_state;
-      if ( chr > 0x10ffff || (chr >= 0xd800 && chr <= 0xdfff) )
+      if ( chr < p->utf8_min || chr > 0x10ffff ||
+	   (chr >= 0xd800 && chr <= 0xdfff) )
       { gripe(p, ERC_SYNTAX_ERROR, L"Illegal UTF-8 code point", L"");
 	chr = 0xfffd;
       }
