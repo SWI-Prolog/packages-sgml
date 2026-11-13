@@ -100,9 +100,9 @@ static int		process_entity_declaration(dtd_parser *p,
 						    const ichar *decl);
 static void		free_notations(dtd_notation *n);
 static void		free_shortrefs(dtd_shortref *sr);
-static int		process_cdata(dtd_parser *p, int last);
+static bool		process_cdata(dtd_parser *p, int last);
 static int		process_entity(dtd_parser *p, const ichar *name);
-static int		emit_cdata(dtd_parser *p, int last);
+static bool		emit_cdata(dtd_parser *p, int last);
 static dtd_space_mode	istr_to_space_mode(const ichar *val);
 static void		update_space_mode(dtd_parser *p, dtd_element *e,
 					  size_t natts, sgml_attribute *atts);
@@ -116,9 +116,9 @@ int			putchar_dtd_parser(dtd_parser *p, int chr);
 void			free_dtd_parser(dtd_parser *p);
 static const ichar *	isee_character_entity(dtd *dtd, const ichar *in,
 					      int *chr);
-static int		add_default_attributes(dtd_parser *p, dtd_element *e,
+static bool		add_default_attributes(dtd_parser *p, dtd_element *e,
 					       sgml_attribute_list *atts);
-static int		prepare_cdata(dtd_parser *p);
+static bool		prepare_cdata(dtd_parser *p);
 static void		init_attribute_list(sgml_attribute_list *atts);
 static void		clear_attribute_list(sgml_attribute_list *atts);
 static sgml_attribute * new_attribute(sgml_attribute_list *atts);
@@ -466,7 +466,7 @@ than in the internal subset of a document or the entity was declared in a
 document that is read from a file (i.e., not from a string or stream).
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-static int
+static bool
 external_entity_allowed(dtd_parser *p, dtd_entity *e, ichar *file,
 			int catalog)
 { if ( catalog || p->dtd->system_entities || e->trusted || e->baseurl )
@@ -686,7 +686,7 @@ isee_character_entity(dtd *dtd, const ichar *in, int *chr)
 Expand entities in a string.  Used to expand CDATA attribute values.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-static int
+static bool
 expand_entities(dtd_parser *p, const ichar *in, int len, ocharbuf *out)
 { const ichar *s;
   const ichar *end = &in[len];
@@ -2040,7 +2040,7 @@ match_map(dtd *dtd, dtd_map *map, ocharbuf *buf)
 }
 
 
-static int
+static bool
 match_shortref(dtd_parser *p)
 { dtd_map *map;
 
@@ -2839,7 +2839,7 @@ in_or_excluded(sgml_environment *env, dtd_element *e)
 }
 
 
-static int
+static bool
 complete(sgml_environment *env)
 { if ( env->element->structure &&
        !env->element->undefined &&
@@ -2950,7 +2950,7 @@ Pop the stack,  closing  all  environment   uptil  `to'.  The  close was
 initiated by pushing the element `e'.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-static int
+static bool
 pop_to(dtd_parser *p, sgml_environment *to, dtd_element *e0)
 { sgml_environment *env, *parent;
 
@@ -3026,7 +3026,7 @@ allow_for(dtd_element *in, dtd_element *e)
 
 
 
-static int
+static bool
 open_element(dtd_parser *p, dtd_element *e, int warn)
 { if ( !p->environments && p->enforce_outer_element )
   { dtd_element *f = p->enforce_outer_element->element;
@@ -3517,7 +3517,7 @@ This function adds attributes for omitted  default and fixed attributes.
 These attributes are added to  the  end   of  the  attribute  list.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-static int
+static bool
 add_default_attributes(dtd_parser *p, dtd_element *e,
 		       sgml_attribute_list *atts)
 { dtd_attr_list *al;
@@ -3743,7 +3743,7 @@ process_net(dtd_parser *p)
     We've seen a / of a shorttag element.  Close this one.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-static int
+static bool
 process_net(dtd_parser *p)
 { sgml_environment *env;
 
@@ -4004,7 +4004,7 @@ Process <? ... ?>
 Should deal with character encoding for XML documents.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-static int
+static bool
 process_pi(dtd_parser *p, const ichar *decl)
 { const ichar *s;
   dtd *dtd = p->dtd;
@@ -4225,7 +4225,7 @@ free_dtd_parser(dtd_parser *p)
 }
 
 
-static int
+static bool
 process_chars(dtd_parser *p, input_type in, const ichar *name, const ichar *s)
 { locbuf old;
 
@@ -4416,7 +4416,7 @@ cb_cdata(dtd_parser *p, ocharbuf *buf, size_t offset, size_t size)
 }
 
 
-static int
+static bool
 emit_cdata(dtd_parser *p, int last)
 { dtd *dtd = p->dtd;
   locbuf locsafe;
@@ -4580,7 +4580,7 @@ emit_cdata(dtd_parser *p, int last)
 }
 
 
-static int
+static bool
 prepare_cdata(dtd_parser *p)
 { if ( p->cdata->size == 0 )
     return true;
@@ -4624,7 +4624,7 @@ prepare_cdata(dtd_parser *p)
 }
 
 
-static int
+static bool
 process_cdata(dtd_parser *p, int last)
 { prepare_cdata(p);
 

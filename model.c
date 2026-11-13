@@ -109,7 +109,7 @@ typedef struct _visited
 static void	translate_model(dtd_model *m, dtd_state *from, dtd_state *to);
 static transition *state_transitions(dtd_state *state);
 
-static int
+static bool
 visit(dtd_state *state, visited *visited)
 { int i;
 
@@ -164,7 +164,7 @@ make_dtd_transition(dtd_state *here, dtd_element *e)
 }
 
 
-static int
+static bool
 find_same_state(dtd_state *final, dtd_state *here, visited *visited)
 { transition *t;
 
@@ -237,7 +237,7 @@ state_allows_for(dtd_state *state, dtd_element **allow, int *n)
 }
 
 
-static int
+static bool
 do_find_omitted_path(dtd_state *state, dtd_element *e,
 		     dtd_element **path, int *pl,
 		     visited *visited)

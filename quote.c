@@ -147,7 +147,7 @@ add_char_buf(charbuf *b, char chr)
 }
 
 
-static int
+static bool
 add_char_bufW(charbuf *b, int chr)
 {
 #if SIZEOF_WCHAR_T == 2
@@ -178,7 +178,7 @@ add_char_bufW(charbuf *b, int chr)
 }
 
 
-static int
+static bool
 add_str_buf(charbuf *b, const char *s)
 { size_t len = strlen(s);
 
@@ -193,7 +193,7 @@ add_str_buf(charbuf *b, const char *s)
 }
 
 
-static int
+static bool
 add_str_bufW(charbuf *b, const char *s)
 { size_t len = strlen(s);
 

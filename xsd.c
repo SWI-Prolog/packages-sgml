@@ -249,7 +249,7 @@ typedef struct
 } time;
 
 
-static int
+static bool
 get_int_arg(term_t t, int n, int *ip)
 { term_t a = PL_new_term_ref();
 
@@ -258,7 +258,7 @@ get_int_arg(term_t t, int n, int *ip)
 }
 
 
-static int
+static bool
 get_int_args(term_t t, int n, int *av)
 { term_t a = PL_new_term_ref();
   int i;
@@ -272,7 +272,7 @@ get_int_args(term_t t, int n, int *av)
   return true;
 }
 
-static int
+static bool
 get_time_args(term_t t, int offset, time *tm)
 { term_t a = PL_new_term_ref();
 
@@ -377,7 +377,7 @@ parse_date_parts(const char *in, int *av, size_t avlen)
 }
 
 
-static int
+static bool
 int_domain(const char *domain, int i)
 { term_t t = PL_new_term_ref();
 
@@ -385,7 +385,7 @@ int_domain(const char *domain, int i)
 }
 
 
-static int
+static bool
 float_domain(const char *domain, double f)
 { term_t t = PL_new_term_ref();
 
@@ -417,7 +417,7 @@ interested in such calculations with the proleptic Gregorian calendar
 have adopted it), and is consistent with the current edition of ISO
 8601.
 */
-static int
+static bool
 valid_year(int i)
 {
 #if XSD_VERSION_1_0
@@ -445,7 +445,7 @@ mkyear(int v, int sign)
 }
 
 
-static int
+static bool
 valid_month(int i)
 { if ( i >= 1 && i <= 12 )
     return true;
@@ -453,7 +453,7 @@ valid_month(int i)
 }
 
 
-static int
+static bool
 valid_day(int i)
 { if ( i >= 1 && i <= 31 )
     return true;
@@ -461,7 +461,7 @@ valid_day(int i)
 }
 
 
-static int
+static bool
 valid_hour(int i)
 { if ( i >= 0 && i <= 23 )
     return true;
@@ -469,7 +469,7 @@ valid_hour(int i)
 }
 
 
-static int
+static bool
 valid_minute(int i)
 { if ( i >= 0 && i <= 59 )
     return true;
@@ -477,7 +477,7 @@ valid_minute(int i)
 }
 
 
-static int
+static bool
 valid_second(int i)
 { if ( i >= 0 && i <= 59 )
     return true;
@@ -485,7 +485,7 @@ valid_second(int i)
 }
 
 
-static int
+static bool
 valid_second_f(double f)
 { if ( f >= 0.0 && f < 60.0 )
     return true;
@@ -493,13 +493,13 @@ valid_second_f(double f)
 }
 
 
-static int
+static bool
 valid_date(int v[3])
 { return (valid_year(v[0]) && valid_month(v[1]) && valid_day(v[2]));
 }
 
 
-static int
+static bool
 valid_time(const time *t)
 { if ( t->hour == 24 && t->minute == 0 &&
        (t->sec_is_float ? t->second.f == 0.0 : t->second.i == 0) )
@@ -517,7 +517,7 @@ valid_time(const time *t)
 }
 
 
-static int
+static bool
 valid_tz(int hoff, int moff)
 { if ( hoff >= 0 && hoff <= 13 )
     return valid_minute(moff);
@@ -528,7 +528,7 @@ valid_tz(int hoff, int moff)
 }
 
 
-static int
+static bool
 valid_tzoffset(int sec)
 { if ( sec < -12*3600 || sec > 12*3600 )
     return int_domain("tz_offset", sec);
@@ -596,7 +596,7 @@ time_sec_chars(time *t, char *buf, size_t sz)
     xsd_time_string(-Term, ?Type, +String) is det.
 */
 
-static int
+static bool
 is_time_url(atom_t url)
 { return ( url == URL_date ||
 	   url == URL_dateTime ||
@@ -608,7 +608,7 @@ is_time_url(atom_t url)
 	   url == URL_time );
 }
 
-static int
+static bool
 maybe_invalid_time_url(term_t type)
 { atom_t url;
 
@@ -622,7 +622,7 @@ maybe_invalid_time_url(term_t type)
 }
 
 
-static int
+static bool
 unify_parsed_type(term_t t, atom_t type)
 { if ( PL_unify_atom(t, type) )
   { return true;
@@ -645,7 +645,7 @@ unify_parsed_type(term_t t, atom_t type)
 }
 
 
-static int
+static bool
 incompatible_time_term(term_t term, atom_t type_atom)
 { term_t ex;
 
@@ -660,7 +660,7 @@ incompatible_time_term(term_t term, atom_t type_atom)
 	 );
 }
 
-static int
+static bool
 unify_prolog_type(term_t term, term_t type_term, atom_t type_atom)
 { if ( PL_unify_atom(type_term, type_atom) )
   { return true;

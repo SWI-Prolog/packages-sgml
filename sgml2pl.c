@@ -314,7 +314,7 @@ static int on_data(dtd_parser *p, data_type type, size_t len, const wchar_t *dat
 		 *	       ACCESS		*
 		 *******************************/
 
-static int
+static bool
 unify_parser(term_t parser, dtd_parser *p)
 { return PL_unify_term(parser, PL_FUNCTOR, FUNCTOR_sgml_parser1,
 			 PL_POINTER, p);
@@ -341,7 +341,7 @@ static dtd_parser **live_parsers = NULL;
 static size_t live_count = 0;
 static size_t live_size  = 0;
 
-static int
+static bool
 register_parser(dtd_parser *p)
 { int rc = true;
 
@@ -363,7 +363,7 @@ register_parser(dtd_parser *p)
   return rc;
 }
 
-static int
+static bool
 live_parser(dtd_parser *p, int unregister)
 { size_t i;
   int rc = false;
@@ -406,7 +406,7 @@ get_parser(term_t parser, dtd_parser **p)
 }
 
 
-static int
+static bool
 unify_dtd(term_t t, dtd *dtd)
 { if ( dtd->doctype )
     return PL_unify_term(t, PL_FUNCTOR, FUNCTOR_dtd2,
@@ -530,7 +530,7 @@ pl_free_dtd(term_t t)
 		 *	   DATA EXCHANGE	*
 		 *******************************/
 
-static int
+static bool
 put_atom_wchars(term_t t, wchar_t const *s)
 { PL_put_variable(t);
   return PL_unify_wchars(t, PL_ATOM, ENDSNUL, s);
@@ -1298,7 +1298,7 @@ unify_attribute_list(dtd_parser *p, term_t alist,
 
 
 
-static int
+static bool
 on_begin_(dtd_parser *p, dtd_element *e, size_t argc, sgml_attribute *argv)
 { parser_data *pd = p->closure;
 
@@ -1423,7 +1423,7 @@ ok:
 }
 
 
-static int
+static bool
 on_entity_(dtd_parser *p, dtd_entity *e, int chr)
 { parser_data *pd = p->closure;
 
@@ -1486,7 +1486,7 @@ on_entity_(dtd_parser *p, dtd_entity *e, int chr)
 }
 
 
-static int
+static bool
 on_data_(dtd_parser *p, data_type type, size_t len, const wchar_t *data)
 { parser_data *pd = p->closure;
 
@@ -1562,7 +1562,7 @@ on_cdata(dtd_parser *p, data_type type, size_t len, const wchar_t *data)
 }
 
 
-static int
+static bool
 can_end_omitted(dtd_parser *p)
 { sgml_environment *env;
 
@@ -1577,7 +1577,7 @@ can_end_omitted(dtd_parser *p)
 }
 
 
-static int
+static bool
 on_error_(dtd_parser *p, dtd_error *error)
 { parser_data *pd = p->closure;
   const char *severity;
@@ -1705,7 +1705,7 @@ on_error_(dtd_parser *p, dtd_error *error)
 }
 
 
-static int
+static bool
 on_xmlns_(dtd_parser *p, dtd_symbol *ns, dtd_symbol *url)
 { parser_data *pd = p->closure;
 
@@ -2516,7 +2516,7 @@ dtd_prop_elements(dtd *dtd, term_t prop)
 }
 
 
-static int
+static bool
 get_element(dtd *dtd, term_t name, dtd_element **elem)
 { ichar *s;
   dtd_element *e;
@@ -2608,7 +2608,7 @@ static plattrdef plattrs[] =
 };
 
 
-static int
+static bool
 unify_attribute_type(term_t type, dtd_attr *a)
 { plattrdef *ad = plattrs;
 
@@ -2655,7 +2655,7 @@ unify_attribute_type(term_t type, dtd_attr *a)
 
 
 
-static int
+static bool
 unify_attribute_default(term_t defval, dtd_attr *a)
 { int v;
 
