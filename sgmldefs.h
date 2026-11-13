@@ -78,10 +78,7 @@ typedef wchar_t ichar;			/* input character */
 		 *	    CONSTANTS		*
 		 *******************************/
 
-#ifndef TRUE
-#define TRUE 1
-#define FALSE 0
-#endif
+#include <stdbool.h>
 
 #define LF 10
 #define CR 13

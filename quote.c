@@ -61,7 +61,7 @@ static atom_t ATOM_unicode;
 static atom_t ATOM_ascii;
 
 #define __COMPARE_AND_SWAP(at, from, to) \
-	__atomic_compare_exchange_n(at, &(from), to, FALSE, \
+	__atomic_compare_exchange_n(at, &(from), to, false, \
 				    __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
 
 static inline int
@@ -125,7 +125,7 @@ room_buf(charbuf *b, size_t room)
     b->end = b->bufp + used;
   }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -158,10 +158,10 @@ add_char_bufW(charbuf *b, int chr)
       p = utf16_put_char(p, chr);
       b->end = (char *)p;
 
-      return TRUE;
+      return true;
     }
 
-    return FALSE;
+    return false;
   }
 #endif
 
@@ -171,10 +171,10 @@ add_char_bufW(charbuf *b, int chr)
     *p++ = chr;
     b->end = (char *)p;
 
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -186,10 +186,10 @@ add_str_buf(charbuf *b, const char *s)
   { memcpy(b->end, s, len+1);
     b->end += len;
 
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -204,10 +204,10 @@ add_str_bufW(charbuf *b, const char *s)
       *p++ = *s++;
     b->end = (char *)p;
 
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -224,7 +224,7 @@ do_quote(term_t in, term_t quoted, const char **map, int maxchr)
 
   if ( !PL_get_nchars(in, &len, &inA, CVT_ATOMIC) &&
        !PL_get_wchars(in, &len, &inW0, CVT_ATOMIC|CVT_EXCEPTION) )
-    return FALSE;
+    return false;
   if ( len == 0 )
     return PL_unify(in, quoted);
 
@@ -236,7 +236,7 @@ do_quote(term_t in, term_t quoted, const char **map, int maxchr)
 
       if ( map[c] )
       { if ( !add_str_buf(&buffer, map[c]) )
-	  return FALSE;
+	  return false;
 
 	changes++;
       } else if ( c > maxchr )
@@ -244,7 +244,7 @@ do_quote(term_t in, term_t quoted, const char **map, int maxchr)
 
 	snprintf(buf, sizeof buf, "&#%d;", c);
 	if ( !add_str_buf(&buffer, buf) )
-	  return FALSE;
+	  return false;
 
 	changes++;
       } else
@@ -267,7 +267,7 @@ do_quote(term_t in, term_t quoted, const char **map, int maxchr)
 
       if ( c <= 0xff && map[c] )
       { if ( !add_str_bufW(&buffer, map[c]) )
-	  return FALSE;
+	  return false;
 
 	changes++;
       } else if ( c > maxchr )
@@ -275,7 +275,7 @@ do_quote(term_t in, term_t quoted, const char **map, int maxchr)
 
 	snprintf(buf, sizeof(buf), "&#%d;", c);
 	if ( !add_str_bufW(&buffer, buf) )
-	  return FALSE;
+	  return false;
 
 	changes++;
       } else
@@ -353,7 +353,7 @@ xml_quote_attribute(term_t in, term_t out, term_t encoding)
   }
 
   if ( !get_max_chr(encoding, &maxchr) )
-    return FALSE;
+    return false;
 
   return do_quote(in, out, (const char **)map, maxchr);
 }
@@ -383,7 +383,7 @@ xml_quote_cdata(term_t in, term_t out, term_t encoding)
   }
 
   if ( !get_max_chr(encoding, &maxchr) )
-    return FALSE;
+    return false;
 
   return do_quote(in, out, (const char **)map, maxchr);
 }
@@ -426,7 +426,7 @@ xml_name(term_t in, term_t encoding)
   int maxchr;
 
   if ( !get_max_chr(encoding, &maxchr) )
-    return FALSE;
+    return false;
 
   if ( !map )
     map = new_charclass();
@@ -435,22 +435,22 @@ xml_name(term_t in, term_t encoding)
   { int c;
 
     if ( len == 0 )
-      return FALSE;
+      return false;
 
     c = ins[0] & 0xff;
     if ( c > maxchr )
-      return FALSE;
+      return false;
 
     if ( !(map->class[c] & CH_NMSTART) )
-      return FALSE;
+      return false;
     for(i=1; i<len; i++)
     { c = ins[i] & 0xff;
 
       if ( c > maxchr || !(map->class[c] & CH_NAME) )
-	return FALSE;
+	return false;
     }
 
-    return TRUE;
+    return true;
   }
   if ( PL_get_wchars(in, &len, &inW0, CVT_ATOMIC) )
   { const wchar_t *inW = inW0;
@@ -458,25 +458,25 @@ xml_name(term_t in, term_t encoding)
     int c;
 
     if ( len == 0 )
-      return FALSE;
+      return false;
 
     inW = get_wchar(inW, &c);
     if ( c > maxchr ||
 	 !is_xml_nmstart(map, c) )
-      return FALSE;
+      return false;
 
     while(inW < endW)
     { inW = get_wchar(inW, &c);
 
       if ( c > maxchr ||
 	   !is_xml_chname(map, c) )
-	return FALSE;
+	return false;
     }
 
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -499,12 +499,12 @@ iri_xml_namespace(term_t iri, term_t namespace, term_t localname)
       p++;
 
     if ( !PL_unify_atom_nchars(namespace, p-s, s) )
-      return FALSE;
+      return false;
     if ( localname &&
 	 !PL_unify_atom_nchars(localname, e-p, p) )
-      return FALSE;
+      return false;
 
-    return TRUE;
+    return true;
   } else if ( PL_get_wchars(iri, &len, &w, CVT_ATOM|CVT_STRING|CVT_EXCEPTION) )
   { const pl_wchar_t *e = &w[len];
     const pl_wchar_t *p = e;
@@ -524,15 +524,15 @@ iri_xml_namespace(term_t iri, term_t namespace, term_t localname)
     }
 
     if ( !PL_unify_wchars(namespace, PL_ATOM, p-w, w) )
-      return FALSE;
+      return false;
     if ( localname &&
 	 !PL_unify_wchars(localname, PL_ATOM, e-p, p) )
-      return FALSE;
+      return false;
 
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -546,11 +546,11 @@ static foreign_t
 pl_xml_basechar(term_t t)
 { int c;
 
-  if ( PL_get_char_ex(t, &c, FALSE) &&
+  if ( PL_get_char_ex(t, &c, false) &&
        xml_basechar(c) )
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 
@@ -558,11 +558,11 @@ static foreign_t
 pl_xml_ideographic(term_t t)
 { int c;
 
-  if ( PL_get_char_ex(t, &c, FALSE) &&
+  if ( PL_get_char_ex(t, &c, false) &&
        xml_ideographic(c) )
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 
@@ -570,11 +570,11 @@ static foreign_t
 pl_xml_combining_char(term_t t)
 { int c;
 
-  if ( PL_get_char_ex(t, &c, FALSE) &&
+  if ( PL_get_char_ex(t, &c, false) &&
        xml_combining_char(c) )
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 
@@ -582,11 +582,11 @@ static foreign_t
 pl_xml_digit(term_t t)
 { int c;
 
-  if ( PL_get_char_ex(t, &c, FALSE) &&
+  if ( PL_get_char_ex(t, &c, false) &&
        xml_digit(c) )
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 
@@ -594,11 +594,11 @@ static foreign_t
 pl_xml_extender(term_t t)
 { int c;
 
-  if ( PL_get_char_ex(t, &c, FALSE) &&
+  if ( PL_get_char_ex(t, &c, false) &&
        xml_extender(c) )
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 

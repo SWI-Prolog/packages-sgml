@@ -48,7 +48,7 @@
 char *program;
 int nerrors = 0;
 int nwarnings = 0;
-int style_messages = FALSE;
+int style_messages = false;
 
 static void
 usage(void)
@@ -137,7 +137,7 @@ print_close(dtd_parser * p, dtd_element * e)
 { print_word(p, ')', e->name->name, 0);
   putchar('\n');
 
-  return TRUE;
+  return true;
 }
 
 
@@ -148,23 +148,23 @@ typedef struct atdef
 } atdef;
 
 static atdef attrs[] = {
-  {AT_CDATA,	"CDATA",    FALSE},
-  {AT_ENTITY,	"ENTITY",   FALSE},
-  {AT_ENTITIES,	"ENTITY",   TRUE},
-  {AT_ID,	"ID",	    FALSE},
-  {AT_IDREF,	"IDREF",    FALSE},
-  {AT_IDREFS,	"IDREF",    TRUE},
-  {AT_NAME,	"NAME",	    FALSE},
-  {AT_NAMES,	"NAME",	    TRUE},
-  {AT_NMTOKEN,	"NMTOKEN",  FALSE},
-  {AT_NMTOKENS,	"NMTOKEN",  TRUE},
-  {AT_NUMBER,	"NUMBER",   FALSE},
-  {AT_NUMBERS,	"NUMBER",   TRUE},
-  {AT_NUTOKEN,	"NUTOKEN",  FALSE},
-  {AT_NUTOKENS,	"NUTOKEN",  TRUE},
-  {AT_NOTATION,	"NOTATION", FALSE},
+  {AT_CDATA,	"CDATA",    false},
+  {AT_ENTITY,	"ENTITY",   false},
+  {AT_ENTITIES,	"ENTITY",   true},
+  {AT_ID,	"ID",	    false},
+  {AT_IDREF,	"IDREF",    false},
+  {AT_IDREFS,	"IDREF",    true},
+  {AT_NAME,	"NAME",	    false},
+  {AT_NAMES,	"NAME",	    true},
+  {AT_NMTOKEN,	"NMTOKEN",  false},
+  {AT_NMTOKENS,	"NMTOKEN",  true},
+  {AT_NUMBER,	"NUMBER",   false},
+  {AT_NUMBERS,	"NUMBER",   true},
+  {AT_NUTOKEN,	"NUTOKEN",  false},
+  {AT_NUTOKENS,	"NUTOKEN",  true},
+  {AT_NOTATION,	"NOTATION", false},
 
-  {AT_CDATA,	(char *) 0, FALSE}
+  {AT_CDATA,	(char *) 0, false}
 };
 
 
@@ -235,7 +235,7 @@ print_open(dtd_parser * p, dtd_element * e, int argc, sgml_attribute *argv)
   }
   print_word(p, '(', e->name->name, 0);
   putchar('\n');
-  return TRUE;
+  return true;
 }
 
 
@@ -259,7 +259,7 @@ print_data(dtd_parser * p, data_type type, int len, const wchar_t *data)
   wputc(c, stdout);
   wprint_escaped(stdout, data, len);
   wputc('\n', stdout);
-  return TRUE;
+  return true;
 }
 
 
@@ -269,7 +269,7 @@ on_entity(dtd_parser *p, dtd_entity *e, int chr)
     printf("&#%d;\n", chr);
   else
     wprintf(L"&%s;\n", e->name->name);
-  return TRUE;
+  return true;
 }
 
 
@@ -277,7 +277,7 @@ static int
 on_pi(dtd_parser *p, ichar const *pi)
 { wputc('?', stdout);
   wprint_escaped(stdout, pi, wcslen(pi));
-  return TRUE;
+  return true;
 }
 
 
@@ -311,7 +311,7 @@ on_error(dtd_parser * p, dtd_error * error)
   { case ERS_STYLE:
       severity = "Style";
       if ( !style_messages )
-	return TRUE;
+	return true;
       break;
     case ERS_WARNING:
       severity = "Warning";
@@ -335,7 +335,7 @@ on_error(dtd_parser * p, dtd_error * error)
 	       error->plain_message);
   }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -378,28 +378,28 @@ int
 main(int argc, char **argv)
 { dtd_parser *p = NULL;
   char *s;
-  int xml = FALSE;
-  int output = TRUE;
-  int nodefs = FALSE;		/* include defaulted attributes */
+  int xml = false;
+  int output = true;
+  int nodefs = false;		/* include defaulted attributes */
 
   setlocale(LC_CTYPE, "");
 
   s = strchr(argv[0], '/');
   program = s == NULL ? argv[0] : s + 1;
   if (streq(program, "xml"))
-    xml = TRUE;
+    xml = true;
 
   shift;
 
   while (argc > 0 && argv[0][0] == '-')
   { if (streq(argv[0], "-xml"))
-    { xml = TRUE;
+    { xml = true;
     } else if (streq(argv[0], "-s"))
-    { output = FALSE;
+    { output = false;
     } else if (streq(argv[0], "-nodefs"))
-    { nodefs = TRUE;
+    { nodefs = true;
     } else if (streq(argv[0], "-style"))
-    { style_messages = TRUE;
+    { style_messages = true;
     } else
     { usage();
     }

@@ -53,7 +53,7 @@ sgml2pl_error(plerrorid id, ...)
   if ( !(except = PL_new_term_ref()) ||
        !(formal = PL_new_term_ref()) ||
        !(swi	= PL_new_term_ref()) )
-    return FALSE;
+    return false;
 
   va_start(args, id);
   switch(id)
@@ -181,7 +181,7 @@ sgml2pl_error(plerrorid id, ...)
 			PL_FUNCTOR_CHARS, "context", 2,
 			  PL_TERM, predterm,
 			  PL_TERM, msgterm) )
-      rc = FALSE;
+      rc = false;
   }
 
   if ( rc )
@@ -193,6 +193,6 @@ sgml2pl_error(plerrorid id, ...)
   if ( rc )
     return PL_raise_exception(except);
 
-  return FALSE;
+  return false;
 }
 

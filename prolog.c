@@ -522,9 +522,9 @@ prolog_print_dtd(dtd *dtd, unsigned int flags)
 
   if ( errors )
   { fprintf(stderr, "Warning: DTD contained %d errors\n", errors);
-    return FALSE;
+    return false;
   }
 
-  return TRUE;
+  return true;
 }
 

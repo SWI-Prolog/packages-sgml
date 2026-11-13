@@ -115,17 +115,17 @@ visit(dtd_state *state, visited *visited)
 
   for(i=0; i<visited->size; i++)
   { if ( visited->states[i] == state )
-      return FALSE;
+      return false;
   }
 
   if ( visited->size >= MAX_VISITED )
   { fprintf(stderr, "Reached MAX_VISITED!\n");
-    return FALSE;
+    return false;
   }
 
   visited->states[visited->size++] = state;
 
-  return TRUE;
+  return true;
 }
 
 
@@ -169,16 +169,16 @@ find_same_state(dtd_state *final, dtd_state *here, visited *visited)
 { transition *t;
 
   if ( final == here )
-    return TRUE;
+    return true;
 
   for(t=state_transitions(here); t; t=t->next)
   { if ( t->element == NULL && visit(t->state, visited) )
     { if ( find_same_state(final, t->state, visited) )
-	return TRUE;
+	return true;
     }
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -247,7 +247,7 @@ do_find_omitted_path(dtd_state *state, dtd_element *e,
 
   for(t=tset; t; t=t->next)
   { if ( t->element == e )
-      return TRUE;
+      return true;
 
     if ( t->element &&
 	 t->element != CDATA_ELEMENT &&
@@ -260,7 +260,7 @@ do_find_omitted_path(dtd_state *state, dtd_element *e,
       path[pathlen] = t->element;
       *pl = pathlen+1;
       if ( do_find_omitted_path(initial, e, path, pl, visited) )
-	return TRUE;
+	return true;
       *pl = pathlen;
     }
   }
@@ -269,11 +269,11 @@ do_find_omitted_path(dtd_state *state, dtd_element *e,
   { if ( !t->element &&
 	 visit(t->state, visited) )
     { if ( do_find_omitted_path(t->state, e, path, pl, visited) )
-	return TRUE;
+	return true;
     }
   }
 
-  return FALSE;
+  return false;
 }
 
 

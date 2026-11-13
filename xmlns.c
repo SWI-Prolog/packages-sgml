@@ -168,21 +168,21 @@ xmlns_resolve_attribute(dtd_parser *p, dtd_symbol *id,
       if ( istrprefix(L"xml", buf) )	/* XML reserved namespaces */
       { *url = n->name;
       *prefix = NULL;
-        return TRUE;
+        return true;
       } else if ( (ns = xmlns_find(p, n)) )
       { if ( ns->url->name[0] )
 	  *url = ns->url->name;
 	else
           *url = NULL;
         *prefix = n->name;
-	return TRUE;
+	return true;
       } else
       { *url = n->name;			/* undefined namespace */
         *prefix = NULL;
 	if ( p->xml_no_ns == NONS_QUIET )
-	  return TRUE;
+	  return true;
 	gripe(p, ERC_EXISTENCE, L"namespace", n->name);
-	return FALSE;
+	return false;
       }
     }
     *o++ = *s;
@@ -197,7 +197,7 @@ xmlns_resolve_attribute(dtd_parser *p, dtd_symbol *id,
   else
     *url = NULL;			/* no default namespace is defined */
 
-  return TRUE;
+  return true;
 }
 
 
@@ -234,14 +234,14 @@ xmlns_resolve_element(dtd_parser *p, const ichar **local, const ichar **url, con
 	  else
 	    *url = NULL;
 	  e->thisns = ns;		/* default for attributes */
-	  return TRUE;
+	  return true;
 	} else
 	{ *url = n->name;		/* undefined namespace */
 	  e->thisns = xmlns_push(p, n->name, n->name); /* define implicitly */
 	  if ( p->xml_no_ns == NONS_QUIET )
-	    return TRUE;
+	    return true;
 	  gripe(p, ERC_EXISTENCE, L"namespace", n->name);
-	  return FALSE;
+	  return false;
 	}
       }
       *o++ = *s;
@@ -260,9 +260,9 @@ xmlns_resolve_element(dtd_parser *p, const ichar **local, const ichar **url, con
       e->thisns = NULL;
     }
 
-    return TRUE;
+    return true;
   } else
-    return FALSE;
+    return false;
 }
 
 

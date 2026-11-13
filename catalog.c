@@ -91,10 +91,7 @@ static pthread_mutex_t catalog_mutex = PTHREAD_MUTEX_INITIALIZER;
 #ifndef EOS
 #define EOS '\0'
 #endif
-#ifndef TRUE
-#define TRUE 1
-#define FALSE 0
-#endif
+#include <stdbool.h>
 
 #define streq(s1, s2) istreq(s1, s2)
 #define uc(p) (*(p))
@@ -156,9 +153,9 @@ is_absolute_path(const ichar *name)
       || (iswalpha(uc(name)) && name[1] == ':')
 #endif
     )
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 int
@@ -167,10 +164,10 @@ is_url(const ichar *name)
   { while(*name && iswalpha(*name))
       name++;
     if ( *name && name[0] == ':' && name[1] == '/' && name[2] == '/' )
-      return TRUE;
+      return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -212,7 +209,7 @@ register_catalog_file_unlocked(const ichar *file, catalog_location where)
   { cf = *f;
 
     if (istreq(cf->file, file))
-      return TRUE;		/* existing, move? */
+      return true;		/* existing, move? */
   }
 
   cf = sgml_malloc(sizeof(*cf));
@@ -229,7 +226,7 @@ register_catalog_file_unlocked(const ichar *file, catalog_location where)
     catalog = cf;
   }
 
-  return TRUE;
+  return true;
 }
 
 
@@ -254,7 +251,7 @@ wgetenv(const char *name)
 
 static void
 init_catalog()
-{ static int done = FALSE;
+{ static int done = false;
 
   LOCK();
   if ( !done++ )
@@ -646,7 +643,7 @@ find_in_catalogue(int kind,
   { if (catfile)
     { if (!catfile->loaded)
       { load_one_catalogue(catfile);
-	catfile->loaded = TRUE;
+	catfile->loaded = true;
       }
       item = catfile->first_item;
     } else

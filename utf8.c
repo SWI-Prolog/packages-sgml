@@ -50,7 +50,7 @@ sgml__utf8_get_char(const char *in, int *chr)
 char *
 sgml_utf8_put_char(char *out, int chr)
 { if ( chr < 0x80 )
-  { *out++ = (char) chr; /* dubious cast if chr < 0 */ 
+  { *out++ = (char) chr; /* dubious cast if chr < 0 */
   } else if ( chr < 0x800 )
   { *out++ = (char) (0xc0|((chr>>6)&0x1f));
     *out++ = (char) (0x80|(chr&0x3f));

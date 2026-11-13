@@ -76,23 +76,23 @@ xsd_number_string(term_t number, term_t string)
   { char *s = in;
 
     if ( strlen(s) == len )			/* no 0-characters */
-    { int isfloat = FALSE;
-      int hasdot=FALSE;
+    { int isfloat = false;
+      int hasdot=false;
 
       if ( strcmp(s, "NaN") != 0 )
       { int decl = 0, dect = 0;
 
 	if ( issign(*s) ) s++;			/* [+-]? */
 	if ( strcmp(s, "INF") == 0 )
-	{ isfloat = TRUE;
+	{ isfloat = true;
 	  goto ok;
 	}
 
 	while(isdigit(*s)) decl++, s++;		/* [0-9]* */
 	if ( isdot(*s) )			/* [.]? */
 	{ s++;
-	  isfloat = TRUE;
-	  hasdot = TRUE;
+	  isfloat = true;
+	  hasdot = true;
 	  while(isdigit(*s)) dect++, s++;	/* [0-9]* */
 	}
 	if ( decl+dect == 0 )
@@ -101,7 +101,7 @@ xsd_number_string(term_t number, term_t string)
 	{ int exp = 0;
 
 	  s++;
-	  isfloat = TRUE;
+	  isfloat = true;
 	  if ( issign(*s) ) s++;		/* [+-]? */
 	  while(isdigit(*s)) exp++, s++;	/* [0-9]+ */
 	  if ( exp == 0 )
@@ -110,7 +110,7 @@ xsd_number_string(term_t number, term_t string)
 	if ( *s )
 	  goto syntax_error;
       } else
-      { isfloat = TRUE;
+      { isfloat = true;
       }
 
     ok:
@@ -266,10 +266,10 @@ get_int_args(term_t t, int n, int *av)
   for(i=0; i<n; i++)
   { _PL_get_arg(i+1, t, a);
     if ( !PL_get_integer_ex(a, &av[i]) )
-      return FALSE;
+      return false;
   }
 
-  return TRUE;
+  return true;
 }
 
 static int
@@ -278,19 +278,19 @@ get_time_args(term_t t, int offset, time *tm)
 
   _PL_get_arg(offset+1, t, a);
   if ( !PL_get_integer_ex(a, &tm->hour) )
-    return FALSE;
+    return false;
   _PL_get_arg(offset+2, t, a);
   if ( !PL_get_integer_ex(a, &tm->minute) )
-    return FALSE;
+    return false;
   _PL_get_arg(offset+3, t, a);
   if ( PL_get_integer(a, &tm->second.i) )
-  { tm->sec_is_float = FALSE;
+  { tm->sec_is_float = false;
   } else if ( PL_get_float_ex(a, &tm->second.f) )
-  { tm->sec_is_float = TRUE;
+  { tm->sec_is_float = true;
   } else
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 
@@ -422,10 +422,10 @@ valid_year(int i)
 {
 #if XSD_VERSION_1_0
   if ( i != 0 )
-    return TRUE;
+    return true;
   return int_domain("year", i);
 #else
-  return TRUE;
+  return true;
 #endif
 }
 
@@ -448,7 +448,7 @@ mkyear(int v, int sign)
 static int
 valid_month(int i)
 { if ( i >= 1 && i <= 12 )
-    return TRUE;
+    return true;
   return int_domain("month", i);
 }
 
@@ -456,7 +456,7 @@ valid_month(int i)
 static int
 valid_day(int i)
 { if ( i >= 1 && i <= 31 )
-    return TRUE;
+    return true;
   return int_domain("day", i);
 }
 
@@ -464,7 +464,7 @@ valid_day(int i)
 static int
 valid_hour(int i)
 { if ( i >= 0 && i <= 23 )
-    return TRUE;
+    return true;
   return int_domain("hour", i);
 }
 
@@ -472,7 +472,7 @@ valid_hour(int i)
 static int
 valid_minute(int i)
 { if ( i >= 0 && i <= 59 )
-    return TRUE;
+    return true;
   return int_domain("minute", i);
 }
 
@@ -480,7 +480,7 @@ valid_minute(int i)
 static int
 valid_second(int i)
 { if ( i >= 0 && i <= 59 )
-    return TRUE;
+    return true;
   return int_domain("second", i);
 }
 
@@ -488,7 +488,7 @@ valid_second(int i)
 static int
 valid_second_f(double f)
 { if ( f >= 0.0 && f < 60.0 )
-    return TRUE;
+    return true;
   return float_domain("second", f);
 }
 
@@ -503,7 +503,7 @@ static int
 valid_time(const time *t)
 { if ( t->hour == 24 && t->minute == 0 &&
        (t->sec_is_float ? t->second.f == 0.0 : t->second.i == 0) )
-    return TRUE;			/* 24:00:00[.0+] */
+    return true;			/* 24:00:00[.0+] */
 
   if ( valid_hour(t->hour) &&
        valid_minute(t->minute) )
@@ -513,7 +513,7 @@ valid_time(const time *t)
       return valid_second(t->second.i);
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -522,7 +522,7 @@ valid_tz(int hoff, int moff)
 { if ( hoff >= 0 && hoff <= 13 )
     return valid_minute(moff);
   else if ( hoff == 14 && moff == 0 )
-    return TRUE;
+    return true;
   else
     return int_domain("tz_hour", hoff);
 }
@@ -532,7 +532,7 @@ static int
 valid_tzoffset(int sec)
 { if ( sec < -12*3600 || sec > 12*3600 )
     return int_domain("tz_offset", sec);
-  return TRUE;
+  return true;
 }
 
 
@@ -544,11 +544,11 @@ is_time_seq(const int av[], time *t)
   { t->hour   = av[1];
     t->minute = av[4];
     if ( av[8] == DECIMAL )
-    { t->sec_is_float = TRUE;
+    { t->sec_is_float = true;
       t->second.f = (double)av[7] + (double)av[10]/pow(10.0, (double)av[9]);
       return 11;
     } else
-    { t->sec_is_float = FALSE;
+    { t->sec_is_float = false;
       t->second.i = av[7];
       return 8;
     }
@@ -614,18 +614,18 @@ maybe_invalid_time_url(term_t type)
 
   if ( PL_get_atom_ex(type, &url) )
   { if ( is_time_url(url) )
-      return FALSE;
+      return false;
     return PL_domain_error("xsd_time_url", type);
   }
 
-  return FALSE;
+  return false;
 }
 
 
 static int
 unify_parsed_type(term_t t, atom_t type)
 { if ( PL_unify_atom(t, type) )
-  { return TRUE;
+  { return true;
   } else
   { if ( PL_is_atom(t) )
     { term_t ex;
@@ -640,7 +640,7 @@ unify_parsed_type(term_t t, atom_t type)
 	     );
     }
 
-    return FALSE;
+    return false;
   }
 }
 
@@ -663,12 +663,12 @@ incompatible_time_term(term_t term, atom_t type_atom)
 static int
 unify_prolog_type(term_t term, term_t type_term, atom_t type_atom)
 { if ( PL_unify_atom(type_term, type_atom) )
-  { return TRUE;
+  { return true;
   } else
   { if ( PL_is_atom(type_term) )
       incompatible_time_term(term, type_atom);
 
-    return FALSE;
+    return false;
   }
 }
 
@@ -686,7 +686,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
       char *sign = "";
 
       if ( !get_int_args(term, 3, v) || !valid_date(v) )
-	return FALSE;
+	return false;
       at = URL_date;
       if ( v[0] < 0 )
       { sign = "-";
@@ -701,7 +701,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
       if ( !get_int_args(term, 3, v) ||
 	   !get_time_args(term, 3, &t) ||
 	   !valid_date(v) || !valid_time(&t) )
-	return FALSE;
+	return false;
       at = URL_dateTime;
       if ( v[0] < 0 )
       { sign = "-";
@@ -719,7 +719,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	   !get_int_arg(term, 7, &tz) ||
 	   !valid_date(v) || !valid_time(&t) ||
 	   !valid_tzoffset(tz) )
-	return FALSE;
+	return false;
       at = URL_dateTime;
       if ( v[0] < 0 )
       { sign = "-";
@@ -739,7 +739,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
     { time t;
 
       if ( !get_time_args(term, 0, &t) || !valid_time(&t) )
-	return FALSE;
+	return false;
       at = URL_time;
       snprintf(buf, sizeof buf, "%02d:%02d:%s",
 	      t.hour, t.minute, time_sec_chars(&t, b2, sizeof b2));
@@ -747,7 +747,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
     { int v[2];
 
       if ( !get_int_args(term, 2, v) )
-	return FALSE;
+	return false;
       at = URL_gMonthDay;
       snprintf(buf, sizeof buf, "%02d-%02d",
 	      v[0], v[1]);
@@ -756,7 +756,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
       char *sign = "";
 
       if ( !get_int_args(term, 2, v) )
-	return FALSE;
+	return false;
       if ( v[0] < 0 )
       { sign = "-";
 	v[0] = mkyear(v[0], -1);
@@ -767,19 +767,19 @@ xsd_time_string(term_t term, term_t type, term_t string)
     { atom_t url;
 
       if ( !PL_get_atom_ex(type, &url) )
-	return FALSE;
+	return false;
       if ( url == URL_gDay )
       { if ( !valid_day(v) )
-	  return FALSE;
+	  return false;
 	snprintf(buf, sizeof buf, "%02d", v);
       } else if ( url == URL_gMonth )
       { if ( !valid_month(v) )
-	  return FALSE;
+	  return false;
 	snprintf(buf, sizeof buf, "%02d", v);
       } else if ( url == URL_gYear )
       { char *sign = "";
 	if ( !valid_year(v) )
-	  return FALSE;
+	  return false;
 	if ( v < 0 )
 	{ sign = "-";
 	  v = mkyear(v, -1);
@@ -794,7 +794,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
     }
 
     if ( at && !unify_prolog_type(term, type, at) )
-      return FALSE;
+      return false;
 
     return PL_unify_chars(string, PL_STRING, (size_t)-1, buf);
   } else					/* -, ?, + */
@@ -808,7 +808,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
 
     if ( !PL_get_nchars(string, &len, &in,
 			CVT_ATOM|CVT_STRING|CVT_LIST|CVT_EXCEPTION) )
-      return FALSE;
+      return false;
 
     if ( parse_date_parts(in, avb, sizeof(avb)/sizeof(*avb)) )
       return PL_syntax_error("xsd_time", NULL);
@@ -824,7 +824,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
     { int v[3] = {mkyear(av[1],yearsign),av[4],av[7]};
 
       if ( !valid_date(v) )
-	return FALSE;
+	return false;
 
       if ( av[8] == END )
       { return (unify_parsed_type(type, URL_date) &&
@@ -837,11 +837,11 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	term_t sec = PL_new_term_ref();
 
 	if ( !valid_time(&t) )
-	  return FALSE;
+	  return false;
 
 	if ( !(t.sec_is_float ? PL_put_float(sec, t.second.f)
 			      : PL_put_integer(sec, t.second.i)) )
-	  return FALSE;
+	  return false;
 
 	if ( av[at] == END )
 	  return (unify_parsed_type(type, URL_dateTime) &&
@@ -863,7 +863,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	  if ( av[at] == MINUS ) tz = -tz;
 
 	  if ( !valid_tz(av[at+2], av[at+5]) )
-	    return FALSE;
+	    return false;
 
 	  return (unify_parsed_type(type, URL_dateTime) &&
 		  PL_unify_term(term, PL_FUNCTOR, FUNCTOR_date_time7,
@@ -879,13 +879,13 @@ xsd_time_string(term_t term, term_t type, term_t string)
     { term_t sec = PL_new_term_ref();
 
       if ( !valid_time(&t) )
-	return FALSE;
+	return false;
       if ( yearsign == -1 )
 	return PL_syntax_error("xsd_time", NULL);
 
       if ( !(t.sec_is_float ? PL_put_float(sec, t.second.f)
 			    : PL_put_integer(sec, t.second.i)) )
-	return FALSE;
+	return false;
 
       return (valid_time(&t) &&
 	      unify_parsed_type(type, URL_time) &&
@@ -919,7 +919,7 @@ xsd_time_string(term_t term, term_t type, term_t string)
 	return PL_syntax_error("xsd_time", NULL);
 
       if ( !PL_get_atom_ex(type, &url) )
-	return FALSE;
+	return false;
       if ( url == URL_gDay )
 	return valid_day(av[1]) && PL_unify_integer(term, av[1]);
       if ( url == URL_gMonth )

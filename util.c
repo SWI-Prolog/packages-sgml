@@ -145,7 +145,7 @@ istrcaseeq(const ichar *s1, const ichar *s2)
 
   while ((c = *s1++) != '\0')
   { if (towlower(*s2++) != towlower(c))
-      return FALSE;
+      return false;
   }
 
   return *s2 == '\0';
@@ -158,9 +158,9 @@ istreq(const ichar *s1, const ichar *s2)
     s1++, s2++;
 
   if ( *s1 == 0 && *s2 == 0 )
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 
@@ -170,9 +170,9 @@ istrncaseeq(const ichar *s1, const ichar *s2, int len)
     s1++, s2++;
 
   if ( len < 0 )
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 
@@ -182,9 +182,9 @@ istrprefix(const ichar *pref, const ichar *s)
     pref++, s++;
 
   if ( *pref == 0 )
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 
@@ -268,11 +268,11 @@ istrtol(const ichar *s, intptr_t *val)
   { v = wcstoll(s, &e, 10);
     if ( !e[0] && errno != ERANGE )
     { *val = (intptr_t)v;
-      return TRUE;
+      return true;
     }
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -293,7 +293,7 @@ new_icharbuf(size_t limit)
   buf->allocated = 0;
   buf->size = 0;
   buf->limit = limit;
-  buf->limit_reached = FALSE;
+  buf->limit_reached = false;
   buf->data = NULL;
 
   return buf;
@@ -378,7 +378,7 @@ init_ocharbuf(ocharbuf *buf, size_t limit)
 { buf->size      = 0;
   buf->allocated = sizeof(buf->localbuf)/sizeof(wchar_t);
   buf->limit     = limit;
-  buf->limit_reached = FALSE;
+  buf->limit_reached = false;
   buf->data.w    = buf->localbuf;
 
   return buf;
@@ -439,7 +439,7 @@ add_ocharbuf(ocharbuf *buf, int chr)
   if ( buf->size+needed > buf->allocated )
   { size_t sz = buf->allocated * 2;
     if ( buf->limit && sz*sizeof(wchar_t) > buf->limit )
-    { buf->limit_reached = TRUE;
+    { buf->limit_reached = true;
       return;
     }
     buf->allocated = sz;
