@@ -274,14 +274,15 @@ was added to support HTML quasi quotations and most likely has
 little value in other contexts.
 
     \termitem{system_entities}{+Boolean}
-Define whether SYSTEM entities are expanded. The default is
+
+Define whether SYSTEM entities are expanded.  The default is
 \const{false}.  If \const{false}, general entities in the content are
 not expanded.  Other external resources --- parameter entities, entities
-used in attribute values and the external DTD subset (\verb$<!DOCTYPE
-name SYSTEM "file">$) --- are only accessed if they are found through
-the catalog, are declared in a DTD file or the document is read from a
-file.  Notably, a document read from a string or stream cannot access
-local files unless this option is \const{true}.
+used in attribute values and the external DTD subset
+(\verb$<!DOCTYPE name SYSTEM "file">$) --- are only accessed if they are
+found through the catalog, are declared in a DTD file or the document is
+read from a file.  Notably, a document read from a string or stream
+cannot access local files unless this option is \const{true}.
 
     \termitem{max_entity_expansion}{+Max}
 Limit the number of characters produced by entities that are referenced
